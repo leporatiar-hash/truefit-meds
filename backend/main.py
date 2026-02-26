@@ -14,16 +14,23 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="TrueFit Meds API", version="1.0.0")
 
-# ALLOWED_ORIGINS env var: comma-separated list of allowed origins
+# ALLOWED_ORIGINS: comma-separated explicit origins
 _origins_env = os.getenv(
     "ALLOWED_ORIGINS",
     "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000",
 )
 allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
+# Also allow all Vercel preview deployments via regex
+_origin_regex = os.getenv(
+    "ALLOWED_ORIGINS_REGEX",
+    r"https://.*\.vercel\.app",
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
