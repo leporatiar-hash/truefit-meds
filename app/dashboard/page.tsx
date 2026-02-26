@@ -10,10 +10,10 @@ import type { Patient, DailyLog } from "../lib/types";
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex-1">
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold mt-1" style={{ color: "#0D1B2A" }}>{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex-1">
+      <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className="text-3xl font-bold mt-1" style={{ color: "#0D1B2A" }}>{value}</p>
+      {sub && <p className="text-sm text-slate-400 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -58,7 +58,6 @@ export default function DashboardPage() {
     if (!isLoading && user) loadData();
   }, [user, isLoading, loadData, router]);
 
-  // Computed stats
   const streak = calculateStreak(logs);
 
   const thisMonth = (() => {
@@ -92,11 +91,9 @@ export default function DashboardPage() {
     return count > 0 ? (sum / count).toFixed(1) : null;
   })();
 
-  // Today's completion status
   const todayComplete = todayLog !== null;
   const missedToday = !todayComplete;
 
-  // AI alert: look for high symptom days in last 7 days
   const last7 = logs.filter((l) => {
     const d = new Date(l.date);
     const cutoff = new Date();
@@ -110,7 +107,7 @@ export default function DashboardPage() {
   if (isLoading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-teal border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -120,10 +117,14 @@ export default function DashboardPage() {
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
-        {/* Greeting */}
+        {/* Warm greeting */}
         <div>
-          <p className="text-slate-500 text-sm">Good {getTimeOfDay()}, {user?.name?.split(" ")[0]}</p>
-          <h1 className="text-2xl font-bold text-navy mt-0.5">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-navy">
+            Good {getTimeOfDay()}, {user?.name?.split(" ")[0]}.
+          </h1>
+          <p className="text-base text-slate-500 mt-1">
+            {patient ? `Here's how ${patient.name} is doing.` : "Welcome back."}
+          </p>
         </div>
 
         {patient ? (
@@ -132,56 +133,64 @@ export default function DashboardPage() {
             <div className="rounded-2xl p-5 text-white shadow-lg" style={{ background: "#0D1B2A" }}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-slate-400 text-xs uppercase tracking-wide font-medium">Patient</p>
-                  <h2 className="text-xl font-bold mt-0.5">{patient.name}</h2>
-                  <p className="text-slate-300 text-sm mt-0.5">{patient.diagnosis}</p>
+                  <p className="text-slate-400 text-sm uppercase tracking-wide font-semibold">Patient</p>
+                  <h2 className="text-2xl font-bold mt-1">{patient.name}</h2>
+                  <p className="text-slate-300 text-base mt-0.5">{patient.diagnosis}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-slate-400 text-xs uppercase tracking-wide font-medium">Streak</p>
-                  <div className="flex items-center gap-1 justify-end mt-0.5">
-                    <span className="text-2xl font-bold" style={{ color: "#0D9488" }}>{streak}</span>
-                    <span className="text-slate-300 text-sm">days</span>
+                  <p className="text-slate-400 text-sm uppercase tracking-wide font-semibold">Streak</p>
+                  <div className="flex items-center gap-1.5 justify-end mt-1">
+                    <span className="text-3xl font-bold" style={{ color: "#0D9488" }}>{streak}</span>
+                    <span className="text-slate-300 text-base">days</span>
                   </div>
-                  <p className="text-slate-400 text-xs">consecutive</p>
+                  <p className="text-slate-400 text-sm">consecutive</p>
                 </div>
               </div>
 
-              {/* Active meds count */}
               <div className="mt-4 pt-4 border-t border-slate-700">
-                <p className="text-slate-400 text-xs">
+                <p className="text-slate-400 text-sm">
                   {patient.medications.filter((m) => m.active).length} active medications
                 </p>
               </div>
             </div>
 
+            {/* Streak = 0 motivational message */}
+            {streak === 0 && (
+              <div className="rounded-2xl p-4 border" style={{ background: "#FFF8EC", borderColor: "#F59E0B" }}>
+                <p className="text-base font-medium leading-snug" style={{ color: "#92400E" }}>
+                  Start logging today — every entry helps {patient.name}&apos;s doctor understand them better.
+                </p>
+              </div>
+            )}
+
             {/* Today's status */}
             <div
-              className={`rounded-2xl p-4 border ${todayComplete ? "bg-teal-light border-teal" : "bg-amber-50 border-amber-200"}`}
+              className="rounded-2xl p-5 border"
               style={{
                 background: todayComplete ? "#CCFBF1" : "#FFF8EC",
                 borderColor: todayComplete ? "#0D9488" : "#F59E0B",
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background: todayComplete ? "#0D9488" : "#F59E0B" }}
                 >
                   {todayComplete ? (
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold text-sm" style={{ color: "#0D1B2A" }}>
-                    {todayComplete ? "Today's log complete" : "Today hasn't been logged yet"}
+                  <p className="font-semibold text-base" style={{ color: "#0D1B2A" }}>
+                    {todayComplete ? "Today's log is complete" : "Today hasn't been logged yet"}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: todayComplete ? "#0B7A70" : "#B45309" }}>
+                  <p className="text-sm mt-0.5" style={{ color: todayComplete ? "#0B7A70" : "#B45309" }}>
                     {todayComplete
                       ? "Great job keeping the streak alive!"
                       : "Tap 'Log Today' below to record today's health data."}
@@ -206,16 +215,16 @@ export default function DashboardPage() {
 
             {/* AI Alert */}
             {alertDays.length > 0 && (
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FEF3C7" }}>
-                    <svg className="w-4 h-4" style={{ color: "#D97706" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FEF3C7" }}>
+                    <svg className="w-5 h-5" style={{ color: "#D97706" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-navy">Pattern detected</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-base font-semibold text-navy">Pattern detected</p>
+                    <p className="text-sm text-slate-500 mt-1">
                       {alertDays.length} high-symptom day{alertDays.length !== 1 ? "s" : ""} in the last 7 days. Consider generating an AI summary before the next appointment.
                     </p>
                   </div>
@@ -223,11 +232,11 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Log Today CTA */}
+            {/* Log Today CTA — large, prominent */}
             {missedToday && (
               <Link
                 href="/log"
-                className="block w-full py-4 rounded-2xl text-center text-white font-bold text-lg shadow-lg transition-transform active:scale-95"
+                className="block w-full py-6 rounded-3xl text-center text-white font-bold text-2xl shadow-xl transition-transform active:scale-95"
                 style={{ background: "linear-gradient(135deg, #0D9488, #0B7A70)" }}
               >
                 Log Today
@@ -238,14 +247,14 @@ export default function DashboardPage() {
               <div className="flex gap-3">
                 <Link
                   href="/log"
-                  className="flex-1 py-3.5 rounded-2xl text-center font-semibold text-sm border-2 transition-colors"
+                  className="flex-1 py-4 rounded-2xl text-center font-semibold text-base border-2 transition-colors"
                   style={{ borderColor: "#0D9488", color: "#0D9488" }}
                 >
                   Edit Today&apos;s Log
                 </Link>
                 <Link
                   href="/summary"
-                  className="flex-1 py-3.5 rounded-2xl text-center text-white font-semibold text-sm"
+                  className="flex-1 py-4 rounded-2xl text-center text-white font-semibold text-base"
                   style={{ background: "#0D9488" }}
                 >
                   View Summary
@@ -255,10 +264,10 @@ export default function DashboardPage() {
           </>
         ) : (
           <div className="text-center py-16">
-            <p className="text-slate-500 mb-4">No patient profile yet.</p>
+            <p className="text-slate-500 text-base mb-4">No patient profile yet.</p>
             <Link
               href="/onboarding"
-              className="inline-block px-6 py-3 rounded-xl text-white font-semibold"
+              className="inline-block px-6 py-3 rounded-xl text-white font-semibold text-base"
               style={{ background: "#0D9488" }}
             >
               Set up patient
