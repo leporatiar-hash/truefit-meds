@@ -141,7 +141,7 @@ export default function SummaryPage() {
             <div>
               <p className="font-semibold text-navy">Generate AI Summary</p>
               <p className="text-sm text-slate-500 mt-1">
-                Analyzes the last 30 days of logs and produces a doctor-ready clinical summary using Claude AI.
+                Analyzes the last 30 days of logs and produces a doctor-ready clinical summary using OpenAI.
               </p>
             </div>
             <button
@@ -161,7 +161,7 @@ export default function SummaryPage() {
             <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
             <div className="text-center">
               <p className="font-medium text-navy">Analyzing 30 days of data…</p>
-              <p className="text-sm text-slate-400 mt-1">Claude is reviewing logs, calculating patterns, and drafting your summary.</p>
+              <p className="text-sm text-slate-400 mt-1">OpenAI is reviewing logs, calculating patterns, and drafting your summary.</p>
             </div>
           </div>
         )}

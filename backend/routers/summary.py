@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from collections import defaultdict
-import anthropic
 import json
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from database import get_db
 import models
@@ -205,21 +205,26 @@ Please generate a doctor-ready summary as JSON with exactly these fields:
         "Return ONLY valid JSON — no markdown fences, no extra text."
     )
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not configured")
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
 
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model="claude-opus-4-6",
-        max_tokens=2048,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+    client = OpenAI(api_key=api_key)
+    completion = client.chat.completions.create(
+        model=model,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
     )
 
-    response_text = message.content[0].text.strip()
+    response_text = (completion.choices[0].message.content or "").strip()
+    if not response_text:
+        raise HTTPException(status_code=500, detail="OpenAI returned an empty response")
 
-    # Strip code fences if Claude adds them despite instructions
+    # Strip code fences if the model adds them despite instructions
     if response_text.startswith("```"):
         response_text = response_text.split("\n", 1)[-1]
         if response_text.endswith("```"):
