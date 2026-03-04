@@ -42,7 +42,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#0D1B2A" }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight">TrueFit Meds</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Witness</h1>
           <p className="text-slate-400 mt-2 text-sm">Create your caregiver account</p>
         </div>
 
@@ -51,9 +51,12 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
+              <label htmlFor="reg-name" className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
               <input
+                id="reg-name"
+                name="name"
                 type="text"
+                autoComplete="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -62,9 +65,12 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+              <label htmlFor="reg-email" className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
               <input
+                id="reg-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -73,9 +79,12 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <label htmlFor="reg-password" className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
               <input
+                id="reg-password"
+                name="password"
                 type="password"
+                autoComplete="new-password"
                 required
                 minLength={8}
                 value={password}

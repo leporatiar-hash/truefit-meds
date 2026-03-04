@@ -1,4 +1,34 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+function normalizeApiBase(rawValue: string | undefined): string {
+  const fallback = "http://localhost:8000";
+  if (!rawValue) return fallback;
+
+  let value = rawValue.trim().replace(/^["'`]|["'`]$/g, "").replace(/\/+$/, "");
+  if (!value) return fallback;
+
+  // Common env typo in dashboards: "ttps://..." (missing leading "h")
+  if (value.startsWith("ttps://")) value = `h${value}`;
+  if (value.startsWith("//")) value = `https:${value}`;
+  if (!/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(value)) value = `https://${value}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(
+      `Invalid NEXT_PUBLIC_API_URL: "${rawValue}". Use a full URL like https://truefit-meds-production.up.railway.app`
+    );
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new Error(
+      `Invalid NEXT_PUBLIC_API_URL protocol: "${parsed.protocol}". Only http:// or https:// are supported`
+    );
+  }
+
+  return parsed.origin;
+}
+
+const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

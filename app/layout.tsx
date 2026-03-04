@@ -10,7 +10,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "TrueFit Meds",
+  title: "Witness",
   description: "Caregiver health tracking & doctor-ready summaries",
 };
 

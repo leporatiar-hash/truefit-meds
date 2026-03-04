@@ -34,7 +34,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight">TrueFit Meds</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Witness</h1>
           <p className="text-slate-400 mt-2 text-sm">Health tracking for caregivers</p>
         </div>
 

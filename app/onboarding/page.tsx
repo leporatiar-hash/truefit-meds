@@ -69,7 +69,7 @@ export default function OnboardingPage() {
       for (const med of validMeds) {
         await api.addMedication(patientId, med);
       }
-      toast.success("All set! Welcome to TrueFit Meds.");
+      toast.success("All set! Welcome to Witness.");
       router.push("/dashboard");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to save medications");

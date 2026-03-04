@@ -57,7 +57,7 @@ export function NavBar() {
     <>
       {/* Top header */}
       <header className="sticky top-0 z-50 bg-navy px-4 py-3 flex items-center justify-between shadow-lg">
-        <span className="text-white font-bold text-lg tracking-tight">TrueFit Meds</span>
+        <span className="text-white font-bold text-lg tracking-tight">Witness</span>
         <button
           onClick={handleLogout}
           className="text-slate-400 hover:text-white text-sm transition-colors"

@@ -10,7 +10,14 @@ import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffec
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SYMPTOM_NAMES = ["Agitation", "Mood / Affect", "Clarity / Cognition"];
+const DEFAULT_SYMPTOM_NAMES = ["Agitation", "Mood / Affect", "Clarity / Cognition"];
+const SYMPTOMS_LS_KEY = "witness_symptom_names";
+
+function loadSymptomNames(): string[] {
+  if (typeof window === "undefined") return DEFAULT_SYMPTOM_NAMES;
+  const saved = localStorage.getItem(SYMPTOMS_LS_KEY);
+  return saved ? JSON.parse(saved) : DEFAULT_SYMPTOM_NAMES;
+}
 
 const SIDE_EFFECT_OPTIONS = [
   "Nausea", "Vomiting", "Constipation", "Diarrhea",
@@ -201,11 +208,11 @@ interface LogDraft {
   lifestyle: Lifestyle; notes: string;
 }
 
-function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
+function defaultDraft(patientId: number | null, meds: Medication[], symptomNamesArg: string[]): LogDraft {
   return {
     date: new Date().toISOString().split("T")[0], patientId,
     medicationsTaken: meds.filter(m => m.active).map(m => ({ medication_id: m.id, taken: false, time_taken: null })),
-    symptoms: SYMPTOM_NAMES.map(name => ({ name, severity: 5 })),
+    symptoms: symptomNamesArg.map(name => ({ name, severity: 5 })),
     medicationSideEffects: meds.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
     sleepHours: null, moodScore: null, waterIntakeOz: null,
     activities: [], lifestyle: { smoked: false, alcohol: false, stressed: false, ate_well: false }, notes: "",
@@ -225,6 +232,8 @@ export default function LogPage() {
   const [saved, setSaved] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>("medications");
   const [expandedSE, setExpandedSE] = useState<number | null>(null);
+  const [symptomNames, setSymptomNames] = useState<string[]>(() => loadSymptomNames());
+  const [newSymptomInput, setNewSymptomInput] = useState("");
 
   // Auto-expand section from URL hash
   useEffect(() => {
@@ -253,7 +262,7 @@ export default function LogPage() {
         setDraft({
           date: today, patientId: p.id,
           medicationsTaken: (todayLog.medications_taken as MedicationTaken[]) || p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, taken: false, time_taken: null })),
-          symptoms: (todayLog.symptoms as Symptom[]) || SYMPTOM_NAMES.map(name => ({ name, severity: 5 })),
+          symptoms: (todayLog.symptoms as Symptom[]) || loadSymptomNames().map((name: string) => ({ name, severity: 5 })),
           medicationSideEffects: (todayLog.medication_side_effects as MedicationSideEffect[]) || p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
           sleepHours: todayLog.sleep_hours as number | null,
           moodScore: todayLog.mood_score as number | null,
@@ -263,7 +272,7 @@ export default function LogPage() {
           notes: (todayLog.notes as string) || "",
         });
       } else {
-        setDraft(defaultDraft(p.id, p.medications));
+        setDraft(defaultDraft(p.id, p.medications, loadSymptomNames()));
       }
     } catch { /* silent */ } finally { setLoading(false); }
   }, [router]);
@@ -312,6 +321,21 @@ export default function LogPage() {
   }
   function toggleLifestyle(key: keyof Lifestyle) {
     update({ lifestyle: { ...draft!.lifestyle, [key]: !draft!.lifestyle[key] } });
+  }
+  function addSymptom(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || symptomNames.includes(trimmed)) return;
+    const updated = [...symptomNames, trimmed];
+    setSymptomNames(updated);
+    localStorage.setItem(SYMPTOMS_LS_KEY, JSON.stringify(updated));
+    update({ symptoms: [...(draft?.symptoms ?? []), { name: trimmed, severity: 5 }] });
+    setNewSymptomInput("");
+  }
+  function removeSymptom(name: string) {
+    const updated = symptomNames.filter(n => n !== name);
+    setSymptomNames(updated);
+    localStorage.setItem(SYMPTOMS_LS_KEY, JSON.stringify(updated));
+    update({ symptoms: draft!.symptoms.filter(s => s.name !== name) });
   }
 
   function toggle(id: string) {
@@ -482,17 +506,24 @@ export default function LogPage() {
 
         {/* ── Symptoms ── */}
         <AccordionSection id="symptoms" title="Symptoms" summaryLine={symptomsText}
-          bgColor="#FFF5F5" borderColor="#FCA5A5" headingColor="#991B1B"
+          bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
           isOpen={openSection === "symptoms"} onToggle={() => toggle("symptoms")}>
 
-          {SYMPTOM_NAMES.map(name => {
+          {symptomNames.map(name => {
             const s = draft.symptoms.find(s => s.name === name);
             const val = s?.severity ?? 5;
             const activeChip = SEVERITY_CHIPS.find(c => c.value === val);
 
             return (
               <div key={name} className="space-y-3">
-                <p className="text-base font-semibold text-slate-700">{name}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-slate-700">{name}</p>
+                  <button
+                    type="button" onClick={() => removeSymptom(name)}
+                    className="text-slate-300 hover:text-red-400 text-lg leading-none transition-colors"
+                    title="Remove symptom"
+                  >×</button>
+                </div>
 
                 {/* Quick chips */}
                 <div className="grid grid-cols-4 gap-2">
@@ -504,8 +535,8 @@ export default function LogPage() {
                         onClick={() => setSymptomSeverity(name, chip.value)}
                         className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
                         style={{
-                          borderColor: isActive ? "#991B1B" : "#CBD5E1",
-                          background: isActive ? "#991B1B" : "white",
+                          borderColor: isActive ? "#0D9488" : "#CBD5E1",
+                          background: isActive ? "#0D9488" : "white",
                           color: isActive ? "white" : "#334155",
                         }}
                       >{chip.label}</button>
@@ -520,6 +551,23 @@ export default function LogPage() {
               </div>
             );
           })}
+
+          {/* Add symptom */}
+          <div className="flex gap-2 pt-2 border-t border-slate-100">
+            <input
+              type="text"
+              value={newSymptomInput}
+              onChange={e => setNewSymptomInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSymptom(newSymptomInput); } }}
+              placeholder="Add a symptom…"
+              className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-navy text-sm focus:outline-none"
+            />
+            <button
+              type="button" onClick={() => addSymptom(newSymptomInput)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              style={{ background: "#0D9488" }}
+            >Add</button>
+          </div>
         </AccordionSection>
 
         {/* ── Sleep ── */}
