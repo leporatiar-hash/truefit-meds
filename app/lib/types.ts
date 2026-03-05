@@ -47,6 +47,9 @@ export interface Episode {
 export interface Vitals {
   heart_rate: string;
   blood_pressure: string;
+  cigarettes: string;
+  alcohol: boolean;
+  alcohol_drinks: string;
 }
 
 export interface SideEffect {
