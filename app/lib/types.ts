@@ -91,6 +91,7 @@ export interface DailyLog {
   notes: string | null;
   episode: Episode | null;
   vitals: Vitals | null;
+  photo: string | null;
   created_at: string;
 }
 

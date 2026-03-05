@@ -50,6 +50,7 @@ def create_or_update_log(
         "notes": log_data.notes,
         "episode": log_data.episode,
         "vitals": log_data.vitals,
+        "photo": log_data.photo,
     }
 
     # Upsert: update if a log for this patient+date already exists

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { api } from "../lib/api";
@@ -182,6 +182,30 @@ interface LogDraft {
   notes: string;
   episode: Episode;
   vitals: Vitals;
+  photo: string | null; // base64 JPEG data URL (compressed ~50-100 KB)
+}
+
+// ── Photo compression ─────────────────────────────────────────────────────────
+
+async function compressPhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 900;
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("canvas")); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("load")); };
+    img.src = url;
+  });
 }
 
 function emptyVitals(): Vitals {
@@ -200,6 +224,7 @@ function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
     notes: "",
     episode: { occurred: false, time: "", description: "" },
     vitals: emptyVitals(),
+    photo: null,
   };
 }
 
@@ -234,6 +259,11 @@ export default function LogPage() {
   // Multi-dose: which med has "add dose" panel open + pending time
   const [addDoseOpenFor, setAddDoseOpenFor] = useState<number | null>(null);
   const [addDoseTime, setAddDoseTime] = useState("");
+
+  // Photo capture
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-expand section from URL hash
   useEffect(() => {
@@ -289,6 +319,7 @@ export default function LogPage() {
             alcohol: (vt as Vitals).alcohol ?? false,
             alcohol_drinks: (vt as Vitals).alcohol_drinks ?? "",
           } : emptyVitals(),
+          photo: (todayLog.photo as string | null) ?? null,
         });
       } else {
         setDraft(defaultDraft(p.id, p.medications));
@@ -422,6 +453,22 @@ export default function LogPage() {
     }
   }
 
+  async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoLoading(true);
+    try {
+      const compressed = await compressPhoto(file);
+      update({ photo: compressed });
+    } catch {
+      toast.error("Could not process photo");
+    } finally {
+      setPhotoLoading(false);
+      // Reset input so same file can be re-selected
+      e.target.value = "";
+    }
+  }
+
   function toggle(id: string) {
     setOpenSection(prev => prev === id ? null : id);
   }
@@ -453,6 +500,7 @@ export default function LogPage() {
         vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks)
           ? draft.vitals
           : null,
+        photo: draft.photo || null,
       });
       localStorage.removeItem(LS_KEY);
       setSaved(true);
@@ -480,6 +528,7 @@ export default function LogPage() {
   const symptomsText = draft.symptoms.length > 0 ? `${draft.symptoms.length} symptom${draft.symptoms.length !== 1 ? "s" : ""} noted` : "None noted";
   const activitiesText = draft.activities.length ? `${draft.activities.length} selected` : "None selected";
   const notesText = draft.notes ? draft.notes.slice(0, 40) + (draft.notes.length > 40 ? "…" : "") : "Tap to add";
+  const photoText = draft.photo ? "Photo saved" : "No photo yet";
   const episodeText = draft.episode.occurred ? `Episode at ${draft.episode.time ? fmt12(draft.episode.time) : "unknown time"}` : "No episode today";
   const vitalsText = draft.vitals.heart_rate || draft.vitals.blood_pressure
     ? [draft.vitals.heart_rate && `HR ${draft.vitals.heart_rate}`, draft.vitals.blood_pressure && `BP ${draft.vitals.blood_pressure}`].filter(Boolean).join(" · ")
@@ -839,6 +888,72 @@ export default function LogPage() {
               )}
             </div>
           </div>
+        </AccordionSection>
+
+        {/* ── Today's Photo ── */}
+        <AccordionSection id="photo" title="Today's Photo" summaryLine={photoText}
+          bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
+          isOpen={openSection === "photo"} onToggle={() => toggle("photo")}>
+
+          {/* Hidden file inputs */}
+          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+            className="hidden" onChange={handlePhotoFile} />
+          <input ref={libraryInputRef} type="file" accept="image/*"
+            className="hidden" onChange={handlePhotoFile} />
+
+          {draft.photo ? (
+            <div className="space-y-3">
+              {/* Photo preview */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={draft.photo}
+                alt="Today's photo"
+                className="w-full rounded-2xl object-cover"
+                style={{ maxHeight: 320 }}
+              />
+              <div className="flex gap-3">
+                <button type="button"
+                  onClick={() => libraryInputRef.current?.click()}
+                  className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 bg-white">
+                  Replace
+                </button>
+                <button type="button"
+                  onClick={() => update({ photo: null })}
+                  className="flex-1 py-3 rounded-xl border border-red-100 text-sm font-semibold text-red-500 bg-red-50">
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-400">One photo per day. Saves with the log and appears in the photo timeline.</p>
+              {photoLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 bg-slate-50 active:bg-slate-100 transition-colors">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-sm font-semibold">Take Photo</span>
+                  </button>
+                  <button type="button"
+                    onClick={() => libraryInputRef.current?.click()}
+                    className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 bg-slate-50 active:bg-slate-100 transition-colors">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm font-semibold">From Library</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </AccordionSection>
 
         {/* ── Notes ── */}

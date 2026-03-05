@@ -158,6 +158,15 @@ function DayCard({ log, patient }: { log: DailyLog; patient: Patient }) {
             <p className="text-sm text-slate-700 whitespace-pre-wrap">{log.notes}</p>
           </section>
         )}
+
+        {/* Photo */}
+        {log.photo && (
+          <section>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Photo</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={log.photo} alt={`Photo for ${log.date}`} className="rounded-xl max-h-64 object-cover" />
+          </section>
+        )}
       </div>
     </div>
   );

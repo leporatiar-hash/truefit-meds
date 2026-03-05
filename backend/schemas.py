@@ -141,6 +141,7 @@ class DailyLogCreate(BaseModel):
     notes: Optional[str] = None
     episode: Optional[Any] = None
     vitals: Optional[Any] = None
+    photo: Optional[str] = None
 
 
 class DailyLogResponse(BaseModel):
@@ -159,6 +160,7 @@ class DailyLogResponse(BaseModel):
     notes: Optional[str] = None
     episode: Optional[Any] = None
     vitals: Optional[Any] = None
+    photo: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

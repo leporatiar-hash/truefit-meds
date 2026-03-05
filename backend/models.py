@@ -88,6 +88,9 @@ class DailyLog(Base):
     # {heart_rate: str|null, blood_pressure: str|null}
     vitals = Column(JSON, nullable=True)
 
+    # base64 JPEG data URL, compressed to ~50-100 KB before storing
+    photo = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="daily_logs")
