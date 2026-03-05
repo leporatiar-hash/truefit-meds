@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { api, calculateStreak } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
@@ -97,6 +98,40 @@ export default function DashboardPage() {
     if (!isLoading && !user) { router.push("/login"); return; }
     if (!isLoading && user) loadData();
   }, [user, isLoading, loadData, router]);
+
+  // Evening reminders at 7pm and 8pm if log not done
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Request notification permission on first load
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    const checkReminder = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      if ((hour === 19 || hour === 20) && minute === 0) {
+        const todayStr = now.toISOString().split("T")[0];
+        const key = `witness_reminder_${todayStr}_h${hour}`;
+        if (localStorage.getItem(key)) return; // already fired today
+        localStorage.setItem(key, "1");
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Witness — Evening reminder", {
+            body: "Don't forget to complete today's log.",
+            icon: "/favicon.ico",
+          });
+        } else {
+          toast("Evening reminder: don't forget to complete today's log.", { icon: "⏰", duration: 8000 });
+        }
+      }
+    };
+
+    const interval = setInterval(checkReminder, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const calcStreak = calculateStreak(logs);
 
@@ -234,7 +269,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Summary shortcut */}
+            {/* Quick actions */}
             <Link
               href="/summary"
               className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-slate-100 transition-colors active:bg-slate-50"
@@ -245,6 +280,19 @@ export default function DashboardPage() {
               </div>
               <svg className="w-5 h-5" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+
+            <Link
+              href="/print"
+              className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-slate-100 transition-colors active:bg-slate-50"
+            >
+              <div>
+                <p className="text-base font-semibold text-navy">Print Report</p>
+                <p className="text-sm text-slate-500 mt-0.5">Last 7 or 30 days — formatted for doctor</p>
+              </div>
+              <svg className="w-5 h-5" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
             </Link>
           </>

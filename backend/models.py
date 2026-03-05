@@ -81,6 +81,13 @@ class DailyLog(Base):
     lifestyle = Column(JSON, nullable=True)
 
     notes = Column(Text, nullable=True)
+
+    # {occurred: bool, time: str|null, description: str|null}
+    episode = Column(JSON, nullable=True)
+
+    # {heart_rate: str|null, blood_pressure: str|null}
+    vitals = Column(JSON, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="daily_logs")

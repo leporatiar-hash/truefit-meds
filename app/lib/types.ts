@@ -35,6 +35,18 @@ export interface MedicationTaken {
 export interface Symptom {
   name: string;
   severity: number;
+  worse_than_usual?: boolean;
+}
+
+export interface Episode {
+  occurred: boolean;
+  time: string;
+  description: string;
+}
+
+export interface Vitals {
+  heart_rate: string;
+  blood_pressure: string;
 }
 
 export interface SideEffect {
@@ -74,6 +86,8 @@ export interface DailyLog {
   activities: Activity[] | null;
   lifestyle: Lifestyle | null;
   notes: string | null;
+  episode: Episode | null;
+  vitals: Vitals | null;
   created_at: string;
 }
 

@@ -101,6 +101,7 @@ class MedicationTaken(BaseModel):
 class Symptom(BaseModel):
     name: str
     severity: int  # 1–10
+    worse_than_usual: Optional[bool] = None
 
 
 class SideEffect(BaseModel):
@@ -138,6 +139,8 @@ class DailyLogCreate(BaseModel):
     activities: List[Activity] = []
     lifestyle: Optional[Lifestyle] = None
     notes: Optional[str] = None
+    episode: Optional[Any] = None
+    vitals: Optional[Any] = None
 
 
 class DailyLogResponse(BaseModel):
@@ -154,6 +157,8 @@ class DailyLogResponse(BaseModel):
     activities: Optional[Any] = None
     lifestyle: Optional[Any] = None
     notes: Optional[str] = None
+    episode: Optional[Any] = None
+    vitals: Optional[Any] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

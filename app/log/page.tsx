@@ -10,13 +10,26 @@ import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffec
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_SYMPTOM_NAMES = ["Agitation", "Mood / Affect", "Clarity / Cognition"];
+const DEFAULT_SYMPTOM_NAMES = [
+  "Agitation", "Mood / Affect", "Clarity / Cognition",
+  "Catatonic Episode", "Intrusive Thoughts", "Auditory Hallucinations",
+  "Visual Hallucinations", "Suicidal Ideation", "Command Hallucinations",
+];
 const SYMPTOMS_LS_KEY = "witness_symptom_names";
 
 function loadSymptomNames(): string[] {
   if (typeof window === "undefined") return DEFAULT_SYMPTOM_NAMES;
   const saved = localStorage.getItem(SYMPTOMS_LS_KEY);
-  return saved ? JSON.parse(saved) : DEFAULT_SYMPTOM_NAMES;
+  if (!saved) return DEFAULT_SYMPTOM_NAMES;
+  const existing: string[] = JSON.parse(saved);
+  // Merge any new defaults not yet in the saved list
+  let changed = false;
+  const merged = [...existing];
+  for (const name of DEFAULT_SYMPTOM_NAMES) {
+    if (!merged.includes(name)) { merged.push(name); changed = true; }
+  }
+  if (changed) localStorage.setItem(SYMPTOMS_LS_KEY, JSON.stringify(merged));
+  return merged;
 }
 
 const SIDE_EFFECT_OPTIONS = [
@@ -39,6 +52,7 @@ const ACTIVITY_OPTIONS: { type: string; label: string }[] = [
   { type: "brain_stimulating", label: "Brain Games" },
   { type: "exercise", label: "Exercise" },
   { type: "outside", label: "Outdoors" },
+  { type: "skateboarding", label: "Skateboarding" },
 ];
 
 const LIFESTYLE_OPTIONS: { key: keyof Lifestyle; label: string }[] = [
@@ -199,6 +213,17 @@ function WaterStepper({ value, onChange }: { value: number | null; onChange: (v:
 
 const LS_KEY = "truefit_log_draft";
 
+interface Episode {
+  occurred: boolean;
+  time: string;
+  description: string;
+}
+
+interface Vitals {
+  heart_rate: string;
+  blood_pressure: string;
+}
+
 interface LogDraft {
   date: string; patientId: number | null;
   medicationsTaken: MedicationTaken[]; symptoms: Symptom[];
@@ -206,16 +231,20 @@ interface LogDraft {
   sleepHours: number | null; moodScore: number | null;
   waterIntakeOz: number | null; activities: Activity[];
   lifestyle: Lifestyle; notes: string;
+  episode: Episode;
+  vitals: Vitals;
 }
 
 function defaultDraft(patientId: number | null, meds: Medication[], symptomNamesArg: string[]): LogDraft {
   return {
     date: new Date().toISOString().split("T")[0], patientId,
     medicationsTaken: meds.filter(m => m.active).map(m => ({ medication_id: m.id, taken: false, time_taken: null })),
-    symptoms: symptomNamesArg.map(name => ({ name, severity: 5 })),
+    symptoms: symptomNamesArg.map(name => ({ name, severity: 5, worse_than_usual: false })),
     medicationSideEffects: meds.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
     sleepHours: null, moodScore: null, waterIntakeOz: null,
     activities: [], lifestyle: { smoked: false, alcohol: false, stressed: false, ate_well: false }, notes: "",
+    episode: { occurred: false, time: "", description: "" },
+    vitals: { heart_rate: "", blood_pressure: "" },
   };
 }
 
@@ -235,6 +264,12 @@ export default function LogPage() {
   const [symptomNames, setSymptomNames] = useState<string[]>(() => loadSymptomNames());
   const [newSymptomInput, setNewSymptomInput] = useState("");
 
+  // Medication management
+  const [showMedManage, setShowMedManage] = useState(false);
+  const [newMedName, setNewMedName] = useState("");
+  const [newMedTime, setNewMedTime] = useState("morning");
+  const [addingMed, setAddingMed] = useState(false);
+
   // Auto-expand section from URL hash
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -249,20 +284,25 @@ export default function LogPage() {
       setPatient(p);
 
       const today = new Date().toISOString().split("T")[0];
-      const saved = localStorage.getItem(LS_KEY);
-      if (saved) {
-        const parsed: LogDraft = JSON.parse(saved);
+      const savedDraft = localStorage.getItem(LS_KEY);
+      if (savedDraft) {
+        const parsed: LogDraft = JSON.parse(savedDraft);
         if (parsed.date === today && parsed.patientId === p.id) {
+          // Ensure episode and vitals exist (for older drafts)
+          if (!parsed.episode) parsed.episode = { occurred: false, time: "", description: "" };
+          if (!parsed.vitals) parsed.vitals = { heart_rate: "", blood_pressure: "" };
           setDraft(parsed); setLoading(false); return;
         }
       }
 
       const todayLog = await api.getTodayLog(p.id) as Record<string, unknown> | null;
       if (todayLog) {
+        const ep = todayLog.episode as Episode | null;
+        const vt = todayLog.vitals as Vitals | null;
         setDraft({
           date: today, patientId: p.id,
           medicationsTaken: (todayLog.medications_taken as MedicationTaken[]) || p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, taken: false, time_taken: null })),
-          symptoms: (todayLog.symptoms as Symptom[]) || loadSymptomNames().map((name: string) => ({ name, severity: 5 })),
+          symptoms: (todayLog.symptoms as Symptom[]) || loadSymptomNames().map((name: string) => ({ name, severity: 5, worse_than_usual: false })),
           medicationSideEffects: (todayLog.medication_side_effects as MedicationSideEffect[]) || p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
           sleepHours: todayLog.sleep_hours as number | null,
           moodScore: todayLog.mood_score as number | null,
@@ -270,6 +310,8 @@ export default function LogPage() {
           activities: (todayLog.activities as Activity[]) || [],
           lifestyle: (todayLog.lifestyle as Lifestyle) || { smoked: false, alcohol: false, stressed: false, ate_well: false },
           notes: (todayLog.notes as string) || "",
+          episode: ep ?? { occurred: false, time: "", description: "" },
+          vitals: vt ?? { heart_rate: "", blood_pressure: "" },
         });
       } else {
         setDraft(defaultDraft(p.id, p.medications, loadSymptomNames()));
@@ -298,6 +340,9 @@ export default function LogPage() {
   }
   function setSymptomSeverity(name: string, severity: number) {
     update({ symptoms: draft!.symptoms.map(s => s.name === name ? { ...s, severity } : s) });
+  }
+  function toggleSymptomWorse(name: string) {
+    update({ symptoms: draft!.symptoms.map(s => s.name === name ? { ...s, worse_than_usual: !s.worse_than_usual } : s) });
   }
   function toggleSideEffect(medId: number, seName: string) {
     update({
@@ -328,7 +373,7 @@ export default function LogPage() {
     const updated = [...symptomNames, trimmed];
     setSymptomNames(updated);
     localStorage.setItem(SYMPTOMS_LS_KEY, JSON.stringify(updated));
-    update({ symptoms: [...(draft?.symptoms ?? []), { name: trimmed, severity: 5 }] });
+    update({ symptoms: [...(draft?.symptoms ?? []), { name: trimmed, severity: 5, worse_than_usual: false }] });
     setNewSymptomInput("");
   }
   function removeSymptom(name: string) {
@@ -336,6 +381,58 @@ export default function LogPage() {
     setSymptomNames(updated);
     localStorage.setItem(SYMPTOMS_LS_KEY, JSON.stringify(updated));
     update({ symptoms: draft!.symptoms.filter(s => s.name !== name) });
+  }
+  function updateEpisode(patch: Partial<Episode>) {
+    update({ episode: { ...draft!.episode, ...patch } });
+  }
+  function updateVitals(patch: Partial<Vitals>) {
+    update({ vitals: { ...draft!.vitals, ...patch } });
+  }
+
+  async function handleAddMed() {
+    if (!newMedName.trim() || !patient) return;
+    setAddingMed(true);
+    try {
+      const added = await api.addMedication(patient.id, {
+        name: newMedName.trim(),
+        dose: "",
+        frequency: "daily",
+        time_of_day: newMedTime,
+      }) as Medication;
+      // Update patient medications in state
+      const updatedPatient = { ...patient, medications: [...patient.medications, added] };
+      setPatient(updatedPatient);
+      // Add to draft
+      update({
+        medicationsTaken: [...draft!.medicationsTaken, { medication_id: added.id, taken: false, time_taken: null }],
+        medicationSideEffects: [...draft!.medicationSideEffects, { medication_id: added.id, medication_name: added.name, side_effects: [] }],
+      });
+      setNewMedName("");
+      toast.success(`${added.name} added`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to add medication");
+    } finally {
+      setAddingMed(false);
+    }
+  }
+
+  async function handleRemoveMed(medId: number) {
+    if (!patient) return;
+    try {
+      await api.deleteMedication(medId);
+      const updatedPatient = {
+        ...patient,
+        medications: patient.medications.map(m => m.id === medId ? { ...m, active: false } : m),
+      };
+      setPatient(updatedPatient);
+      update({
+        medicationsTaken: draft!.medicationsTaken.filter(m => m.medication_id !== medId),
+        medicationSideEffects: draft!.medicationSideEffects.filter(m => m.medication_id !== medId),
+      });
+      toast.success("Medication removed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove medication");
+    }
   }
 
   function toggle(id: string) {
@@ -353,6 +450,8 @@ export default function LogPage() {
         sleep_hours: draft.sleepHours, mood_score: draft.moodScore,
         water_intake_oz: draft.waterIntakeOz, activities: draft.activities,
         lifestyle: draft.lifestyle, notes: draft.notes || null,
+        episode: draft.episode,
+        vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure) ? draft.vitals : null,
       });
       localStorage.removeItem(LS_KEY);
       setSaved(true);
@@ -384,6 +483,10 @@ export default function LogPage() {
     ? Object.entries(draft.lifestyle).filter(([,v]) => v).map(([k]) => k.replace("_", " ")).join(", ")
     : "None selected";
   const notesText = draft.notes ? draft.notes.slice(0, 40) + (draft.notes.length > 40 ? "…" : "") : "Optional — tap to add";
+  const episodeText = draft.episode.occurred ? `Episode at ${draft.episode.time || "unknown time"}` : "No episode today";
+  const vitalsText = draft.vitals.heart_rate || draft.vitals.blood_pressure
+    ? [draft.vitals.heart_rate && `HR ${draft.vitals.heart_rate}`, draft.vitals.blood_pressure && `BP ${draft.vitals.blood_pressure}`].filter(Boolean).join(" · ")
+    : "Tap to record";
 
   return (
     <div className="min-h-screen pb-36" style={{ background: "#F8FAFC" }}>
@@ -416,7 +519,7 @@ export default function LogPage() {
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <p className="text-base font-semibold text-navy">{med.name}</p>
-                    <p className="text-sm text-slate-500">{med.dose} · {med.time_of_day}</p>
+                    <p className="text-sm text-slate-500">{med.time_of_day}</p>
                   </div>
                   <Toggle value={taken?.taken ?? false} onChange={v => setMedTaken(med.id, v)} />
                 </div>
@@ -447,7 +550,6 @@ export default function LogPage() {
                         style={{ borderColor: "#CBD5E1", background: "white", color: "#334155" }}
                       >Custom</button>
                     </div>
-                    {/* Custom time input — shown when time is set and doesn't match presets */}
                     {taken.time_taken && !TIME_PRESETS.some(p => p.getValue() === taken.time_taken) && (
                       <input
                         type="time" value={taken.time_taken}
@@ -502,6 +604,65 @@ export default function LogPage() {
               </div>
             );
           })}
+
+          {/* ── Manage medications ── */}
+          <div className="pt-2 border-t border-amber-100">
+            <button
+              type="button"
+              onClick={() => setShowMedManage(v => !v)}
+              className="flex items-center gap-1.5 text-sm font-medium text-amber-700"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Manage medications
+              <span style={{ display: "inline-block", transition: "transform 0.2s", transform: showMedManage ? "rotate(180deg)" : "none" }}>▾</span>
+            </button>
+
+            {showMedManage && (
+              <div className="mt-3 space-y-3">
+                {/* Existing meds with remove button */}
+                {patient.medications.filter(m => m.active).map(med => (
+                  <div key={med.id} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-amber-100">
+                    <span className="text-sm font-medium text-navy">{med.name} <span className="text-slate-400 font-normal">· {med.time_of_day}</span></span>
+                    <button type="button" onClick={() => handleRemoveMed(med.id)}
+                      className="text-red-400 hover:text-red-600 text-lg leading-none transition-colors" title="Remove">×</button>
+                  </div>
+                ))}
+
+                {/* Add new med form */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Add medication</p>
+                  <input
+                    type="text"
+                    value={newMedName}
+                    onChange={e => setNewMedName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddMed(); } }}
+                    placeholder="Medication name"
+                    className="w-full px-3 py-2 rounded-xl border border-amber-200 text-navy text-sm focus:outline-none bg-white"
+                  />
+                  <div className="flex gap-2">
+                    {["morning", "noon", "night"].map(t => (
+                      <button key={t} type="button" onClick={() => setNewMedTime(t)}
+                        className="flex-1 py-2 rounded-xl border text-sm font-medium capitalize transition-all"
+                        style={{
+                          borderColor: newMedTime === t ? "#0D9488" : "#CBD5E1",
+                          background: newMedTime === t ? "#0D9488" : "white",
+                          color: newMedTime === t ? "white" : "#64748B",
+                        }}
+                      >{t}</button>
+                    ))}
+                  </div>
+                  <button
+                    type="button" onClick={handleAddMed} disabled={addingMed || !newMedName.trim()}
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                    style={{ background: newMedName.trim() ? "#0D9488" : "#CBD5E1" }}
+                  >{addingMed ? "Adding…" : "Add medication"}</button>
+                </div>
+              </div>
+            )}
+          </div>
         </AccordionSection>
 
         {/* ── Symptoms ── */}
@@ -513,6 +674,7 @@ export default function LogPage() {
             const s = draft.symptoms.find(s => s.name === name);
             const val = s?.severity ?? 5;
             const activeChip = SEVERITY_CHIPS.find(c => c.value === val);
+            const isChecked = val > 1; // anything above "OK" counts as present
 
             return (
               <div key={name} className="space-y-3">
@@ -548,6 +710,17 @@ export default function LogPage() {
                 <LabeledSlider label="" value={val} min={1} max={10}
                   onChange={v => setSymptomSeverity(name, v)}
                   leftLabel="1 — Minimal" rightLabel="10 — Severe" />
+
+                {/* Worse than usual toggle — only when symptom is present */}
+                {isChecked && (
+                  <div className="flex items-center justify-between bg-orange-50 rounded-xl px-4 py-3 border border-orange-100">
+                    <span className="text-sm font-medium text-orange-800">Worse than usual?</span>
+                    <Toggle
+                      value={s?.worse_than_usual ?? false}
+                      onChange={() => toggleSymptomWorse(name)}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -567,6 +740,76 @@ export default function LogPage() {
               className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
               style={{ background: "#0D9488" }}
             >Add</button>
+          </div>
+        </AccordionSection>
+
+        {/* ── Episode ── */}
+        <AccordionSection id="episode" title="Episode" summaryLine={episodeText}
+          bgColor="#FFF1F2" borderColor="#FECDD3" headingColor="#9F1239"
+          isOpen={openSection === "episode"} onToggle={() => toggle("episode")}>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-base font-semibold" style={{ color: "#9F1239" }}>Did an episode occur today?</p>
+              <Toggle value={draft.episode.occurred} onChange={v => updateEpisode({ occurred: v })} />
+            </div>
+
+            {draft.episode.occurred && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Time of episode</label>
+                  <input
+                    type="time"
+                    value={draft.episode.time}
+                    onChange={e => updateEpisode({ time: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-rose-200 text-navy text-base focus:outline-none bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Describe what happened</label>
+                  <textarea
+                    value={draft.episode.description}
+                    onChange={e => updateEpisode({ description: e.target.value })}
+                    rows={4}
+                    placeholder="e.g. At 4pm Jack had a catatonic episode that lasted about 20 minutes…"
+                    className="w-full px-4 py-3 rounded-xl border border-rose-200 text-navy text-base focus:outline-none resize-none bg-white"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </AccordionSection>
+
+        {/* ── Vitals ── */}
+        <AccordionSection id="vitals" title="Vitals" summaryLine={vitalsText}
+          bgColor="#F0F9FF" borderColor="#BAE6FD" headingColor="#1E40AF"
+          isOpen={openSection === "vitals"} onToggle={() => toggle("vitals")}>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-base font-semibold text-slate-700">Heart Rate <span className="text-sm font-normal text-slate-400">(bpm)</span></label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={draft.vitals.heart_rate}
+                onChange={e => updateVitals({ heart_rate: e.target.value })}
+                placeholder="e.g. 72"
+                className="w-full px-4 py-3 rounded-xl border border-sky-200 text-navy text-base focus:outline-none bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-base font-semibold text-slate-700">Blood Pressure <span className="text-sm font-normal text-slate-400">(e.g. 120/80)</span></label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={draft.vitals.blood_pressure}
+                onChange={e => updateVitals({ blood_pressure: e.target.value })}
+                placeholder="120/80"
+                className="w-full px-4 py-3 rounded-xl border border-sky-200 text-navy text-base focus:outline-none bg-white"
+              />
+            </div>
           </div>
         </AccordionSection>
 
