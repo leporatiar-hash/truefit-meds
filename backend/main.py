@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import os
+import re
 from dotenv import load_dotenv
 
 from sqlalchemy import text
@@ -33,7 +36,7 @@ app = FastAPI(title="TrueFit Meds API", version="1.0.0")
 # ALLOWED_ORIGINS: comma-separated explicit origins
 _origins_env = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000",
+    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,https://truefit-meds.vercel.app",
 )
 allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
@@ -42,6 +45,37 @@ _origin_regex = os.getenv(
     "ALLOWED_ORIGINS_REGEX",
     r"https://.*\.vercel\.app",
 )
+
+# Compile regex for use in exception handler
+_origin_pattern = re.compile(_origin_regex) if _origin_regex else None
+
+
+def _is_allowed_origin(origin: str | None) -> bool:
+    """Check if origin is allowed."""
+    if not origin:
+        return False
+    if origin in allowed_origins:
+        return True
+    if _origin_pattern and _origin_pattern.match(origin):
+        return True
+    return False
+
+
+# Custom exception handler to ensure CORS headers are included on error responses
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    origin = request.headers.get("origin")
+    headers = {}
+    if _is_allowed_origin(origin):
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers,
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
