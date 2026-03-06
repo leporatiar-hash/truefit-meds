@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
+from sqlalchemy import text
 from database import engine, Base
 import models  # noqa: F401 — ensures models are registered before create_all
 from routers import auth, patients, medications, logs, summary
@@ -11,6 +12,21 @@ load_dotenv()
 
 # Create all database tables on startup
 Base.metadata.create_all(bind=engine)
+
+# Safe column migrations — add new columns to existing tables without data loss
+_MIGRATIONS = [
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS episode JSON",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS vitals JSON",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS photo TEXT",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS water_intake_oz FLOAT",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS activities JSON",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS medication_side_effects JSON",
+]
+
+with engine.connect() as conn:
+    for stmt in _MIGRATIONS:
+        conn.execute(text(stmt))
+    conn.commit()
 
 app = FastAPI(title="TrueFit Meds API", version="1.0.0")
 
