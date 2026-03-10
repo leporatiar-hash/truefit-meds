@@ -43,7 +43,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+    // Never serve stale API data from the browser cache
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));

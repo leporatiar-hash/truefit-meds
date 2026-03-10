@@ -241,6 +241,15 @@ export default function DashboardPage() {
     if (!isLoading && user) loadData();
   }, [user, isLoading, loadData, router]);
 
+  // Re-fetch whenever user returns to the app (tab/PWA resume)
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible") loadData();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadData]);
+
   // Evening reminders at 7pm and 8pm if log not done
   useEffect(() => {
     if (typeof window === "undefined") return;
