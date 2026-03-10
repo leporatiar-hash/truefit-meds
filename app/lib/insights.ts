@@ -228,48 +228,58 @@ export function computeObservations(logs: DailyLog[]): Observation[] {
   if (logs.length < 21) return [];
   const sorted = [...logs].sort((a, b) => a.date.localeCompare(b.date));
 
-  const agitation = extractSymptom(sorted, "Agitation");
-  const mood = extractSymptom(sorted, "Mood / Affect");
-  const clarity = extractSymptom(sorted, "Clarity / Cognition");
   const sleep = extractSleep(sorted);
   const alcohol = extractLifestyle(sorted, "alcohol");
   const adherence = extractOverallAdherence(sorted);
 
+  // Collect all unique symptom names from logs
+  const symptomNames = Array.from(
+    new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? []))
+  );
+
   const results: Observation[] = [];
 
-  const checks: Array<[MetricPoint[], MetricPoint[], boolean, string, string]> = [
-    [sleep, agitation, false,
-      "Higher sleep duration is associated with lower agitation scores.",
-      "Higher sleep duration is associated with higher agitation scores."],
-    [sleep, mood, false,
-      "Higher sleep is associated with lower mood difficulty.",
-      "Lower sleep is associated with lower mood difficulty."],
-    [sleep, clarity, false,
-      "Higher sleep is associated with lower clarity difficulty.",
-      "Higher sleep is associated with higher clarity difficulty."],
-    [alcohol, agitation, true,
-      "Alcohol use days tend to coincide with higher agitation.",
-      "Alcohol use days tend to coincide with lower agitation."],
-  ];
-
-  for (const [a, b, expectPositive, positiveText, negativeText] of checks) {
-    const [xs, ys] = alignByDate(a, b);
-    const r = pearsonR(xs, ys);
-    if (Math.abs(r) > 0.5 && xs.length >= 21) {
-      results.push({ r, text: r > 0 ? positiveText : negativeText });
-    }
-  }
-
-  // Lagged: adherence → agitation next day
-  {
-    const [xs, ys] = alignLagged(adherence, agitation);
+  // Sleep vs each symptom
+  for (const name of symptomNames) {
+    const pts = extractSymptom(sorted, name);
+    const [xs, ys] = alignByDate(sleep, pts);
     const r = pearsonR(xs, ys);
     if (Math.abs(r) > 0.5 && xs.length >= 21) {
       results.push({
         r,
         text: r < 0
-          ? "Agitation tends to be lower the day after higher medication adherence."
-          : "Agitation tends to be higher the day after lower medication adherence.",
+          ? `Higher sleep is associated with lower ${name.toLowerCase()} severity.`
+          : `Lower sleep is associated with higher ${name.toLowerCase()} severity.`,
+      });
+    }
+  }
+
+  // Alcohol vs each symptom
+  for (const name of symptomNames) {
+    const pts = extractSymptom(sorted, name);
+    const [xs, ys] = alignByDate(alcohol, pts);
+    const r = pearsonR(xs, ys);
+    if (Math.abs(r) > 0.5 && xs.length >= 21) {
+      results.push({
+        r,
+        text: r > 0
+          ? `Alcohol use days tend to coincide with higher ${name.toLowerCase()} severity.`
+          : `Alcohol use days tend to coincide with lower ${name.toLowerCase()} severity.`,
+      });
+    }
+  }
+
+  // Lagged: adherence → each symptom next day
+  for (const name of symptomNames) {
+    const pts = extractSymptom(sorted, name);
+    const [xs, ys] = alignLagged(adherence, pts);
+    const r = pearsonR(xs, ys);
+    if (Math.abs(r) > 0.5 && xs.length >= 21) {
+      results.push({
+        r,
+        text: r < 0
+          ? `${name} tends to be lower the day after higher medication adherence.`
+          : `${name} tends to be higher the day after lower medication adherence.`,
       });
     }
   }
@@ -298,7 +308,11 @@ export function buildMetricRows(logs: DailyLog[], medications: Medication[]): Me
 
   const rows: MetricRow[] = [];
 
-  for (const name of ["Agitation", "Mood / Affect", "Clarity / Cognition"]) {
+  // Collect all unique symptom names from logs (dynamic — no hardcoded list)
+  const allSymptomNames = Array.from(
+    new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? []))
+  );
+  for (const name of allSymptomNames) {
     const r = row(nameToKey(name), name, "/10", false, extractSymptom(sorted, name));
     if (r) rows.push(r);
   }
@@ -344,15 +358,6 @@ export interface MetricConfig {
 }
 
 export function getMetricConfig(key: string, medications: Medication[]): MetricConfig | null {
-  const symptomMap: Record<string, string> = {
-    "agitation": "Agitation",
-    "mood-affect": "Mood / Affect",
-    "clarity-cognition": "Clarity / Cognition",
-  };
-  if (symptomMap[key]) {
-    const name = symptomMap[key];
-    return { label: name, unit: "/10", higherIsBetter: false, color: "#EF4444", extract: (l) => extractSymptom(l, name) };
-  }
   if (key === "sleep") return { label: "Sleep", unit: "hrs", higherIsBetter: true, color: "#3B82F6", extract: extractSleep };
   if (key === "water") return { label: "Water intake", unit: "oz", higherIsBetter: true, color: "#06B6D4", extract: extractWater };
   if (key === "smoked") return { label: "Cigarettes", unit: "days", higherIsBetter: false, color: "#F97316", extract: (l) => extractLifestyle(l, "smoked") };
@@ -364,7 +369,16 @@ export function getMetricConfig(key: string, medications: Medication[]): MetricC
     if (!med) return null;
     return { label: med.name, unit: "%", higherIsBetter: true, color: "#0D9488", extract: (l) => extractMedAdherence(l, medId) };
   }
-  return null;
+  // Dynamic symptom: any key not matching above is treated as a symptom
+  return {
+    label: key.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    unit: "/10", higherIsBetter: false, color: "#EF4444",
+    extract: (l) => {
+      const name = l.flatMap((log) => log.symptoms ?? []).find((s) => nameToKey(s.name) === key)?.name;
+      if (!name) return [];
+      return extractSymptom(l, name);
+    },
+  };
 }
 
 // ── Format helpers ────────────────────────────────────────────────────────────
