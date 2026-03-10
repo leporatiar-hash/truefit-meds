@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./components/AuthProvider";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { Toaster } from "react-hot-toast";
 
 const geist = Geist({
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.variable} antialiased`}>
         <AuthProvider>
+          <UpdateBanner />
           {children}
           <Toaster
             position="top-center"
