@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -8,6 +8,148 @@ import { api, calculateStreak } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, DailyLog } from "../lib/types";
+
+// ── Photo compression (shared with log page) ─────────────────────────────────
+
+async function compressPhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 900;
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("canvas")); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("load")); };
+    img.src = url;
+  });
+}
+
+// ── Quick photo card ──────────────────────────────────────────────────────────
+
+function QuickPhotoCard({
+  patient,
+  todayLog,
+  onSaved,
+}: {
+  patient: Patient;
+  todayLog: DailyLog | null;
+  onSaved: () => void;
+}) {
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const compressed = await compressPhoto(file);
+      const today = new Date().toISOString().split("T")[0];
+      // Merge with existing log so we don't wipe symptoms/meds/etc.
+      await api.createLog({
+        patient_id: patient.id,
+        date: today,
+        medications_taken: (todayLog?.medications_taken as object[]) ?? [],
+        symptoms: (todayLog?.symptoms as object[]) ?? [],
+        medication_side_effects: (todayLog?.medication_side_effects as object[]) ?? [],
+        sleep_hours: todayLog?.sleep_hours ?? null,
+        mood_score: null,
+        water_intake_oz: null,
+        activities: (todayLog?.activities as object[]) ?? [],
+        lifestyle: todayLog?.lifestyle ?? null,
+        notes: todayLog?.notes ?? null,
+        episode: todayLog?.episode ?? null,
+        vitals: todayLog?.vitals ?? null,
+        photo: compressed,
+      });
+      toast.success("Photo saved!");
+      onSaved();
+    } catch {
+      toast.error("Could not save photo");
+    } finally {
+      setLoading(false);
+      e.target.value = "";
+    }
+  }
+
+  const hasPhoto = !!(todayLog?.photo);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <input ref={libraryRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
+      {hasPhoto ? (
+        <div className="flex items-center gap-4 px-5 py-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={todayLog!.photo!}
+            alt="Today's photo"
+            className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-navy">Today&apos;s Photo</p>
+            <p className="text-sm font-medium mt-0.5" style={{ color: "#0D9488" }}>Saved</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => libraryRef.current?.click()}
+            className="text-sm font-semibold px-4 py-2 rounded-xl border border-slate-200 text-slate-600 bg-slate-50 active:bg-slate-100 transition-colors flex-shrink-0"
+          >
+            Replace
+          </button>
+        </div>
+      ) : (
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-base font-semibold text-navy">Today&apos;s Photo</p>
+              <p className="text-sm text-slate-400 mt-0.5">Add a daily photo for the timeline</p>
+            </div>
+            {loading && (
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin flex-shrink-0" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => cameraRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-colors active:opacity-90 disabled:opacity-50"
+              style={{ background: "#0D9488" }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Take Photo
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => libraryRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 bg-slate-50 active:bg-slate-100 transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Upload
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function getTimeOfDay(): string {
   const h = new Date().getHours();
@@ -247,6 +389,9 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Quick photo */}
+            <QuickPhotoCard patient={patient} todayLog={todayLog} onSaved={loadData} />
 
             {/* Primary CTA */}
             <Link
