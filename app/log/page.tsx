@@ -12,10 +12,8 @@ import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constant
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SEVERITY_CHIPS = [
-  { label: "Mild", value: 3 },
   { label: "Moderate", value: 6 },
   { label: "Severe", value: 9 },
-  { label: "Critical", value: 10 },
 ];
 
 const SIDE_EFFECT_OPTIONS = [
@@ -242,9 +240,6 @@ export default function LogPage() {
   const [addDoseOpenFor, setAddDoseOpenFor] = useState<number | null>(null);
   const [addDoseTime, setAddDoseTime] = useState("");
 
-  // "None today" for symptoms
-  const [noneToday, setNoneToday] = useState(false);
-
   // Photo capture
   const [photoLoading, setPhotoLoading] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -350,7 +345,6 @@ export default function LogPage() {
   // ── Symptoms ─────────────────────────────────────────────────────────────
 
   function setSymptomSeverity(name: string, chipValue: number) {
-    setNoneToday(false);
     const existing = draft!.symptoms.find(s => s.name === name);
     if (existing?.severity === chipValue) {
       // Tap same chip → clear symptom
@@ -722,28 +716,25 @@ export default function LogPage() {
           bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
           isOpen={openSection === "symptoms"} onToggle={() => toggle("symptoms")}>
 
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">Tap to mark — tap again to clear.</p>
-            <button
-              type="button"
-              onClick={() => { setNoneToday(true); update({ symptoms: [] }); }}
-              className="px-3 py-1.5 rounded-xl border-2 text-sm font-semibold transition-all"
-              style={{
-                borderColor: noneToday ? "#0D9488" : "#CBD5E1",
-                background: noneToday ? "#CCFBF1" : "white",
-                color: noneToday ? "#0D9488" : "#94A3B8",
-              }}
-            >None today</button>
-          </div>
-
           {symptomNames.map(name => {
             const s = draft.symptoms.find(s => s.name === name);
             const activeValue = s?.severity ?? null;
+            const isNone = activeValue === null;
 
             return (
               <div key={name} className="space-y-2">
                 <p className="text-base font-semibold text-slate-700">{name}</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => update({ symptoms: draft!.symptoms.filter(s => s.name !== name) })}
+                    className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                    style={{
+                      borderColor: isNone ? "#0D9488" : "#CBD5E1",
+                      background: isNone ? "#CCFBF1" : "white",
+                      color: isNone ? "#0D9488" : "#334155",
+                    }}
+                  >None</button>
                   {SEVERITY_CHIPS.map(chip => {
                     const isActive = activeValue === chip.value;
                     return (
