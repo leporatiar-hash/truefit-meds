@@ -33,6 +33,7 @@ class Patient(Base):
     diagnosis = Column(String)
     notes = Column(Text, nullable=True)
     caregiver_id = Column(Integer, ForeignKey("users.id"))
+    dashboard_config = Column(JSON, nullable=True)
 
     caregiver = relationship("User", back_populates="patients")
     medications = relationship("Medication", back_populates="patient")

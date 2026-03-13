@@ -24,6 +24,7 @@ _MIGRATIONS = [
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS water_intake_oz FLOAT",
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS activities JSON",
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS medication_side_effects JSON",
+    "ALTER TABLE patients ADD COLUMN IF NOT EXISTS dashboard_config JSON",
 ]
 
 with engine.connect() as conn:

@@ -16,6 +16,14 @@ export interface Medication {
   active: boolean;
 }
 
+export interface DashboardConfig {
+  symptoms: string[];
+  activities: string[];
+  modules: string[];
+  symptom_label?: string;
+  episode_label?: string;
+}
+
 export interface Patient {
   id: number;
   name: string;
@@ -24,6 +32,7 @@ export interface Patient {
   notes: string | null;
   caregiver_id: number;
   medications: Medication[];
+  dashboard_config: DashboardConfig | null;
 }
 
 export interface MedicationTaken {

@@ -7,33 +7,15 @@ import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity } from "../lib/types";
+import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constants";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-// Fixed symptom list — no add/remove
-const SYMPTOM_NAMES = [
-  "Catatonic Episode",
-  "Intrusive Thoughts",
-  "Auditory Hallucinations",
-  "Visual Hallucinations",
-  "Suicidal Ideation",
-  "Command Hallucinations",
-];
 
 const SEVERITY_CHIPS = [
   { label: "Mild", value: 3 },
   { label: "Moderate", value: 6 },
   { label: "Severe", value: 9 },
   { label: "Critical", value: 10 },
-];
-
-const ACTIVITY_OPTIONS: { type: string; label: string }[] = [
-  { type: "skateboarding", label: "Skateboarding" },
-  { type: "drawing", label: "Drawing" },
-  { type: "music", label: "Music" },
-  { type: "walking", label: "Walking" },
-  { type: "running", label: "Running" },
-  { type: "standup_jokes", label: "Stand Up Jokes" },
 ];
 
 const SIDE_EFFECT_OPTIONS = [
@@ -260,6 +242,9 @@ export default function LogPage() {
   const [addDoseOpenFor, setAddDoseOpenFor] = useState<number | null>(null);
   const [addDoseTime, setAddDoseTime] = useState("");
 
+  // "None today" for symptoms
+  const [noneToday, setNoneToday] = useState(false);
+
   // Photo capture
   const [photoLoading, setPhotoLoading] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -365,6 +350,7 @@ export default function LogPage() {
   // ── Symptoms ─────────────────────────────────────────────────────────────
 
   function setSymptomSeverity(name: string, chipValue: number) {
+    setNoneToday(false);
     const existing = draft!.symptoms.find(s => s.name === name);
     if (existing?.severity === chipValue) {
       // Tap same chip → clear symptom
@@ -523,6 +509,16 @@ export default function LogPage() {
   if (!draft || !patient) return null;
 
   const activeMeds = patient.medications.filter(m => m.active);
+
+  // Dynamic symptom/activity lists — use AI-generated config if available, else defaults
+  const symptomNames: string[] = patient?.dashboard_config?.symptoms ?? DEFAULT_SYMPTOM_NAMES;
+  const activityOptions: { type: string; label: string }[] = patient?.dashboard_config?.activities
+    ? patient.dashboard_config.activities.map((type: string) => {
+        const found = DEFAULT_ACTIVITY_OPTIONS.find(a => a.type === type);
+        return found ?? { type, label: type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) };
+      })
+    : DEFAULT_ACTIVITY_OPTIONS;
+
   const totalDoses = draft.medicationsTaken.filter(m => m.taken).length;
   const medsText = totalDoses > 0 ? `${totalDoses} dose${totalDoses !== 1 ? "s" : ""} logged` : "Nothing logged yet";
   const symptomsText = draft.symptoms.length > 0 ? `${draft.symptoms.length} symptom${draft.symptoms.length !== 1 ? "s" : ""} noted` : "None noted";
@@ -726,9 +722,21 @@ export default function LogPage() {
           bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
           isOpen={openSection === "symptoms"} onToggle={() => toggle("symptoms")}>
 
-          <p className="text-sm text-slate-400">Tap to mark — tap again to clear.</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-400">Tap to mark — tap again to clear.</p>
+            <button
+              type="button"
+              onClick={() => { setNoneToday(true); update({ symptoms: [] }); }}
+              className="px-3 py-1.5 rounded-xl border-2 text-sm font-semibold transition-all"
+              style={{
+                borderColor: noneToday ? "#0D9488" : "#CBD5E1",
+                background: noneToday ? "#CCFBF1" : "white",
+                color: noneToday ? "#0D9488" : "#94A3B8",
+              }}
+            >None today</button>
+          </div>
 
-          {SYMPTOM_NAMES.map(name => {
+          {symptomNames.map(name => {
             const s = draft.symptoms.find(s => s.name === name);
             const activeValue = s?.severity ?? null;
 
@@ -834,7 +842,7 @@ export default function LogPage() {
           isOpen={openSection === "activities"} onToggle={() => toggle("activities")}>
 
           <div className="grid grid-cols-3 gap-3">
-            {ACTIVITY_OPTIONS.map(a => (
+            {activityOptions.map(a => (
               <Tile key={a.type} label={a.label}
                 active={draft.activities.some(act => act.type === a.type)}
                 onClick={() => toggleActivity(a.type)} />

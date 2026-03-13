@@ -86,8 +86,17 @@ class PatientResponse(BaseModel):
     notes: Optional[str] = None
     caregiver_id: int
     medications: List[MedicationResponse] = []
+    dashboard_config: Optional[Any] = None
 
     model_config = {"from_attributes": True}
+
+
+class IntakeSurveyRequest(BaseModel):
+    relationship: str
+    conditions: List[str]
+    track_modules: List[str]
+    reminder_frequency: Optional[str] = None
+    other_notes: Optional[str] = None
 
 
 # ── Daily Logs ────────────────────────────────────────────────────────────────

@@ -74,6 +74,8 @@ export const api = {
     request("/patients/", { method: "POST", body: JSON.stringify(data) }),
   getPatients: () => request("/patients/"),
   getPatient: (id: number) => request(`/patients/${id}`),
+  generateConfig: (patientId: number, data: object) =>
+    request(`/patients/${patientId}/generate-config`, { method: "POST", body: JSON.stringify(data) }),
 
   // Medications
   addMedication: (patientId: number, data: object) =>

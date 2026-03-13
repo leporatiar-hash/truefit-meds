@@ -16,20 +16,50 @@ interface MedForm {
 const emptyMed = (): MedForm => ({ name: "", dose: "", frequency: "", time_of_day: "Morning" });
 const TIME_OPTIONS = ["Morning", "Afternoon", "Evening", "Bedtime", "With meals", "As needed"];
 
+const RELATIONSHIP_OPTIONS = ["Parent", "Child", "Spouse", "Sibling", "Friend", "Other"];
+
+const CONDITION_OPTIONS = [
+  { value: "aging/dementia", label: "Aging / Dementia" },
+  { value: "mental health", label: "Mental Health" },
+  { value: "chronic illness", label: "Chronic Illness" },
+  { value: "physical disability", label: "Physical Disability" },
+  { value: "recovery", label: "Recovery / Post-op" },
+  { value: "pediatric", label: "Pediatric" },
+  { value: "other", label: "Other" },
+];
+
+const MODULE_OPTIONS = [
+  { value: "symptoms", label: "Symptoms" },
+  { value: "medications", label: "Medications" },
+  { value: "mood", label: "Mood" },
+  { value: "sleep", label: "Sleep" },
+  { value: "water", label: "Water Intake" },
+  { value: "activities", label: "Activities" },
+  { value: "vitals", label: "Vitals" },
+  { value: "episode", label: "Behavioral Episodes" },
+  { value: "side_effects", label: "Medication Side Effects" },
+];
+
 export default function OnboardingPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [submitting, setSubmitting] = useState(false);
 
-  // Patient form
+  // Patient form (step 1)
   const [patientName, setPatientName] = useState("");
   const [dob, setDob] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
   const [notes, setNotes] = useState("");
   const [patientId, setPatientId] = useState<number | null>(null);
 
-  // Medication form
+  // Intake survey (step 2)
+  const [relationship, setRelationship] = useState("");
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [trackModules, setTrackModules] = useState<string[]>(["symptoms", "medications", "mood", "sleep"]);
+  const [otherNotes, setOtherNotes] = useState("");
+
+  // Medication form (step 4)
   const [meds, setMeds] = useState<MedForm[]>([emptyMed()]);
 
   useEffect(() => {
@@ -38,6 +68,14 @@ export default function OnboardingPage() {
 
   function updateMed(idx: number, field: keyof MedForm, value: string) {
     setMeds((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: value } : m)));
+  }
+
+  function toggleCondition(val: string) {
+    setConditions(prev => prev.includes(val) ? prev.filter(c => c !== val) : [...prev, val]);
+  }
+
+  function toggleModule(val: string) {
+    setTrackModules(prev => prev.includes(val) ? prev.filter(m => m !== val) : [...prev, val]);
   }
 
   async function handlePatientSubmit(e: React.FormEvent) {
@@ -60,6 +98,24 @@ export default function OnboardingPage() {
     }
   }
 
+  async function handleSurveySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!patientId) return;
+    setStep(3);
+    // Step 3 is auto-triggered loading state — call generateConfig
+    try {
+      await api.generateConfig(patientId, {
+        relationship: relationship || "other",
+        conditions: conditions.length ? conditions : ["other"],
+        track_modules: trackModules.length ? trackModules : ["symptoms", "medications"],
+        other_notes: otherNotes || null,
+      });
+    } catch {
+      toast.error("Couldn't personalize dashboard — using defaults.");
+    }
+    setStep(4);
+  }
+
   async function handleMedsSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!patientId) return;
@@ -80,14 +136,25 @@ export default function OnboardingPage() {
 
   if (isLoading) return null;
 
+  // Progress bar: 4 segments
+  const progressSteps = [1, 2, 3, 4] as const;
+
   return (
     <div className="min-h-screen px-4 py-8 max-w-lg mx-auto" style={{ background: "#F8FAFC" }}>
       {/* Progress indicator */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className={`flex-1 h-1.5 rounded-full ${step >= 1 ? "bg-teal" : "bg-slate-200"}`} style={{ background: step >= 1 ? "#0D9488" : "#E2E8F0" }} />
-        <div className={`flex-1 h-1.5 rounded-full ${step >= 2 ? "bg-teal" : "bg-slate-200"}`} style={{ background: step >= 2 ? "#0D9488" : "#E2E8F0" }} />
-      </div>
+      {step !== 3 && (
+        <div className="flex items-center gap-2 mb-8">
+          {progressSteps.map((s) => (
+            <div
+              key={s}
+              className="flex-1 h-1.5 rounded-full"
+              style={{ background: step >= s ? "#0D9488" : "#E2E8F0" }}
+            />
+          ))}
+        </div>
+      )}
 
+      {/* ── Step 1: Patient profile ── */}
       {step === 1 && (
         <>
           <div className="mb-6">
@@ -149,7 +216,142 @@ export default function OnboardingPage() {
         </>
       )}
 
+      {/* ── Step 2: Intake survey ── */}
       {step === 2 && (
+        <>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-navy">Personalize your dashboard</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              A few quick questions so we can set up the right tracking for {patientName}.
+            </p>
+          </div>
+
+          <form onSubmit={handleSurveySubmit} className="space-y-6">
+
+            {/* Relationship */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                Your relationship to {patientName}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {RELATIONSHIP_OPTIONS.map(r => (
+                  <button
+                    key={r} type="button"
+                    onClick={() => setRelationship(r.toLowerCase())}
+                    className="px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all"
+                    style={{
+                      borderColor: relationship === r.toLowerCase() ? "#0D9488" : "#CBD5E1",
+                      background: relationship === r.toLowerCase() ? "#0D9488" : "white",
+                      color: relationship === r.toLowerCase() ? "white" : "#334155",
+                    }}
+                  >{r}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Conditions */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                What situation are they dealing with? <span className="font-normal text-slate-400">(select all that apply)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CONDITION_OPTIONS.map(c => {
+                  const active = conditions.includes(c.value);
+                  return (
+                    <button
+                      key={c.value} type="button"
+                      onClick={() => toggleCondition(c.value)}
+                      className="px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all"
+                      style={{
+                        borderColor: active ? "#0D9488" : "#CBD5E1",
+                        background: active ? "#CCFBF1" : "white",
+                        color: active ? "#0D9488" : "#334155",
+                      }}
+                    >{c.label}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Track modules */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                What do you want to track? <span className="font-normal text-slate-400">(pick what&apos;s relevant)</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {MODULE_OPTIONS.map(m => {
+                  const active = trackModules.includes(m.value);
+                  return (
+                    <button
+                      key={m.value} type="button"
+                      onClick={() => toggleModule(m.value)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium text-left transition-all"
+                      style={{
+                        borderColor: active ? "#0D9488" : "#CBD5E1",
+                        background: active ? "#CCFBF1" : "white",
+                        color: active ? "#0D9488" : "#334155",
+                      }}
+                    >
+                      <div
+                        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                        style={{ background: active ? "#0D9488" : "#E2E8F0" }}
+                      >
+                        {active && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Other notes */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                Anything else important to know? <span className="font-normal text-slate-400">(optional)</span>
+              </label>
+              <textarea
+                value={otherNotes}
+                onChange={(e) => setOtherNotes(e.target.value)}
+                rows={3}
+                placeholder="e.g. non-verbal, uses a wheelchair, has frequent night episodes..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
+              style={{ background: "#0D9488" }}
+            >
+              Personalize Dashboard →
+            </button>
+          </form>
+        </>
+      )}
+
+      {/* ── Step 3: Loading / AI generating ── */}
+      {step === 3 && (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+          <div
+            className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: "#0D9488", borderTopColor: "transparent" }}
+          />
+          <div className="text-center">
+            <p className="text-xl font-bold text-navy">Personalizing your dashboard…</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Generating tracking options tailored to {patientName}&apos;s situation.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 4: Add medications ── */}
+      {step === 4 && (
         <>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-navy">Add medications</h1>
@@ -211,9 +413,8 @@ export default function OnboardingPage() {
             <div className="flex gap-3 mt-2">
               <button
                 type="button"
-                onClick={() => meds.every((m) => !m.name.trim()) && router.push("/dashboard")}
+                onClick={() => router.push("/dashboard")}
                 className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-500 font-medium text-sm"
-                style={{}}
               >
                 Skip for now
               </button>
