@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from database import engine, Base
 import models  # noqa: F401 — ensures models are registered before create_all
-from routers import auth, patients, medications, logs, summary
+from routers import auth, patients, medications, logs, summary, onboarding
 
 load_dotenv()
 
@@ -25,6 +25,7 @@ _MIGRATIONS = [
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS activities JSON",
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS medication_side_effects JSON",
     "ALTER TABLE patients ADD COLUMN IF NOT EXISTS dashboard_config JSON",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS user_config JSON",
 ]
 
 with engine.connect() as conn:
@@ -62,7 +63,7 @@ def _is_allowed_origin(origin: str | None) -> bool:
     return False
 
 
-# Custom exception handler to ensure CORS headers are included on error responses
+# Custom exception handlers to ensure CORS headers are included on ALL error responses
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     origin = request.headers.get("origin")
@@ -70,10 +71,25 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     if _is_allowed_origin(origin):
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
+        headers=headers,
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin")
+    headers = {}
+    if _is_allowed_origin(origin):
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
         headers=headers,
     )
 
@@ -92,6 +108,7 @@ app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(medications.router, prefix="/medications", tags=["medications"])
 app.include_router(logs.router, prefix="/logs", tags=["logs"])
 app.include_router(summary.router, prefix="/summary", tags=["summary"])
+app.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 
 
 @app.get("/")

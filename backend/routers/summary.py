@@ -210,19 +210,22 @@ Please generate a doctor-ready summary as JSON with exactly these fields:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
 
     model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-    client = OpenAI(api_key=api_key)
-    completion = client.chat.completions.create(
-        model=model,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
+    try:
+        client = OpenAI(api_key=api_key)
+        completion = client.chat.completions.create(
+            model=model,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        response_text = (completion.choices[0].message.content or "").strip()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
 
-    response_text = (completion.choices[0].message.content or "").strip()
     if not response_text:
-        raise HTTPException(status_code=500, detail="OpenAI returned an empty response")
+        raise HTTPException(status_code=500, detail="AI returned an empty response")
 
     # Strip code fences if the model adds them despite instructions
     if response_text.startswith("```"):

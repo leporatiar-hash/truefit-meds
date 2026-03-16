@@ -504,10 +504,15 @@ export default function LogPage() {
 
   const activeMeds = patient.medications.filter(m => m.active);
 
-  // Dynamic symptom/activity lists — use AI-generated config if available, else defaults
-  const symptomNames: string[] = patient?.dashboard_config?.symptoms ?? DEFAULT_SYMPTOM_NAMES;
-  const activityOptions: { type: string; label: string }[] = patient?.dashboard_config?.activities
-    ? patient.dashboard_config.activities.map((type: string) => {
+  // Dynamic symptom/activity lists — user_config first, fall back to patient config, then defaults
+  const symptomNames: string[] =
+    user?.user_config?.symptoms ??
+    patient?.dashboard_config?.symptoms ??
+    DEFAULT_SYMPTOM_NAMES;
+
+  const _activitySlugs = user?.user_config?.activities ?? patient?.dashboard_config?.activities;
+  const activityOptions: { type: string; label: string }[] = _activitySlugs
+    ? _activitySlugs.map((type: string) => {
         const found = DEFAULT_ACTIVITY_OPTIONS.find(a => a.type === type);
         return found ?? { type, label: type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) };
       })

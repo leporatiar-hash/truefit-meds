@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     name: str
     role: UserRole
     created_at: datetime
+    user_config: Optional[Any] = None
 
     model_config = {"from_attributes": True}
 
@@ -97,6 +98,14 @@ class IntakeSurveyRequest(BaseModel):
     track_modules: List[str]
     reminder_frequency: Optional[str] = None
     other_notes: Optional[str] = None
+
+
+class OnboardingSurveyRequest(BaseModel):
+    relationship: str
+    condition: str
+    track_modules: List[str]
+    medications_daily: bool
+    good_day: Optional[str] = None
 
 
 # ── Daily Logs ────────────────────────────────────────────────────────────────

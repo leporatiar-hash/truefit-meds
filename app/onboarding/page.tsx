@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
+import type { User } from "../lib/types";
 
 interface MedForm {
   name: string;
@@ -16,16 +17,15 @@ interface MedForm {
 const emptyMed = (): MedForm => ({ name: "", dose: "", frequency: "", time_of_day: "Morning" });
 const TIME_OPTIONS = ["Morning", "Afternoon", "Evening", "Bedtime", "With meals", "As needed"];
 
-const RELATIONSHIP_OPTIONS = ["Parent", "Child", "Spouse", "Sibling", "Friend", "Other"];
+const RELATIONSHIP_OPTIONS = ["Parent", "Child", "Partner", "Sibling", "Other"];
 
-const CONDITION_OPTIONS = [
-  { value: "aging/dementia", label: "Aging / Dementia" },
-  { value: "mental health", label: "Mental Health" },
-  { value: "chronic illness", label: "Chronic Illness" },
-  { value: "physical disability", label: "Physical Disability" },
-  { value: "recovery", label: "Recovery / Post-op" },
-  { value: "pediatric", label: "Pediatric" },
-  { value: "other", label: "Other" },
+const CONDITION_SUGGESTIONS = [
+  "Mental health",
+  "Dementia / Alzheimer's",
+  "Chronic illness",
+  "Physical disability",
+  "Aging / general care",
+  "Other",
 ];
 
 const MODULE_OPTIONS = [
@@ -41,7 +41,7 @@ const MODULE_OPTIONS = [
 ];
 
 export default function OnboardingPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login, token } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [submitting, setSubmitting] = useState(false);
@@ -55,9 +55,10 @@ export default function OnboardingPage() {
 
   // Intake survey (step 2)
   const [relationship, setRelationship] = useState("");
-  const [conditions, setConditions] = useState<string[]>([]);
+  const [condition, setCondition] = useState("");
   const [trackModules, setTrackModules] = useState<string[]>(["symptoms", "medications", "mood", "sleep"]);
-  const [otherNotes, setOtherNotes] = useState("");
+  const [medicationsDaily, setMedicationsDaily] = useState<boolean | null>(null);
+  const [goodDay, setGoodDay] = useState("");
 
   // Medication form (step 4)
   const [meds, setMeds] = useState<MedForm[]>([emptyMed()]);
@@ -68,10 +69,6 @@ export default function OnboardingPage() {
 
   function updateMed(idx: number, field: keyof MedForm, value: string) {
     setMeds((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: value } : m)));
-  }
-
-  function toggleCondition(val: string) {
-    setConditions(prev => prev.includes(val) ? prev.filter(c => c !== val) : [...prev, val]);
   }
 
   function toggleModule(val: string) {
@@ -102,13 +99,23 @@ export default function OnboardingPage() {
     e.preventDefault();
     if (!patientId) return;
     setStep(3);
-    // Step 3 is auto-triggered loading state — call generateConfig
     try {
+      // Generate user-level config via Claude and save to users table
+      const updatedUser = await api.completeOnboardingSurvey({
+        relationship: relationship || "other",
+        condition: condition || "general care",
+        track_modules: trackModules.length ? trackModules : ["symptoms", "medications"],
+        medications_daily: medicationsDaily ?? false,
+        good_day: goodDay || null,
+      }) as User;
+      if (token) login(token, updatedUser);
+
+      // Also keep patient.dashboard_config in sync
       await api.generateConfig(patientId, {
         relationship: relationship || "other",
-        conditions: conditions.length ? conditions : ["other"],
+        conditions: condition ? [condition] : ["other"],
         track_modules: trackModules.length ? trackModules : ["symptoms", "medications"],
-        other_notes: otherNotes || null,
+        other_notes: goodDay || null,
       });
     } catch {
       toast.error("Couldn't personalize dashboard — using defaults.");
@@ -216,7 +223,7 @@ export default function OnboardingPage() {
         </>
       )}
 
-      {/* ── Step 2: Intake survey ── */}
+      {/* ── Step 2: Personalization survey ── */}
       {step === 2 && (
         <>
           <div className="mb-6">
@@ -228,7 +235,7 @@ export default function OnboardingPage() {
 
           <form onSubmit={handleSurveySubmit} className="space-y-6">
 
-            {/* Relationship */}
+            {/* Q1: Relationship */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-3">
                 Your relationship to {patientName}
@@ -238,7 +245,7 @@ export default function OnboardingPage() {
                   <button
                     key={r} type="button"
                     onClick={() => setRelationship(r.toLowerCase())}
-                    className="px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all"
+                    className="px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all"
                     style={{
                       borderColor: relationship === r.toLowerCase() ? "#0D9488" : "#CBD5E1",
                       background: relationship === r.toLowerCase() ? "#0D9488" : "white",
@@ -249,31 +256,36 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* Conditions */}
+            {/* Q2: Primary condition (free text + suggestion chips) */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">
-                What situation are they dealing with? <span className="font-normal text-slate-400">(select all that apply)</span>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                What&apos;s their primary condition?
+                <span className="font-normal text-slate-400"> (or situation)</span>
               </label>
+              <input
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                placeholder="e.g. Parkinson&apos;s, anxiety disorder, recovering from surgery…"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none focus:ring-2 focus:border-transparent mb-2"
+                style={{ "--tw-ring-color": "#0D9488" } as React.CSSProperties}
+              />
               <div className="flex flex-wrap gap-2">
-                {CONDITION_OPTIONS.map(c => {
-                  const active = conditions.includes(c.value);
-                  return (
-                    <button
-                      key={c.value} type="button"
-                      onClick={() => toggleCondition(c.value)}
-                      className="px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all"
-                      style={{
-                        borderColor: active ? "#0D9488" : "#CBD5E1",
-                        background: active ? "#CCFBF1" : "white",
-                        color: active ? "#0D9488" : "#334155",
-                      }}
-                    >{c.label}</button>
-                  );
-                })}
+                {CONDITION_SUGGESTIONS.map(s => (
+                  <button
+                    key={s} type="button"
+                    onClick={() => setCondition(s)}
+                    className="px-3 py-1.5 rounded-lg border text-xs font-medium transition-all"
+                    style={{
+                      borderColor: condition === s ? "#0D9488" : "#E2E8F0",
+                      background: condition === s ? "#CCFBF1" : "#F8FAFC",
+                      color: condition === s ? "#0D9488" : "#64748B",
+                    }}
+                  >{s}</button>
+                ))}
               </div>
             </div>
 
-            {/* Track modules */}
+            {/* Q3: Track modules */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-3">
                 What do you want to track? <span className="font-normal text-slate-400">(pick what&apos;s relevant)</span>
@@ -309,16 +321,38 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* Other notes */}
+            {/* Q4: Medications daily concern */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                Are medications a daily concern?
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {([{ label: "Yes", value: true }, { label: "No", value: false }] as const).map(opt => (
+                  <button
+                    key={opt.label} type="button"
+                    onClick={() => setMedicationsDaily(opt.value)}
+                    className="py-4 rounded-xl border-2 text-base font-semibold transition-all"
+                    style={{
+                      borderColor: medicationsDaily === opt.value ? "#0D9488" : "#CBD5E1",
+                      background: medicationsDaily === opt.value ? "#0D9488" : "white",
+                      color: medicationsDaily === opt.value ? "white" : "#334155",
+                    }}
+                  >{opt.label}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q5: Good day description */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Anything else important to know? <span className="font-normal text-slate-400">(optional)</span>
+                What does a good day look like for them?
+                <span className="font-normal text-slate-400"> (optional)</span>
               </label>
               <textarea
-                value={otherNotes}
-                onChange={(e) => setOtherNotes(e.target.value)}
+                value={goodDay}
+                onChange={(e) => setGoodDay(e.target.value)}
                 rows={3}
-                placeholder="e.g. non-verbal, uses a wheelchair, has frequent night episodes..."
+                placeholder="e.g. They went for a short walk and recognized family members…"
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none resize-none"
               />
             </div>

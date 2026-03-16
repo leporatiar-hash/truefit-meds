@@ -5,13 +5,19 @@ import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
-import type { Patient, DailyLog } from "../lib/types";
+import type { Patient, DailyLog, MedicationTaken, Vitals } from "../lib/types";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Date helpers ──────────────────────────────────────────────────────────────
 
-function fmt(dateStr: string) {
+function fmtLong(dateStr: string) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
+  });
+}
+
+function fmtMed(dateStr: string) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+    month: "long", day: "numeric",
   });
 }
 
@@ -21,158 +27,391 @@ function fmtShort(dateStr: string) {
   });
 }
 
-function severityLabel(v: number) {
-  if (v <= 2) return "Minimal";
-  if (v <= 4) return "Mild";
-  if (v <= 7) return "Moderate";
-  return "Severe";
+// ── Aggregate computation ─────────────────────────────────────────────────────
+
+function computeStatusSummary(logs: DailyLog[]): { text: string; warn: boolean } {
+  const concernRe = /suicid|command hallucin/i;
+  for (const log of logs) {
+    if (log.symptoms?.some(s => concernRe.test(s.name))) {
+      return { text: "⚠ Concerning — see episode notes", warn: true };
+    }
+    if (log.episode?.occurred && concernRe.test(log.episode.description || "")) {
+      return { text: "⚠ Concerning — see episode notes", warn: true };
+    }
+  }
+  const symptomDays = logs.filter(l => (l.symptoms?.length ?? 0) > 0).length;
+  if (symptomDays >= 4) return { text: "Symptomatic — review below", warn: false };
+  return { text: "Relatively stable over this period", warn: false };
 }
 
-// ── Print styles injected at render time ──────────────────────────────────────
+interface MedRow {
+  name: string;
+  dose: string;
+  takenDays: number;
+  trackedDays: number;
+  missedDates: string[];
+}
+
+function computeMedAggregates(logs: DailyLog[], patient: Patient): MedRow[] {
+  return patient.medications
+    .filter(m => m.active)
+    .map(med => {
+      let takenDays = 0, trackedDays = 0;
+      const missedDates: string[] = [];
+      for (const log of logs) {
+        const entries = (log.medications_taken ?? [] as MedicationTaken[]).filter(
+          (m: MedicationTaken) => m.medication_id === med.id
+        );
+        if (!entries.length) continue;
+        trackedDays++;
+        if (entries.some(e => e.taken)) takenDays++;
+        else missedDates.push(log.date);
+      }
+      return { name: med.name, dose: med.dose, takenDays, trackedDays, missedDates };
+    })
+    .filter(r => r.trackedDays > 0);
+}
+
+interface SymptomRow {
+  name: string;
+  daysReported: number;
+  totalDays: number;
+  lastDate: string;
+}
+
+function computeSymptomTable(logs: DailyLog[]): SymptomRow[] {
+  const map = new Map<string, { count: number; lastDate: string }>();
+  const total = logs.length;
+  for (const log of logs) {
+    const seen = new Set<string>();
+    for (const s of (log.symptoms ?? [])) {
+      if (seen.has(s.name)) continue;
+      seen.add(s.name);
+      const existing = map.get(s.name);
+      if (existing) {
+        existing.count++;
+        if (log.date > existing.lastDate) existing.lastDate = log.date;
+      } else {
+        map.set(s.name, { count: 1, lastDate: log.date });
+      }
+    }
+  }
+  return Array.from(map.entries())
+    .map(([name, { count, lastDate }]) => ({ name, daysReported: count, totalDays: total, lastDate }))
+    .sort((a, b) => b.daysReported - a.daysReported);
+}
+
+interface EpisodeRow {
+  date: string;
+  time: string | null;
+  description: string | null;
+}
+
+function computeEpisodes(logs: DailyLog[]): EpisodeRow[] {
+  return logs
+    .filter(l => l.episode?.occurred)
+    .map(l => ({
+      date: l.date,
+      time: (l.episode as { occurred: boolean; time?: string; description?: string }).time || null,
+      description: (l.episode as { occurred: boolean; time?: string; description?: string }).description || null,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+interface VitalsRange {
+  hrMin: number | null;
+  hrMax: number | null;
+  hrAvg: number | null;
+  bpValues: string[];
+}
+
+function computeVitalsRange(logs: DailyLog[]): VitalsRange {
+  const hrs: number[] = [];
+  const bpSet = new Set<string>();
+  for (const log of logs) {
+    if (!log.vitals) continue;
+    const v = log.vitals as Vitals;
+    const hr = parseInt(v.heart_rate || "");
+    if (!isNaN(hr)) hrs.push(hr);
+    if (v.blood_pressure?.trim()) bpSet.add(v.blood_pressure.trim());
+  }
+  return {
+    hrMin: hrs.length ? Math.min(...hrs) : null,
+    hrMax: hrs.length ? Math.max(...hrs) : null,
+    hrAvg: hrs.length ? Math.round(hrs.reduce((a, b) => a + b) / hrs.length) : null,
+    bpValues: Array.from(bpSet),
+  };
+}
+
+interface ActivityRow { type: string; daysActive: number }
+
+function computeActivities(logs: DailyLog[]): ActivityRow[] {
+  const map = new Map<string, number>();
+  for (const log of logs) {
+    const seen = new Set<string>();
+    for (const a of (log.activities ?? [])) {
+      if (seen.has(a.type)) continue;
+      seen.add(a.type);
+      map.set(a.type, (map.get(a.type) ?? 0) + 1);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([type, daysActive]) => ({
+      type: type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+      daysActive,
+    }))
+    .sort((a, b) => b.daysActive - a.daysActive);
+}
+
+// ── Print stylesheet ──────────────────────────────────────────────────────────
 
 const PRINT_STYLE = `
 @media print {
-  body { font-family: Georgia, serif; font-size: 11pt; color: #000; background: #fff; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; color: #000; background: #fff; margin: 0; }
   .no-print { display: none !important; }
-  .page-break { page-break-before: always; }
-  h1, h2, h3 { page-break-after: avoid; }
-  table { page-break-inside: avoid; }
+  .print-page { background: #fff !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 0 !important; }
+  .section-rule { border-top: 1.5px solid #000 !important; }
+  .section-title { color: #000 !important; border-bottom: 1.5px solid #000 !important; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-weight: bold; border-bottom: 1.5px solid #000; padding: 3pt 0; text-align: left; }
+  td { border-bottom: 0.5px solid #bbb; padding: 3pt 8pt 3pt 0; vertical-align: top; }
+  .status-badge { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; }
+  h1 { font-size: 16pt; }
 }
 `;
 
-// ── Log Day Card ──────────────────────────────────────────────────────────────
+// ── Section wrapper ───────────────────────────────────────────────────────────
 
-function DayCard({ log, patient }: { log: DailyLog; patient: Patient }) {
-  const meds = log.medications_taken ?? [];
-  const symptoms = log.symptoms ?? [];
-  const activities = log.activities ?? [];
-  const ep = log.episode;
-  const vt = log.vitals;
+function Section({
+  title, children, accent = "#0D1B2A",
+}: {
+  title: string; children: React.ReactNode; accent?: string;
+}) {
+  return (
+    <div className="mb-7">
+      <h2
+        className="section-title text-xs font-bold uppercase tracking-widest pb-1.5 mb-4 border-b-2"
+        style={{ color: accent, borderColor: accent }}
+      >
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
 
-  const takenCount = meds.filter(m => m.taken).length;
+// ── Clinical report ───────────────────────────────────────────────────────────
+
+function ClinicalReport({
+  patient, logs, userName,
+}: {
+  patient: Patient;
+  logs: DailyLog[];
+  userName: string | undefined;
+}) {
+  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const startDate = logs.length ? fmtShort(logs[0].date) : "—";
+  const endDate = logs.length ? fmtShort(logs[logs.length - 1].date) : "—";
+  const totalDays = logs.length;
+
+  const status = computeStatusSummary(logs);
+  const medRows = computeMedAggregates(logs, patient);
+  const symptomRows = computeSymptomTable(logs);
+  const episodes = computeEpisodes(logs);
+  const vitals = computeVitalsRange(logs);
+  const activityRows = computeActivities(logs);
+  const noteEntries = [...logs]
+    .filter(l => l.notes?.trim())
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const hasVitals = vitals.hrMin !== null || vitals.bpValues.length > 0;
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden mb-4 print:mb-3 print:border-slate-300">
-      {/* Date header */}
-      <div className="px-5 py-3 font-bold text-base" style={{ background: "#0D1B2A", color: "white" }}>
-        {fmt(log.date)}
+    <div className="print-page bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+
+      {/* ── Report header ── */}
+      <div className="mb-7 pb-5 border-b-2 border-slate-300">
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
+          Caregiver Observation Report
+        </p>
+        <h1 className="text-2xl font-bold text-navy">{patient.name}</h1>
+
+        <div className="mt-3 text-sm text-slate-600 space-y-0.5">
+          {patient.diagnosis && (
+            <p><span className="font-semibold">Diagnosis:</span> {patient.diagnosis}</p>
+          )}
+          <p>
+            <span className="font-semibold">Reporting period:</span>{" "}
+            {startDate} – {endDate}{" "}
+            <span className="text-slate-400">({totalDays} day{totalDays !== 1 ? "s" : ""} logged)</span>
+          </p>
+          <p><span className="font-semibold">Generated:</span> {today}</p>
+          <p><span className="font-semibold">Prepared by:</span> Witness — Caregiver Health Tracking</p>
+        </div>
+
+        {/* Status summary */}
+        {totalDays > 0 && (
+          <div
+            className="status-badge mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold inline-block"
+            style={{
+              background: status.warn ? "#FEF2F2" : "#F0FDF4",
+              color: status.warn ? "#991B1B" : "#14532D",
+              border: `1.5px solid ${status.warn ? "#FECACA" : "#86EFAC"}`,
+            }}
+          >
+            {status.text}
+          </div>
+        )}
       </div>
 
-      <div className="px-5 py-4 space-y-4 bg-white">
-        {/* Medications */}
-        {meds.length > 0 && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Medications ({takenCount}/{meds.length} taken)</p>
-            <div className="space-y-1">
-              {meds.map(m => {
-                const med = patient.medications.find(pm => pm.id === m.medication_id);
-                const medName = med?.name ?? `Medication #${m.medication_id}`;
-                return (
-                  <div key={m.medication_id} className="flex items-center gap-2 text-sm">
-                    <span className="text-lg">{m.taken ? "✓" : "✗"}</span>
-                    <span style={{ color: m.taken ? "#0D9488" : "#94A3B8" }}>
-                      {medName}{m.time_taken ? ` at ${m.time_taken}` : ""}
+      {totalDays === 0 ? (
+        <p className="text-slate-400 text-base py-8 text-center">No logs found for this period.</p>
+      ) : (
+        <>
+          {/* ── Medications ── */}
+          {medRows.length > 0 && (
+            <Section title="Medications" accent="#0D9488">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="text-xs text-slate-500 font-semibold">Medication</th>
+                    <th className="text-xs text-slate-500 font-semibold">Dose</th>
+                    <th className="text-xs text-slate-500 font-semibold">Days Taken</th>
+                    <th className="text-xs text-slate-500 font-semibold">Missed Dates</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {medRows.map((row, i) => (
+                    <tr key={i}>
+                      <td className="text-sm font-semibold text-navy py-2">{row.name}</td>
+                      <td className="text-sm text-slate-600 py-2">{row.dose || "—"}</td>
+                      <td className="text-sm text-slate-700 py-2">{row.takenDays} of {row.trackedDays}</td>
+                      <td className="text-sm text-slate-500 py-2">
+                        {row.missedDates.length === 0
+                          ? <span className="text-slate-300">—</span>
+                          : row.missedDates.map(d => fmtMed(d)).join(", ")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          )}
+
+          {/* ── Symptoms ── */}
+          {symptomRows.length > 0 && (
+            <Section title="Symptoms" accent="#1E40AF">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="text-xs text-slate-500 font-semibold w-1/2">Symptom</th>
+                    <th className="text-xs text-slate-500 font-semibold">Days Reported</th>
+                    <th className="text-xs text-slate-500 font-semibold">Last Occurrence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {symptomRows.map((row, i) => (
+                    <tr key={i}>
+                      <td className="text-sm font-semibold text-navy py-2">{row.name}</td>
+                      <td className="text-sm text-slate-700 py-2">{row.daysReported} / {row.totalDays}</td>
+                      <td className="text-sm text-slate-500 py-2">{fmtMed(row.lastDate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          )}
+
+          {/* ── Episodes ── */}
+          <Section title="Episodes" accent="#7C3AED">
+            {episodes.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">No acute episodes logged in this period.</p>
+            ) : (
+              <div className="space-y-3">
+                {episodes.map((ep, i) => (
+                  <div key={i} className="flex gap-4 text-sm">
+                    <span className="font-semibold text-navy flex-shrink-0 min-w-[140px]">
+                      {fmtMed(ep.date)}{ep.time ? `, ${ep.time}` : ""}
+                    </span>
+                    <span className="text-slate-700 leading-relaxed">
+                      {ep.description ?? <span className="italic text-slate-400">No description logged.</span>}
                     </span>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Symptoms */}
-        {symptoms.length > 0 && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Symptoms</p>
-            <div className="space-y-1">
-              {symptoms.map(s => (
-                <div key={s.name} className="flex items-start gap-2 text-sm">
-                  <span className="font-semibold text-navy min-w-[160px]">{s.name}</span>
-                  <span className="text-slate-600">
-                    {s.severity}/10 — {severityLabel(s.severity)}
-                    {s.worse_than_usual && <span className="ml-2 text-orange-600 font-semibold">(worse than usual)</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Episode */}
-        {ep && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Episode</p>
-            {ep.occurred ? (
-              <div className="text-sm space-y-1">
-                <p className="font-semibold text-red-700">Episode occurred{ep.time ? ` at ${ep.time}` : ""}</p>
-                {ep.description && <p className="text-slate-700">{ep.description}</p>}
+                ))}
               </div>
-            ) : (
-              <p className="text-sm text-slate-500">No episode</p>
             )}
-          </section>
-        )}
+          </Section>
 
-        {/* Vitals */}
-        {vt && (vt.heart_rate || vt.blood_pressure) && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Vitals</p>
-            <div className="flex gap-6 text-sm">
-              {vt.heart_rate && <span><span className="text-slate-400">HR</span> <strong>{vt.heart_rate} bpm</strong></span>}
-              {vt.blood_pressure && <span><span className="text-slate-400">BP</span> <strong>{vt.blood_pressure}</strong></span>}
-            </div>
-          </section>
-        )}
+          {/* ── Vitals ── */}
+          {hasVitals && (
+            <Section title="Vitals" accent="#0D1B2A">
+              <div className="space-y-2 text-sm">
+                {vitals.hrMin !== null && (
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-navy">Heart Rate:</span>{" "}
+                    {vitals.hrMin}–{vitals.hrMax} bpm over period (avg: {vitals.hrAvg})
+                  </p>
+                )}
+                {vitals.bpValues.length > 0 && (
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-navy">Blood Pressure:</span>{" "}
+                    {vitals.bpValues.join(", ")}
+                  </p>
+                )}
+              </div>
+            </Section>
+          )}
 
-        {/* Sleep & Hydration */}
-        {(log.sleep_hours != null || log.water_intake_oz != null) && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Sleep & Hydration</p>
-            <div className="flex gap-6 text-sm">
-              {log.sleep_hours != null && <span><span className="text-slate-400">Sleep</span> <strong>{log.sleep_hours} hrs</strong></span>}
-              {log.water_intake_oz != null && <span><span className="text-slate-400">Water</span> <strong>{log.water_intake_oz} oz</strong></span>}
-            </div>
-          </section>
-        )}
+          {/* ── Caregiver Observations ── */}
+          {noteEntries.length > 0 && (
+            <Section title="Caregiver Observations" accent="#166534">
+              <div className="space-y-3">
+                {noteEntries.map((log, i) => (
+                  <div key={i} className="flex gap-4 text-sm">
+                    <span className="font-semibold text-navy flex-shrink-0 min-w-[80px]">
+                      {fmtMed(log.date)}
+                    </span>
+                    <span className="text-slate-700 leading-relaxed whitespace-pre-wrap">{log.notes}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
 
-        {/* Mood */}
-        {log.mood_score != null && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Mood</p>
-            <p className="text-sm"><strong>{log.mood_score}/10</strong></p>
-          </section>
-        )}
+          {/* ── Functional Engagement ── */}
+          {activityRows.length > 0 && (
+            <Section title="Functional Engagement" accent="#92400E">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="text-xs text-slate-500 font-semibold w-1/2">Activity</th>
+                    <th className="text-xs text-slate-500 font-semibold">Days Active</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activityRows.map((row, i) => (
+                    <tr key={i}>
+                      <td className="text-sm font-semibold text-navy py-2">{row.type}</td>
+                      <td className="text-sm text-slate-700 py-2">{row.daysActive}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          )}
+        </>
+      )}
 
-        {/* Activities */}
-        {activities.length > 0 && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Activities</p>
-            <p className="text-sm text-slate-700">{activities.map(a => a.type.replace("_", " ")).join(", ")}</p>
-          </section>
-        )}
-
-        {/* Notes */}
-        {log.notes?.trim() && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes</p>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{log.notes}</p>
-          </section>
-        )}
-
-        {/* Photo */}
-        {log.photo && (
-          <section>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Photo</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={log.photo} alt={`Photo for ${log.date}`} className="rounded-xl max-h-64 object-cover" />
-          </section>
-        )}
+      {/* Footer */}
+      <div className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-400 text-center">
+        Generated by Witness · Caregiver Health Tracking · {today}
+        {userName ? ` · Submitted by ${userName}` : ""}
       </div>
     </div>
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PrintPage() {
   const { user, isLoading } = useAuth();
@@ -209,13 +448,12 @@ export default function PrintPage() {
     return d.toISOString().split("T")[0];
   })();
 
-  const filtered = logs
+  const filtered = [...logs]
     .filter(l => l.date >= cutoff)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const printedOn = new Date().toLocaleDateString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
-  });
+  const fmtShortLocal = (dateStr: string) =>
+    new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   if (isLoading || dataLoading) {
     return (
@@ -227,7 +465,6 @@ export default function PrintPage() {
 
   return (
     <>
-      {/* Print styles */}
       <style>{PRINT_STYLE}</style>
 
       <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
@@ -237,14 +474,13 @@ export default function PrintPage() {
 
         <div className="max-w-2xl mx-auto px-4 pt-6">
 
-          {/* Controls — hidden on print */}
+          {/* Controls */}
           <div className="no-print mb-6 space-y-4">
             <div>
               <h1 className="text-3xl font-bold text-navy">Print Report</h1>
-              <p className="text-base text-slate-500 mt-1">Generate a clean summary for the doctor.</p>
+              <p className="text-base text-slate-500 mt-1">Generate a clinical summary for the doctor.</p>
             </div>
 
-            {/* Range selector */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
               <p className="text-sm font-semibold text-slate-600">Reporting period</p>
               <div className="flex gap-3">
@@ -261,7 +497,7 @@ export default function PrintPage() {
               </div>
               <p className="text-sm text-slate-400">
                 {filtered.length} log{filtered.length !== 1 ? "s" : ""} found
-                {filtered.length > 0 && ` (${fmtShort(filtered[0].date)} – ${fmtShort(filtered[filtered.length - 1].date)})`}
+                {filtered.length > 0 && ` (${fmtShortLocal(filtered[0].date)} – ${fmtShortLocal(filtered[filtered.length - 1].date)})`}
               </p>
             </div>
 
@@ -275,38 +511,13 @@ export default function PrintPage() {
             </button>
           </div>
 
-          {/* Printable report */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print:shadow-none print:border-none print:rounded-none print:p-0">
-
-            {/* Report header */}
-            <div className="mb-6 pb-4 border-b-2 border-slate-200">
-              <h1 className="text-2xl font-bold text-navy print:text-3xl">Clinical Observation Report</h1>
-              {patient && (
-                <div className="mt-2 space-y-0.5">
-                  <p className="text-base text-slate-700"><span className="font-semibold">Patient:</span> {patient.name}</p>
-                  {patient.diagnosis && <p className="text-base text-slate-700"><span className="font-semibold">Diagnosis:</span> {patient.diagnosis}</p>}
-                  <p className="text-base text-slate-700"><span className="font-semibold">Reporting period:</span> Last {range} days ({filtered.length} days logged)</p>
-                  <p className="text-base text-slate-700"><span className="font-semibold">Prepared by:</span> {user?.name}</p>
-                  <p className="text-base text-slate-700"><span className="font-semibold">Printed on:</span> {printedOn}</p>
-                </div>
-              )}
-            </div>
-
-            {filtered.length === 0 ? (
-              <p className="text-slate-500 text-base py-8 text-center">No logs found for this period.</p>
-            ) : (
-              <div>
-                {filtered.map(log => (
-                  <DayCard key={log.id} log={log} patient={patient!} />
-                ))}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="mt-6 pt-4 border-t border-slate-200 text-xs text-slate-400 text-center">
-              Generated by Witness · {printedOn}
-            </div>
-          </div>
+          {patient && (
+            <ClinicalReport
+              patient={patient}
+              logs={filtered}
+              userName={user?.name}
+            />
+          )}
 
         </div>
       </div>

@@ -4,6 +4,7 @@ export interface User {
   name: string;
   role: "caregiver" | "patient";
   created_at: string;
+  user_config: DashboardConfig | null;
 }
 
 export interface Medication {
@@ -22,6 +23,7 @@ export interface DashboardConfig {
   modules: string[];
   symptom_label?: string;
   episode_label?: string;
+  greeting?: string;
 }
 
 export interface Patient {

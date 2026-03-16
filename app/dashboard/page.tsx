@@ -347,6 +347,11 @@ export default function DashboardPage() {
           <p className="text-base text-slate-500 mt-1">
             {patient ? `Here's how ${patient.name} is doing.` : "Welcome back."}
           </p>
+          {user?.user_config?.greeting && (
+            <p className="text-sm font-medium mt-1" style={{ color: "#0D9488" }}>
+              {user.user_config.greeting}
+            </p>
+          )}
         </div>
 
         {patient ? (

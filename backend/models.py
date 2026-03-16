@@ -20,6 +20,7 @@ class User(Base):
     name = Column(String)
     role = Column(Enum(UserRole), default=UserRole.caregiver)
     created_at = Column(DateTime, default=datetime.utcnow)
+    user_config = Column(JSON, nullable=True)
 
     patients = relationship("Patient", back_populates="caregiver")
 
