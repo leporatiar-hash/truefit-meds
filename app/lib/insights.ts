@@ -20,6 +20,8 @@ export interface MetricRow {
   higherIsBetter: boolean;
   latestValue: number | null;
   change7d: number | null;
+  trend: "improving" | "worsening" | "stable" | null;
+  trendLabel: string | null;
   points7d: MetricPoint[];
   allPoints: MetricPoint[];
 }
@@ -297,10 +299,27 @@ export function buildMetricRows(logs: DailyLog[], medications: Medication[]): Me
     higherIsBetter: boolean, points: MetricPoint[]
   ): MetricRow | null {
     if (!points.length) return null;
+    const change7d = compute7dChange(points);
+    let trend: MetricRow["trend"] = null;
+    let trendLabel: string | null = null;
+    if (change7d !== null && Math.abs(change7d) >= 0.05) {
+      const up = change7d > 0;
+      const isGood = (up && higherIsBetter) || (!up && !higherIsBetter);
+      trend = isGood ? "improving" : "worsening";
+      const sign = up ? "+" : "";
+      trendLabel = unit === "%" ? `${sign}${change7d.toFixed(0)}%`
+        : unit === "/10" ? `${sign}${change7d.toFixed(1)}`
+        : unit === "hrs" ? `${sign}${change7d.toFixed(1)}h`
+        : `${sign}${change7d.toFixed(1)}`;
+    } else if (change7d !== null) {
+      trend = "stable";
+    }
     return {
       key, label, unit, higherIsBetter,
       latestValue: points[points.length - 1]?.value ?? null,
-      change7d: compute7dChange(points),
+      change7d,
+      trend,
+      trendLabel,
       points7d: sparkline7d(points),
       allPoints: points,
     };
@@ -387,7 +406,7 @@ export function formatValue(value: number, unit: string): string {
   if (unit === "%") return `${value.toFixed(0)}%`;
   if (unit === "/10") return value.toFixed(1);
   if (unit === "hrs") return `${value.toFixed(1)}h`;
-  if (unit === "oz") return `${value.toFixed(0)}oz`;
+  if (unit === "oz") return value >= 70 ? "Good" : value >= 40 ? "Fair" : "Poor";
   if (unit === "days") return value > 0 ? "Yes" : "No";
   return value.toFixed(1);
 }

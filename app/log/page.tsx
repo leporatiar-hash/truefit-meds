@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
-import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity } from "../lib/types";
+import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle } from "../lib/types";
 import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constants";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -150,6 +150,19 @@ interface Vitals {
   alcohol_drinks: string;
 }
 
+const LIFESTYLE_LABELS: Record<string, string> = {
+  smoked: "Smoked today?",
+  alcohol: "Had alcohol?",
+  stressed: "High stress day?",
+  ate_well: "Ate well?",
+};
+
+const HYDRATION_PRESETS = [
+  { label: "Good", value: 80 },
+  { label: "Fair", value: 48 },
+  { label: "Poor", value: 24 },
+] as const;
+
 interface LogDraft {
   date: string;
   patientId: number | null;
@@ -158,6 +171,8 @@ interface LogDraft {
   symptoms: Symptom[];
   medicationSideEffects: MedicationSideEffect[];
   sleepHours: number | null;
+  hydration: "Good" | "Fair" | "Poor" | null;
+  lifestyle: Lifestyle;
   activities: Activity[];
   notes: string;
   episode: Episode;
@@ -200,6 +215,8 @@ function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
     symptoms: [],
     medicationSideEffects: meds.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
     sleepHours: null,
+    hydration: null,
+    lifestyle: { smoked: false, alcohol: false, stressed: false, ate_well: false },
     activities: [],
     notes: "",
     episode: { occurred: false, time: "", description: "" },
@@ -271,6 +288,8 @@ export default function LogPage() {
             if (parsed.vitals.alcohol === undefined) parsed.vitals.alcohol = false;
             if (parsed.vitals.alcohol_drinks === undefined) parsed.vitals.alcohol_drinks = "";
           }
+          if (parsed.hydration === undefined) parsed.hydration = null;
+          if (!parsed.lifestyle) parsed.lifestyle = { smoked: false, alcohol: false, stressed: false, ate_well: false };
           setDraft(parsed); setLoading(false); return;
         }
       }
@@ -282,6 +301,8 @@ export default function LogPage() {
         // Load saved doses — filter to only taken:true entries for history
         const savedDoses = (todayLog.medications_taken as MedicationTaken[] | null) ?? [];
         const takenDoses = savedDoses.filter(m => m.taken);
+        const waterOz = todayLog.water_intake_oz as number | null;
+        const hydrPreset = waterOz === 80 ? "Good" : waterOz === 48 ? "Fair" : waterOz === 24 ? "Poor" : null;
         setDraft({
           date: today,
           patientId: p.id,
@@ -289,6 +310,8 @@ export default function LogPage() {
           symptoms: (todayLog.symptoms as Symptom[]) ?? [],
           medicationSideEffects: (todayLog.medication_side_effects as MedicationSideEffect[]) ?? p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
           sleepHours: todayLog.sleep_hours as number | null,
+          hydration: hydrPreset,
+          lifestyle: (todayLog.lifestyle as Lifestyle | null) ?? { smoked: false, alcohol: false, stressed: false, ate_well: false },
           activities: (todayLog.activities as Activity[]) ?? [],
           notes: (todayLog.notes as string) ?? "",
           episode: ep ?? { occurred: false, time: "", description: "" },
@@ -464,6 +487,15 @@ export default function LogPage() {
         .filter(m => !medsWithDoses.has(m.id))
         .map(m => ({ medication_id: m.id, taken: false, time_taken: null }));
 
+      const hydrationOz = draft.hydration === "Good" ? 80 : draft.hydration === "Fair" ? 48 : draft.hydration === "Poor" ? 24 : null;
+      const configLifestyleFlags: Array<keyof Lifestyle> =
+        (user?.user_config?.lifestyle_flags ?? patient?.dashboard_config?.lifestyle_flags ?? ["smoked", "alcohol", "stressed", "ate_well"]) as Array<keyof Lifestyle>;
+      const lifestyleData: Lifestyle = { smoked: false, alcohol: false, stressed: false, ate_well: false };
+      for (const flag of configLifestyleFlags) {
+        lifestyleData[flag] = draft.lifestyle[flag];
+      }
+      const hasLifestyle = configLifestyleFlags.some(f => draft.lifestyle[f]);
+
       await api.createLog({
         patient_id: patient.id,
         date: draft.date,
@@ -472,9 +504,9 @@ export default function LogPage() {
         medication_side_effects: draft.medicationSideEffects.filter(mse => mse.side_effects.length > 0),
         sleep_hours: draft.sleepHours,
         mood_score: null,
-        water_intake_oz: null,
+        water_intake_oz: hydrationOz,
         activities: draft.activities,
-        lifestyle: null,
+        lifestyle: hasLifestyle ? lifestyleData : null,
         notes: draft.notes || null,
         episode: draft.episode,
         vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks)
@@ -518,6 +550,12 @@ export default function LogPage() {
       })
     : DEFAULT_ACTIVITY_OPTIONS;
 
+  const configLifestyleFlags: Array<keyof Lifestyle> =
+    (user?.user_config?.lifestyle_flags ?? patient?.dashboard_config?.lifestyle_flags ?? ["smoked", "alcohol", "stressed", "ate_well"]) as Array<keyof Lifestyle>;
+
+  const configSubstanceFields: Array<"cigarettes" | "alcohol"> =
+    user?.user_config?.substance_fields ?? patient?.dashboard_config?.substance_fields ?? ["cigarettes", "alcohol"];
+
   const totalDoses = draft.medicationsTaken.filter(m => m.taken).length;
   const medsText = totalDoses > 0 ? `${totalDoses} dose${totalDoses !== 1 ? "s" : ""} logged` : "Nothing logged yet";
   const symptomsText = draft.symptoms.length > 0 ? `${draft.symptoms.length} symptom${draft.symptoms.length !== 1 ? "s" : ""} noted` : "None noted";
@@ -529,6 +567,11 @@ export default function LogPage() {
     ? [draft.vitals.heart_rate && `HR ${draft.vitals.heart_rate}`, draft.vitals.blood_pressure && `BP ${draft.vitals.blood_pressure}`].filter(Boolean).join(" · ")
     : "Tap to record";
   const sleepText = draft.sleepHours !== null ? `${draft.sleepHours} hrs` : "Tap to record";
+  const hydrationText = draft.hydration ?? "Tap to record";
+  const lifestyleText = (() => {
+    const active = configLifestyleFlags.filter(f => draft.lifestyle[f]);
+    return active.length ? active.map(f => LIFESTYLE_LABELS[f]?.replace("?", "") ?? f).join(" · ") : "None noted";
+  })();
   const substancesText = (() => {
     const parts = [];
     if (draft.vitals.cigarettes) parts.push(`${draft.vitals.cigarettes} cig${Number(draft.vitals.cigarettes) !== 1 ? "s" : ""}`);
@@ -832,6 +875,34 @@ export default function LogPage() {
             leftLabel="0 hrs" rightLabel="12 hrs" unit=" hrs" />
         </AccordionSection>
 
+        {/* ── Hydration ── */}
+        <AccordionSection id="hydration" title="Hydration" summaryLine={hydrationText}
+          bgColor="#F0F9FF" borderColor="#BAE6FD" headingColor="#1E40AF"
+          isOpen={openSection === "hydration"} onToggle={() => toggle("hydration")}>
+
+          <div className="space-y-2">
+            <p className="text-sm text-slate-500">How well hydrated was {patient.name} today?</p>
+            <div className="grid grid-cols-3 gap-3">
+              {HYDRATION_PRESETS.map(preset => {
+                const isActive = draft.hydration === preset.label;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => update({ hydration: isActive ? null : preset.label })}
+                    className="py-4 rounded-xl border-2 text-base font-semibold transition-all"
+                    style={{
+                      borderColor: isActive ? "#0D9488" : "#CBD5E1",
+                      background: isActive ? "#0D9488" : "white",
+                      color: isActive ? "white" : "#334155",
+                    }}
+                  >{preset.label}</button>
+                );
+              })}
+            </div>
+          </div>
+        </AccordionSection>
+
         {/* ── Activities ── */}
         <AccordionSection id="activities" title="Activities" summaryLine={activitiesText}
           bgColor="#F0FDF4" borderColor="#86EFAC" headingColor="#166534"
@@ -846,53 +917,79 @@ export default function LogPage() {
           </div>
         </AccordionSection>
 
-        {/* ── Substances ── */}
-        <AccordionSection id="substances" title="Substances" summaryLine={substancesText}
-          bgColor="#FFF7ED" borderColor="#FDBA74" headingColor="#9A3412"
-          isOpen={openSection === "substances"} onToggle={() => toggle("substances")}>
+        {/* ── Lifestyle ── */}
+        {configLifestyleFlags.length > 0 && (
+          <AccordionSection id="lifestyle" title="Lifestyle" summaryLine={lifestyleText}
+            bgColor="#F0FDF4" borderColor="#86EFAC" headingColor="#166534"
+            isOpen={openSection === "lifestyle"} onToggle={() => toggle("lifestyle")}>
 
-          <div className="space-y-5">
-            {/* Cigarettes */}
-            <div className="space-y-2">
-              <label className="text-base font-semibold text-slate-700">Cigarettes today</label>
-              <div className="flex items-center gap-3">
-                <button type="button"
-                  onClick={() => updateVitals({ cigarettes: String(Math.max(0, parseInt(draft.vitals.cigarettes || "0") - 1)) })}
-                  className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xl">−</button>
-                <input
-                  type="number" inputMode="numeric" min={0}
-                  value={draft.vitals.cigarettes}
-                  onChange={e => updateVitals({ cigarettes: e.target.value })}
-                  placeholder="0"
-                  className="flex-1 text-center px-4 py-3 rounded-xl border border-orange-200 text-navy text-2xl font-bold focus:outline-none bg-white"
-                />
-                <button type="button"
-                  onClick={() => updateVitals({ cigarettes: String(parseInt(draft.vitals.cigarettes || "0") + 1) })}
-                  className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xl">+</button>
-              </div>
-            </div>
-
-            {/* Alcohol */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-base font-semibold text-slate-700">Alcohol today?</label>
-                <Toggle value={draft.vitals.alcohol} onChange={v => updateVitals({ alcohol: v, alcohol_drinks: v ? draft.vitals.alcohol_drinks : "" })} />
-              </div>
-              {draft.vitals.alcohol && (
-                <div className="space-y-1.5">
-                  <label className="text-sm text-slate-500">How many drinks?</label>
-                  <input
-                    type="number" inputMode="numeric" min={0}
-                    value={draft.vitals.alcohol_drinks}
-                    onChange={e => updateVitals({ alcohol_drinks: e.target.value })}
-                    placeholder="e.g. 2"
-                    className="w-full px-4 py-3 rounded-xl border border-orange-200 text-navy text-base focus:outline-none bg-white"
+            <div className="space-y-4">
+              {configLifestyleFlags.map(flag => (
+                <div key={flag} className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-slate-700">{LIFESTYLE_LABELS[flag] ?? flag}</p>
+                  <Toggle
+                    value={draft.lifestyle[flag] as boolean}
+                    onChange={v => update({ lifestyle: { ...draft.lifestyle, [flag]: v } })}
                   />
+                </div>
+              ))}
+            </div>
+          </AccordionSection>
+        )}
+
+        {/* ── Substances ── */}
+        {configSubstanceFields.length > 0 && (
+          <AccordionSection id="substances" title="Substances" summaryLine={substancesText}
+            bgColor="#FFF7ED" borderColor="#FDBA74" headingColor="#9A3412"
+            isOpen={openSection === "substances"} onToggle={() => toggle("substances")}>
+
+            <div className="space-y-5">
+              {/* Cigarettes */}
+              {configSubstanceFields.includes("cigarettes") && (
+                <div className="space-y-2">
+                  <label className="text-base font-semibold text-slate-700">Cigarettes today</label>
+                  <div className="flex items-center gap-3">
+                    <button type="button"
+                      onClick={() => updateVitals({ cigarettes: String(Math.max(0, parseInt(draft.vitals.cigarettes || "0") - 1)) })}
+                      className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xl">−</button>
+                    <input
+                      type="number" inputMode="numeric" min={0}
+                      value={draft.vitals.cigarettes}
+                      onChange={e => updateVitals({ cigarettes: e.target.value })}
+                      placeholder="0"
+                      className="flex-1 text-center px-4 py-3 rounded-xl border border-orange-200 text-navy text-2xl font-bold focus:outline-none bg-white"
+                    />
+                    <button type="button"
+                      onClick={() => updateVitals({ cigarettes: String(parseInt(draft.vitals.cigarettes || "0") + 1) })}
+                      className="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xl">+</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Alcohol */}
+              {configSubstanceFields.includes("alcohol") && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-slate-700">Alcohol today?</label>
+                    <Toggle value={draft.vitals.alcohol} onChange={v => updateVitals({ alcohol: v, alcohol_drinks: v ? draft.vitals.alcohol_drinks : "" })} />
+                  </div>
+                  {draft.vitals.alcohol && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm text-slate-500">How many drinks?</label>
+                      <input
+                        type="number" inputMode="numeric" min={0}
+                        value={draft.vitals.alcohol_drinks}
+                        onChange={e => updateVitals({ alcohol_drinks: e.target.value })}
+                        placeholder="e.g. 2"
+                        className="w-full px-4 py-3 rounded-xl border border-orange-200 text-navy text-base focus:outline-none bg-white"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        </AccordionSection>
+          </AccordionSection>
+        )}
 
         {/* ── Today's Photo ── */}
         <AccordionSection id="photo" title="Today's Photo" summaryLine={photoText}

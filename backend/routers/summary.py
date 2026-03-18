@@ -83,13 +83,23 @@ def generate_summary(
 
     adherence = _calculate_adherence(logs, medications)
 
+    # Read condition context and summary style from user config
+    user_config = current_user.user_config or {}
+    condition_context = user_config.get(
+        "condition_context",
+        f"{patient.name} has {patient.diagnosis} and is being monitored by a caregiver."
+    )
+    summary_style = user_config.get("summary_style", "adaptive")
+
     # Aggregate statistics
     sleep_vals, mood_vals, water_vals = [], [], []
-    symptom_totals = defaultdict(list)
+    symptom_counts: dict = defaultdict(lambda: {"severe": 0, "moderate": 0, "none": 0})
     activity_counts = defaultdict(int)
     side_effect_counts = defaultdict(lambda: defaultdict(int))
     lifestyle_totals = defaultdict(int)
     log_entries = []
+
+    HYDRATION_LABELS = {80: "Good", 48: "Fair", 24: "Poor"}
 
     for log in logs:
         if log.sleep_hours is not None:
@@ -100,7 +110,14 @@ def generate_summary(
             water_vals.append(log.water_intake_oz)
 
         for s in (log.symptoms or []):
-            symptom_totals[s["name"]].append(s["severity"])
+            name = s["name"]
+            sev = s["severity"]
+            if sev >= 8:
+                symptom_counts[name]["severe"] += 1
+            elif sev >= 5:
+                symptom_counts[name]["moderate"] += 1
+            else:
+                symptom_counts[name]["none"] += 1
 
         for a in (log.activities or []):
             activity_counts[a["type"]] += 1
@@ -114,11 +131,12 @@ def generate_summary(
                 if v:
                     lifestyle_totals[k] += 1
 
+        water_label = HYDRATION_LABELS.get(log.water_intake_oz) if log.water_intake_oz is not None else None
         log_entries.append({
             "date": log.date.isoformat(),
             "mood": log.mood_score,
             "sleep_hours": log.sleep_hours,
-            "water_oz": log.water_intake_oz,
+            "hydration": water_label or (f"{log.water_intake_oz}oz" if log.water_intake_oz is not None else None),
             "symptoms": log.symptoms,
             "activities": log.activities,
             "lifestyle": log.lifestyle,
@@ -129,63 +147,92 @@ def generate_summary(
 
     avg_sleep = round(sum(sleep_vals) / len(sleep_vals), 1) if sleep_vals else None
     avg_mood = round(sum(mood_vals) / len(mood_vals), 1) if mood_vals else None
-    avg_water = round(sum(water_vals) / len(water_vals), 1) if water_vals else None
 
-    symptom_averages = {
-        name: {
-            "average": round(sum(scores) / len(scores), 1),
-            "max": max(scores),
-            "entries": len(scores),
-        }
-        for name, scores in symptom_totals.items()
-    }
+    # Hydration summary
+    hydration_counts: dict = defaultdict(int)
+    for v in water_vals:
+        label = HYDRATION_LABELS.get(v, "other")
+        hydration_counts[label] += 1
+
+    # Build symptom tracking text
+    total_logs = len(logs)
+    symptom_lines = []
+    for name, counts in symptom_counts.items():
+        logged_days = counts["severe"] + counts["moderate"] + counts["none"]
+        not_logged = total_logs - logged_days
+        symptom_lines.append(
+            f"  - {name}: {counts['severe']} Severe days, {counts['moderate']} Moderate days, "
+            f"{not_logged} days not logged"
+        )
+    symptom_tracking_text = "\n".join(symptom_lines) if symptom_lines else "  No symptoms logged."
 
     med_list_text = "\n".join(
         f"  - {d['name']}: {d['percentage']}% adherence ({d['days_taken']}/{d['days_logged']} days)"
         for d in adherence.values()
     ) or "  No medications tracked."
 
-    user_prompt = f"""Here is 30 days of health data for patient {patient.name}, diagnosed with {patient.diagnosis}.
+    # Style guidance for the AI
+    if summary_style == "compassionate":
+        style_instruction = (
+            f"Use {patient.name}'s name throughout. Write warmly and personally — this is a caregiver reading about "
+            f"someone they love. Acknowledge difficult periods empathetically while still being factual. "
+            f"Frame improvements positively. Avoid cold clinical language."
+        )
+    elif summary_style == "clinical":
+        style_instruction = (
+            f"Write in precise clinical language. Use {patient.name} by name. Be concise and data-driven. "
+            f"Prioritize measurable findings and clinically significant patterns."
+        )
+    else:  # adaptive
+        style_instruction = (
+            f"Use {patient.name}'s name throughout. Balance clinical precision with accessible language "
+            f"that a caregiver can understand and discuss with a doctor."
+        )
+
+    user_prompt = f"""Here is 30 days of health data for {patient.name}, diagnosed with {patient.diagnosis}.
+
+PATIENT CONTEXT: {condition_context}
 
 MEDICATIONS:
 {med_list_text}
 
 AGGREGATED STATISTICS:
-- Total log entries: {len(logs)}
+- Total log entries: {total_logs}
 - Average sleep: {avg_sleep} hours/night
 - Average mood score: {avg_mood}/10
-- Average daily water intake: {avg_water} oz
+- Hydration days logged: Good={hydration_counts.get("Good", 0)}, Fair={hydration_counts.get("Fair", 0)}, Poor={hydration_counts.get("Poor", 0)}
 
-SYMPTOM AVERAGES (1–10 scale):
-{json.dumps(symptom_averages, indent=2)}
+SYMPTOM TRACKING (Severity logged as Moderate or Severe — out of {total_logs} logged days):
+{symptom_tracking_text}
 
 ACTIVITY FREQUENCY (number of days each activity was logged):
 {json.dumps(dict(activity_counts), indent=2)}
 
-LIFESTYLE FACTOR TOTALS (out of {len(logs)} logged days):
+LIFESTYLE FACTOR TOTALS (out of {total_logs} logged days):
 {json.dumps(dict(lifestyle_totals), indent=2)}
 
 MEDICATION SIDE EFFECT OCCURRENCES (medication → side effect → count):
-{json.dumps({k: dict(v) for k, v in side_effect_counts.items()}, indent=2)}
+{json.dumps({{k: dict(v) for k, v in side_effect_counts.items()}}, indent=2)}
 
 KEY PATTERNS TO ANALYZE:
-- Identify days where symptoms spiked and what preceded them (missed meds, lifestyle factors, activities)
-- Identify activity types that correlate with better mood or lower symptom severity
-- Note any concerning water intake or sleep trends
+- Identify days where symptoms were Severe and what preceded them (missed meds, lifestyle factors, activities)
+- Note correlations between Severe symptom days and lifestyle factors (alcohol, stress, poor sleep)
+- Note activity types that appear to correlate with fewer Severe symptom days
 - Flag any persistent or severe medication side effects
-- Note missed-dose patterns (day of week, time clusters)
+- Note missed-dose patterns
+- Highlight week-over-week changes if visible in the raw data
 
 RAW LOG DATA (chronological):
 {json.dumps(log_entries, indent=2)}
 
-Please generate a doctor-ready summary as JSON with exactly these fields:
+Please generate a summary as JSON with exactly these fields:
 {{
-  "executive_summary": "2-3 sentence clinical summary",
+  "executive_summary": "2-3 sentence summary of the period",
   "adherence": [
-    {{"medication": "name", "percentage": 85.0, "days_taken": 25, "days_logged": 30, "notes": "brief clinical observation"}}
+    {{"medication": "name", "percentage": 85.0, "days_taken": 25, "days_logged": 30, "notes": "brief observation"}}
   ],
   "patterns": [
-    {{"finding": "specific pattern description with data", "significance": "clinical relevance"}}
+    {{"finding": "specific pattern description with data", "significance": "clinical or caregiver relevance"}}
   ],
   "lifestyle_notes": [
     "observation string"
@@ -196,13 +243,16 @@ Please generate a doctor-ready summary as JSON with exactly these fields:
 }}"""
 
     system_prompt = (
-        "You are a clinical documentation assistant helping caregivers communicate patient health data to doctors. "
-        "You receive structured daily health logs from a caregiver and produce a clear, concise, doctor-ready summary. "
-        "Write in plain clinical language. Be specific with numbers and patterns. "
-        "Highlight correlations between medication adherence, activity, and symptom changes. "
-        "Flag anything that warrants the doctor's attention. "
-        "Do not speculate beyond what the data shows. "
-        "Return ONLY valid JSON — no markdown fences, no extra text."
+        f"You are a clinical documentation assistant helping caregivers communicate patient health data to doctors. "
+        f"Patient context: {condition_context} "
+        f"{style_instruction} "
+        f"You receive structured daily health logs and produce a clear, doctor-ready summary. "
+        f"Be specific with numbers and patterns. Note that symptoms are logged as Moderate or Severe (not on a 1-10 scale) — "
+        f"report them as counts of Severe days and Moderate days, not as averages. "
+        f"Highlight correlations between medication adherence, activities, and symptom severity. "
+        f"Flag anything that warrants the doctor's attention. "
+        f"Do not speculate beyond what the data shows. "
+        f"Return ONLY valid JSON — no markdown fences, no extra text."
     )
 
     api_key = os.getenv("OPENAI_API_KEY")

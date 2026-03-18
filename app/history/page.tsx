@@ -65,8 +65,10 @@ function LogDetail({ log }: { log: DailyLog }) {
           )}
           {log.water_intake_oz !== null && (
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Water</span>
-              <span className="font-semibold text-navy">{log.water_intake_oz} oz</span>
+              <span className="text-slate-400">Hydration</span>
+              <span className="font-semibold text-navy">
+                {log.water_intake_oz >= 70 ? "Good" : log.water_intake_oz >= 40 ? "Fair" : "Poor"}
+              </span>
             </div>
           )}
         </div>

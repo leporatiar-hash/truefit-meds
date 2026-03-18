@@ -24,6 +24,10 @@ export interface DashboardConfig {
   symptom_label?: string;
   episode_label?: string;
   greeting?: string;
+  lifestyle_flags?: Array<"smoked" | "alcohol" | "stressed" | "ate_well">;
+  substance_fields?: Array<"cigarettes" | "alcohol">;
+  condition_context?: string;
+  summary_style?: "compassionate" | "clinical" | "adaptive";
 }
 
 export interface Patient {

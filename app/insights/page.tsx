@@ -7,7 +7,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import {
-  buildMetricRows, formatValue, formatChange,
+  buildMetricRows, formatValue,
   type MetricRow, type MetricPoint,
 } from "../lib/insights";
 import type { Patient, DailyLog } from "../lib/types";
@@ -43,11 +43,28 @@ function Sparkline({ points, color }: { points: MetricPoint[]; color: string }) 
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 
-function MetricRowItem({ row }: { row: MetricRow }) {
-  const { text: changeText, color: changeColor, direction } = formatChange(
-    row.change7d, row.unit, row.higherIsBetter
+function TrendBadge({ row }: { row: MetricRow }) {
+  if (!row.trend || row.trend === "stable" || !row.trendLabel) {
+    return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">—</span>;
+  }
+  const isImproving = row.trend === "improving";
+  const bg = isImproving ? "#DCFCE7" : "#FEE2E2";
+  const color = isImproving ? "#16A34A" : "#DC2626";
+  const arrow = isImproving
+    ? (row.higherIsBetter ? "↑" : "↓")
+    : (row.higherIsBetter ? "↓" : "↑");
+  return (
+    <span
+      className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+      style={{ background: bg, color }}
+    >
+      {arrow} {row.trendLabel}
+    </span>
   );
-  const sparkColor = direction === "neutral" ? "#94A3B8" : changeColor;
+}
+
+function MetricRowItem({ row }: { row: MetricRow }) {
+  const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#DC2626" : "#94A3B8";
   const latestText = row.latestValue !== null ? formatValue(row.latestValue, row.unit) : "—";
 
   const isSymptom = row.unit === "/10";
@@ -56,7 +73,7 @@ function MetricRowItem({ row }: { row: MetricRow }) {
   const subLabel = row.unit === "days" ? "lifestyle"
     : row.unit === "%" ? "adherence"
     : row.unit === "hrs" ? "hrs"
-    : row.unit === "oz" ? "oz"
+    : row.unit === "oz" ? "hydration"
     : sev ? sev.label
     : "severity";
 
@@ -88,12 +105,10 @@ function MetricRowItem({ row }: { row: MetricRow }) {
       {/* Sparkline */}
       <Sparkline points={row.points7d} color={sparkColor} />
 
-      {/* Value + change */}
-      <div className="text-right flex-shrink-0 min-w-[72px]">
+      {/* Value + trend badge */}
+      <div className="text-right flex-shrink-0 min-w-[80px] flex flex-col items-end gap-1">
         <p className="text-base font-bold text-navy">{latestText}</p>
-        <p className="text-sm font-semibold mt-0.5" style={{ color: changeColor }}>
-          {direction !== "neutral" && (direction === "up" ? "▲ " : "▼ ")}{changeText}
-        </p>
+        <TrendBadge row={row} />
       </div>
 
       <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#CBD5E1" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +183,12 @@ function HighlightsCard({ symptomRows }: { symptomRows: MetricRow[] }) {
     });
   }
 
-  if (highlights.length === 0) return null;
+  // Net changes — all symptoms with meaningful week-over-week change
+  const netChanges = symptomRows
+    .filter((r) => r.trend && r.trend !== "stable" && r.trendLabel)
+    .sort((a, b) => Math.abs(b.change7d ?? 0) - Math.abs(a.change7d ?? 0));
+
+  if (highlights.length === 0 && netChanges.length === 0) return null;
 
   const icons: Record<Highlight["type"], string> = {
     attention: "●",
@@ -181,29 +201,66 @@ function HighlightsCard({ symptomRows }: { symptomRows: MetricRow[] }) {
       className="rounded-2xl shadow-sm border overflow-hidden"
       style={{ background: "#FFFBF5", borderColor: "#FDE68A" }}
     >
-      <div className="px-5 pt-4 pb-2">
-        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#92400E" }}>
-          Highlights
-        </p>
-      </div>
-      {highlights.map((h, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between px-5 py-3"
-          style={{ borderTop: i === 0 ? "none" : "1px solid #FEF3C7" }}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold" style={{ color: h.color }}>{icons[h.type]}</span>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: h.color }}>
-                {h.label}
-              </p>
-              <p className="text-sm font-semibold text-navy">{h.symptom}</p>
-            </div>
+      {highlights.length > 0 && (
+        <>
+          <div className="px-5 pt-4 pb-2">
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#92400E" }}>
+              Highlights
+            </p>
           </div>
-          <p className="text-sm font-bold" style={{ color: h.color }}>{h.valueText}</p>
-        </div>
-      ))}
+          {highlights.map((h, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-5 py-3"
+              style={{ borderTop: i === 0 ? "none" : "1px solid #FEF3C7" }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold" style={{ color: h.color }}>{icons[h.type]}</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: h.color }}>
+                    {h.label}
+                  </p>
+                  <p className="text-sm font-semibold text-navy">{h.symptom}</p>
+                </div>
+              </div>
+              <p className="text-sm font-bold" style={{ color: h.color }}>{h.valueText}</p>
+            </div>
+          ))}
+        </>
+      )}
+
+      {netChanges.length > 0 && (
+        <>
+          <div className="px-5 pt-4 pb-2" style={{ borderTop: highlights.length > 0 ? "1px solid #FDE68A" : "none" }}>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#92400E" }}>
+              Net Changes This Week
+            </p>
+          </div>
+          {netChanges.map((r, i) => {
+            const isImproving = r.trend === "improving";
+            const color = isImproving ? "#16A34A" : "#DC2626";
+            const arrow = isImproving ? "↓" : "↑";
+            const desc = isImproving
+              ? `${r.label} improved by ${Math.abs(r.change7d!).toFixed(1)} pts`
+              : `${r.label} worsened by ${Math.abs(r.change7d!).toFixed(1)} pts`;
+            return (
+              <div
+                key={r.key}
+                className="flex items-center justify-between px-5 py-2.5"
+                style={{ borderTop: i === 0 ? "none" : "1px solid #FEF3C7" }}
+              >
+                <p className="text-sm text-slate-700">{desc}</p>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-3"
+                  style={{ background: isImproving ? "#DCFCE7" : "#FEE2E2", color }}
+                >
+                  {arrow} {r.trendLabel}
+                </span>
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }
