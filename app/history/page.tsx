@@ -32,12 +32,6 @@ function moodColor(score: number) {
   return "#DC2626";
 }
 
-function moodEmoji(score: number) {
-  if (score >= 8) return "😊";
-  if (score >= 6) return "😐";
-  if (score >= 4) return "😔";
-  return "😟";
-}
 
 function medsStatus(log: DailyLog) {
   const meds = (log.medications_taken ?? []) as MedicationTaken[];
@@ -205,13 +199,13 @@ function DayRow({ log }: { log: DailyLog }) {
         {/* Summary pills */}
         <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
           {log.mood_score !== null && (
-            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F8FAFC", color: moodColor(log.mood_score) }}>
-              {moodEmoji(log.mood_score)} {log.mood_score}/10
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F8FAFC", color: moodColor(log.mood_score), border: `1px solid ${moodColor(log.mood_score)}22` }}>
+              Mood {log.mood_score}/10
             </span>
           )}
           {log.sleep_hours !== null && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              😴 {log.sleep_hours}h
+              Sleep {log.sleep_hours}h
             </span>
           )}
           {symptomCount > 0 && (
@@ -226,11 +220,11 @@ function DayRow({ log }: { log: DailyLog }) {
           {meds && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
               style={{ background: meds.allTaken ? "#DCFCE7" : "#FEE2E2", color: meds.allTaken ? "#16A34A" : "#DC2626" }}>
-              💊 {meds.taken}/{meds.total}
+              Meds {meds.taken}/{meds.total}
             </span>
           )}
           {hasEpisode && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600">⚠ Episode</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">Episode</span>
           )}
         </div>
 
