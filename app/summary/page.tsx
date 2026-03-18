@@ -8,6 +8,103 @@ import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, SummaryResponse, AdherenceItem } from "../lib/types";
 
+const PRINT_STYLE = `
+@media print {
+  @page { margin: 1.8cm 2cm; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; color: #000 !important; background: #fff !important; }
+  .no-print { display: none !important; }
+  nav, footer { display: none !important; }
+
+  /* Reset page background */
+  .print-container { background: #fff !important; padding: 0 !important; min-height: auto !important; }
+
+  /* Show print-only elements */
+  .print-report-header, .print-footer { display: block !important; }
+
+  /* Report header */
+  .print-report-header { border-bottom: 2px solid #000 !important; padding-bottom: 12pt !important; margin-bottom: 16pt !important; }
+  .print-report-title { font-size: 18pt !important; font-weight: bold !important; color: #000 !important; }
+  .print-report-meta { font-size: 9pt !important; color: #333 !important; }
+
+  /* Cards become plain sections */
+  .insight-card {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    margin-bottom: 14pt !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .insight-card-header {
+    background: #fff !important;
+    border-bottom: 1.5px solid #000 !important;
+    padding: 0 0 4pt 0 !important;
+    margin-bottom: 8pt !important;
+  }
+  .insight-card-header h2 {
+    font-size: 10pt !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: #000 !important;
+  }
+  .insight-card-body {
+    background: #fff !important;
+    padding: 0 !important;
+  }
+
+  /* Text */
+  p, li, span { color: #000 !important; font-size: 10.5pt !important; }
+  .finding-card {
+    background: #fff !important;
+    border: none !important;
+    border-left: 3px solid #000 !important;
+    border-radius: 0 !important;
+    padding: 4pt 0 4pt 8pt !important;
+    margin-bottom: 6pt !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .finding-card p { font-size: 10pt !important; }
+  .finding-significance { color: #444 !important; font-style: italic !important; }
+
+  /* Adherence */
+  .adherence-bar-track { background: #ddd !important; }
+  .adherence-label { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; }
+  .adherence-pct { color: #000 !important; }
+
+  /* Discussion items */
+  .discussion-item {
+    background: #fff !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 3pt 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .discussion-num {
+    background: #000 !important;
+    color: #fff !important;
+    font-size: 9pt !important;
+  }
+
+  /* Bullet dots */
+  .lifestyle-dot { background: #000 !important; }
+
+  /* Footer */
+  .print-footer {
+    border-top: 1px solid #000 !important;
+    margin-top: 16pt !important;
+    padding-top: 6pt !important;
+    font-size: 8pt !important;
+    color: #555 !important;
+    text-align: center !important;
+  }
+}
+`;
+
+
 // ── Adherence bar ─────────────────────────────────────────────────────────────
 
 function AdherenceBar({ item }: { item: AdherenceItem }) {
@@ -21,11 +118,11 @@ function AdherenceBar({ item }: { item: AdherenceItem }) {
       <div className="flex items-center justify-between">
         <span className="text-base font-semibold text-navy">{item.medication}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold px-2.5 py-1 rounded-full" style={{ background: bgColor, color }}>{label}</span>
-          <span className="text-base font-bold" style={{ color }}>{pct.toFixed(0)}%</span>
+          <span className="adherence-label text-sm font-semibold px-2.5 py-1 rounded-full" style={{ background: bgColor, color }}>{label}</span>
+          <span className="adherence-pct text-base font-bold" style={{ color }}>{pct.toFixed(0)}%</span>
         </div>
       </div>
-      <div className="w-full h-3 rounded-full" style={{ background: "#E2E8F0" }}>
+      <div className="adherence-bar-track w-full h-3 rounded-full" style={{ background: "#E2E8F0" }}>
         <div className="h-3 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
       </div>
       <p className="text-sm text-slate-400">{item.days_taken}/{item.days_logged} days taken{item.notes ? ` · ${item.notes}` : ""}</p>
@@ -41,11 +138,11 @@ function InsightCard({
   title: string; accentColor: string; bgColor: string; borderColor: string; children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm border" style={{ borderColor }}>
-      <div className="px-5 py-3 border-b" style={{ background: accentColor, borderColor }}>
+    <div className="insight-card rounded-2xl overflow-hidden shadow-sm border" style={{ borderColor }}>
+      <div className="insight-card-header px-5 py-3 border-b" style={{ background: accentColor, borderColor }}>
         <h2 className="text-base font-bold text-white">{title}</h2>
       </div>
-      <div className="px-5 py-4 space-y-3" style={{ background: bgColor }}>
+      <div className="insight-card-body px-5 py-4 space-y-3" style={{ background: bgColor }}>
         {children}
       </div>
     </div>
@@ -100,19 +197,38 @@ export default function SummaryPage() {
     );
   }
 
+  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
   return (
+    <>
+      <style>{PRINT_STYLE}</style>
     <div className="min-h-screen pb-28 print-container" style={{ background: "#F8FAFC" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
 
-        {/* Header */}
-        <div>
+        {/* Header — screen only */}
+        <div className="no-print">
           <h1 className="text-3xl font-bold text-navy">Insights</h1>
           {patient && (
             <p className="text-base text-slate-500 mt-1">{patient.name} · {patient.diagnosis}</p>
           )}
         </div>
+
+        {/* Print-only report header */}
+        {summary && (
+          <div className="print-report-header hidden" style={{ display: "none" }}>
+            <p style={{ fontSize: "9pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", marginBottom: "4pt" }}>
+              Caregiver Observation Report — AI-Generated Insights
+            </p>
+            <p className="print-report-title">{patient?.name}</p>
+            <div className="print-report-meta" style={{ marginTop: "6pt", lineHeight: "1.6" }}>
+              {patient?.diagnosis && <span><strong>Diagnosis:</strong> {patient.diagnosis} &nbsp;·&nbsp; </span>}
+              <span><strong>Generated:</strong> {today} &nbsp;·&nbsp; </span>
+              <span><strong>Prepared by:</strong> Witness — Caregiver Health Tracking</span>
+            </div>
+          </div>
+        )}
 
         {/* Generate prompt */}
         {!summary && !generating && (
@@ -193,9 +309,9 @@ export default function SummaryPage() {
               <InsightCard title="Patterns" accentColor="#1E40AF" bgColor="#F0F9FF" borderColor="#BAE6FD">
                 <div className="space-y-3">
                   {summary.patterns.map((p, i) => (
-                    <div key={i} className="rounded-xl p-4 border-l-4" style={{ background: "white", borderColor: "#1E40AF" }}>
+                    <div key={i} className="finding-card rounded-xl p-4 border-l-4" style={{ background: "white", borderColor: "#1E40AF" }}>
                       <p className="text-base font-semibold text-navy">{p.finding}</p>
-                      <p className="text-sm text-slate-500 mt-1">{p.significance}</p>
+                      <p className="finding-significance text-sm text-slate-500 mt-1">{p.significance}</p>
                     </div>
                   ))}
                 </div>
@@ -208,7 +324,7 @@ export default function SummaryPage() {
                 <ul className="space-y-2">
                   {summary.lifestyle_notes.map((note, i) => (
                     <li key={i} className="flex items-start gap-3 text-base text-slate-700">
-                      <span className="w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ background: "#0D9488" }} />
+                      <span className="lifestyle-dot w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ background: "#0D9488" }} />
                       {note}
                     </li>
                   ))}
@@ -221,8 +337,8 @@ export default function SummaryPage() {
               <InsightCard title="Bring Up at the Appointment" accentColor="#92400E" bgColor="#FFFBF0" borderColor="#FDE68A">
                 <div className="space-y-3">
                   {summary.discussion_items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white">
-                      <span className="text-base font-bold flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "#92400E" }}>
+                    <div key={i} className="discussion-item flex items-start gap-3 p-4 rounded-xl bg-white">
+                      <span className="discussion-num text-base font-bold flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "#92400E" }}>
                         {i + 1}
                       </span>
                       <p className="text-base text-slate-700">{item}</p>
@@ -231,6 +347,11 @@ export default function SummaryPage() {
                 </div>
               </InsightCard>
             )}
+
+            {/* Print footer — hidden on screen, shown when printing */}
+            <div className="print-footer" style={{ display: "none" }}>
+              Generated by Witness · Caregiver Health Tracking · {today}
+            </div>
 
             {/* Regenerate */}
             <button
@@ -244,5 +365,6 @@ export default function SummaryPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
