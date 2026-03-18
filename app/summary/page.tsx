@@ -151,12 +151,17 @@ function InsightCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+function summaryKey(patientId: number) {
+  return `truefit_summary_${patientId}`;
+}
+
 export default function SummaryPage() {
   const { isLoading } = useAuth();
   const router = useRouter();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -166,7 +171,15 @@ export default function SummaryPage() {
     try {
       const patients = await api.getPatients() as Patient[];
       if (!patients.length) { router.push("/onboarding"); return; }
-      setPatient(patients[0]);
+      const p = patients[0];
+      setPatient(p);
+      // Restore saved summary from localStorage
+      const stored = localStorage.getItem(summaryKey(p.id));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setSummary(parsed.data);
+        setSavedAt(parsed.savedAt);
+      }
     } catch { /* silent */ } finally { setPageLoading(false); }
   }, [router]);
 
@@ -179,14 +192,26 @@ export default function SummaryPage() {
     if (!patient) return;
     setGenerating(true);
     setSummary(null);
+    setSavedAt(null);
     try {
       const result = await api.generateSummary(patient.id) as SummaryResponse;
+      const ts = new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
       setSummary(result);
+      setSavedAt(ts);
+      localStorage.setItem(summaryKey(patient.id), JSON.stringify({ data: result, savedAt: ts }));
+      toast.success("Insights saved");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to generate insights");
     } finally {
       setGenerating(false);
     }
+  }
+
+  function handleClear() {
+    if (!patient) return;
+    localStorage.removeItem(summaryKey(patient.id));
+    setSummary(null);
+    setSavedAt(null);
   }
 
   if (isLoading || pageLoading) {
@@ -212,6 +237,12 @@ export default function SummaryPage() {
           <h1 className="text-3xl font-bold text-navy">Insights</h1>
           {patient && (
             <p className="text-base text-slate-500 mt-1">{patient.name} · {patient.diagnosis}</p>
+          )}
+          {savedAt && (
+            <p className="text-xs text-slate-400 mt-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5 align-middle" />
+              Saved · {savedAt}
+            </p>
           )}
         </div>
 
@@ -280,13 +311,13 @@ export default function SummaryPage() {
                 Print / PDF
               </button>
               <button
-                onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-base font-semibold text-slate-600 flex items-center justify-center gap-2"
+                onClick={handleClear}
+                className="py-3 px-4 rounded-xl border border-slate-200 text-base font-semibold text-slate-400 flex items-center justify-center gap-2"
+                title="Clear saved insights"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Copy Link
               </button>
             </div>
 
