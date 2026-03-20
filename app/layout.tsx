@@ -13,6 +13,15 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Witness",
   description: "Caregiver health tracking & doctor-ready summaries",
+  icons: {
+    icon: "/witness-icon.png",
+    apple: "/apple-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Witness",
+  },
 };
 
 export default function RootLayout({
