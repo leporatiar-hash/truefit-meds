@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
+import { DEFAULT_SYMPTOM_NAMES } from "../lib/constants";
 import type { User } from "../lib/types";
 
 // ── Section card ──────────────────────────────────────────────────────────────
@@ -143,9 +144,12 @@ export default function SettingsPage() {
 
   const loadFromUser = useCallback((u: User) => {
     const cfg = u.user_config;
-    if (!cfg) return;
 
-    if (cfg.symptoms) setSymptoms(cfg.symptoms);
+    // Always populate symptoms — fall back to app defaults if config is empty
+    const savedSymptoms = cfg?.symptoms;
+    setSymptoms(savedSymptoms?.length ? savedSymptoms : [...DEFAULT_SYMPTOM_NAMES]);
+
+    if (!cfg) return;
 
     const sf: string[] = cfg.substance_fields ?? ["cigarettes", "alcohol"];
     setShowCigarettes(sf.includes("cigarettes"));
