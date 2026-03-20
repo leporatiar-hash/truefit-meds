@@ -1,4 +1,5 @@
 import type { DailyLog, Medication } from "./types";
+import { localDateStr } from "./api";
 
 // ── Core types ────────────────────────────────────────────────────────────────
 
@@ -98,8 +99,8 @@ export function compute7dChange(points: MetricPoint[]): number | null {
   cutoff.setDate(cutoff.getDate() - 7);
   const priorCutoff = new Date();
   priorCutoff.setDate(priorCutoff.getDate() - 14);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
-  const priorCutoffStr = priorCutoff.toISOString().split("T")[0];
+  const cutoffStr = localDateStr(cutoff);
+  const priorCutoffStr = localDateStr(priorCutoff);
 
   const recent = points.filter((p) => p.date >= cutoffStr);
   const prior = points.filter((p) => p.date >= priorCutoffStr && p.date < cutoffStr);
@@ -114,7 +115,7 @@ export function sparkline7d(points: MetricPoint[]): MetricPoint[] {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 7);
   return points
-    .filter((p) => p.date >= cutoff.toISOString().split("T")[0])
+    .filter((p) => p.date >= localDateStr(cutoff))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -124,7 +125,7 @@ export function filterByTimeframe(points: MetricPoint[], tf: Timeframe): MetricP
   const days = tf === "1W" ? 7 : tf === "1M" ? 30 : tf === "3M" ? 90 : 365;
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
-  return points.filter((p) => p.date >= cutoff.toISOString().split("T")[0]);
+  return points.filter((p) => p.date >= localDateStr(cutoff));
 }
 
 export function aggregateWeekly(points: MetricPoint[]): MetricPoint[] {

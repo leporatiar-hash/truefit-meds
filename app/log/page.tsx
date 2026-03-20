@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { api } from "../lib/api";
+import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle } from "../lib/types";
@@ -218,7 +218,7 @@ function emptyVitals(): Vitals {
 
 function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
   return {
-    date: new Date().toISOString().split("T")[0],
+    date: localDateStr(),
     patientId,
     medicationsTaken: [],
     symptoms: [],
@@ -289,7 +289,7 @@ export default function LogPage() {
       const p = patients[0];
       setPatient(p);
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = localDateStr();
       const savedDraft = localStorage.getItem(LS_KEY);
       if (savedDraft) {
         const parsed: LogDraft = JSON.parse(savedDraft);

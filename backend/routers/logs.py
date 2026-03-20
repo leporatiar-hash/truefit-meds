@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_type
 
 from database import get_db
 import models
@@ -85,6 +85,7 @@ def create_or_update_log(
 @router.get("/{patient_id}/today", response_model=Optional[schemas.DailyLogResponse])
 def get_today_log(
     patient_id: int,
+    date: Optional[str] = Query(default=None, description="Client local date YYYY-MM-DD"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -99,7 +100,14 @@ def get_today_log(
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    today = datetime.now().date()
+    # Prefer client-supplied local date to avoid UTC offset shifting the day
+    if date:
+        try:
+            today = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            today = datetime.now().date()
+    else:
+        today = datetime.now().date()
     return (
         db.query(models.DailyLog)
         .filter(

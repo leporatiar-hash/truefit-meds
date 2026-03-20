@@ -91,7 +91,7 @@ export const api = {
   createLog: (data: object) =>
     request("/logs/", { method: "POST", body: JSON.stringify(data) }),
   getLogs: (patientId: number) => request(`/logs/${patientId}`),
-  getTodayLog: (patientId: number) => request(`/logs/${patientId}/today`),
+  getTodayLog: (patientId: number) => request(`/logs/${patientId}/today?date=${localDateStr()}`),
 
   // User config
   updateUserConfig: (updates: object) =>
@@ -101,6 +101,15 @@ export const api = {
   generateSummary: (patientId: number) =>
     request(`/summary/${patientId}`, { method: "POST" }),
 };
+
+// Utility: get local date string (YYYY-MM-DD) — avoids UTC offset shifting the date
+export function localDateStr(d: Date = new Date()): string {
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
 
 // Utility: calculate streak from log array
 export function calculateStreak(logs: Array<{ date: string }>): number {
@@ -113,13 +122,13 @@ export function calculateStreak(logs: Array<{ date: string }>): number {
   const cur = new Date(today);
 
   // Allow today to not be logged yet (check from yesterday in that case)
-  const todayStr = cur.toISOString().split("T")[0];
+  const todayStr = localDateStr(cur);
   if (!dateSet.has(todayStr)) {
     cur.setDate(cur.getDate() - 1);
   }
 
   while (true) {
-    const s = cur.toISOString().split("T")[0];
+    const s = localDateStr(cur);
     if (dateSet.has(s)) {
       streak++;
       cur.setDate(cur.getDate() - 1);
