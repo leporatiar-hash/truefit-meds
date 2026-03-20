@@ -29,6 +29,8 @@ export interface DashboardConfig {
   condition_context?: string;
   summary_style?: "compassionate" | "clinical" | "adaptive";
   dose_timing_mode?: "simple" | "exact";
+  tracking_modules?: string[]; // "sleep" | "hydration" | "vitals" | custom names
+  custom_vitals?: string[];    // e.g. ["Weight", "Blood Sugar"]
 }
 
 export interface Patient {

@@ -154,6 +154,9 @@ def generate_summary(
         label = HYDRATION_LABELS.get(v, "other")
         hydration_counts[label] += 1
 
+    # Precompute for JSON serialisation (defaultdicts aren't directly serialisable)
+    side_effects_serializable = {k: dict(v) for k, v in side_effect_counts.items()}
+
     # Build symptom tracking text
     total_logs = len(logs)
     symptom_lines = []
@@ -212,7 +215,7 @@ LIFESTYLE FACTOR TOTALS (out of {total_logs} logged days):
 {json.dumps(dict(lifestyle_totals), indent=2)}
 
 MEDICATION SIDE EFFECT OCCURRENCES (medication → side effect → count):
-{json.dumps({{k: dict(v) for k, v in side_effect_counts.items()}}, indent=2)}
+{json.dumps(side_effects_serializable, indent=2)}
 
 KEY PATTERNS TO ANALYZE:
 - Identify days where symptoms were Severe and what preceded them (missed meds, lifestyle factors, activities)

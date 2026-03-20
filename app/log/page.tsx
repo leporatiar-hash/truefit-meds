@@ -165,12 +165,6 @@ interface Vitals {
   custom_substances?: Record<string, boolean>;
 }
 
-const LIFESTYLE_LABELS: Record<string, string> = {
-  smoked: "Smoked today?",
-  alcohol: "Had alcohol?",
-  stressed: "High stress day?",
-  ate_well: "Ate well?",
-};
 
 const HYDRATION_PRESETS = [
   { label: "Good", value: 80 },
@@ -513,13 +507,6 @@ export default function LogPage() {
         .map(m => ({ medication_id: m.id, taken: false, time_taken: null }));
 
       const hydrationOz = draft.hydration === "Good" ? 80 : draft.hydration === "Fair" ? 48 : draft.hydration === "Poor" ? 24 : null;
-      const configLifestyleFlags: Array<keyof Lifestyle> =
-        (user?.user_config?.lifestyle_flags ?? patient?.dashboard_config?.lifestyle_flags ?? ["smoked", "alcohol", "stressed", "ate_well"]) as Array<keyof Lifestyle>;
-      const lifestyleData: Lifestyle = { smoked: false, alcohol: false, stressed: false, ate_well: false };
-      for (const flag of configLifestyleFlags) {
-        lifestyleData[flag] = draft.lifestyle[flag];
-      }
-      const hasLifestyle = configLifestyleFlags.some(f => draft.lifestyle[f]);
 
       await api.createLog({
         patient_id: patient.id,
@@ -531,7 +518,7 @@ export default function LogPage() {
         mood_score: null,
         water_intake_oz: hydrationOz,
         activities: draft.activities,
-        lifestyle: hasLifestyle ? lifestyleData : null,
+        lifestyle: null,
         notes: draft.notes || null,
         episode: draft.episode,
         vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks || Object.values(draft.vitals.custom_substances ?? {}).some(Boolean))
@@ -579,9 +566,6 @@ export default function LogPage() {
       })
     : DEFAULT_ACTIVITY_OPTIONS;
 
-  const configLifestyleFlags: Array<keyof Lifestyle> =
-    (user?.user_config?.lifestyle_flags ?? patient?.dashboard_config?.lifestyle_flags ?? ["smoked", "alcohol", "stressed", "ate_well"]) as Array<keyof Lifestyle>;
-
   const configSubstanceFields: string[] =
     user?.user_config?.substance_fields ?? patient?.dashboard_config?.substance_fields ?? ["cigarettes", "alcohol"];
 
@@ -601,10 +585,6 @@ export default function LogPage() {
     : "Tap to record";
   const sleepText = draft.sleepHours !== null ? `${draft.sleepHours} hrs` : "Tap to record";
   const hydrationText = draft.hydration ?? "Tap to record";
-  const lifestyleText = (() => {
-    const active = configLifestyleFlags.filter(f => draft.lifestyle[f]);
-    return active.length ? active.map(f => LIFESTYLE_LABELS[f]?.replace("?", "") ?? f).join(" · ") : "None noted";
-  })();
   const substancesText = (() => {
     const parts = [];
     if (draft.vitals.cigarettes) parts.push(`${draft.vitals.cigarettes} cig${Number(draft.vitals.cigarettes) !== 1 ? "s" : ""}`);
@@ -969,26 +949,6 @@ export default function LogPage() {
             ))}
           </div>
         </AccordionSection>
-
-        {/* ── Lifestyle ── */}
-        {configLifestyleFlags.length > 0 && (
-          <AccordionSection id="lifestyle" title="Lifestyle" summaryLine={lifestyleText}
-            bgColor="#F0FDF4" borderColor="#86EFAC" headingColor="#166534"
-            isOpen={openSection === "lifestyle"} onToggle={() => toggle("lifestyle")}>
-
-            <div className="space-y-4">
-              {configLifestyleFlags.map(flag => (
-                <div key={flag} className="flex items-center justify-between">
-                  <p className="text-base font-semibold text-slate-700">{LIFESTYLE_LABELS[flag] ?? flag}</p>
-                  <Toggle
-                    value={draft.lifestyle[flag] as boolean}
-                    onChange={v => update({ lifestyle: { ...draft.lifestyle, [flag]: v } })}
-                  />
-                </div>
-              ))}
-            </div>
-          </AccordionSection>
-        )}
 
         {/* ── Substances ── */}
         {configSubstanceFields.length > 0 && (
