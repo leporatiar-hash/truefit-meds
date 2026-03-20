@@ -33,10 +33,10 @@ const C = {
   rule:      "#d4e0d7",
 };
 
+const SITE_URL = "https://usewitnes.com";
+
 export default function LandingPage() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [emailError, setEmailError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -57,12 +57,22 @@ export default function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  function handleWaitlist() {
-    if (email && email.includes("@")) {
-      setSubmitted(true);
+  function handleCopy() {
+    navigator.clipboard.writeText(SITE_URL).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  function handleShare() {
+    if (navigator.share) {
+      navigator.share({
+        title: "Witness — Care, Documented",
+        text: "A free tool that turns daily caregiver notes into doctor-ready summaries.",
+        url: SITE_URL,
+      });
     } else {
-      setEmailError(true);
-      setTimeout(() => setEmailError(false), 1500);
+      handleCopy();
     }
   }
 
@@ -86,9 +96,11 @@ export default function LandingPage() {
           transform: translateY(24px);
           transition: opacity 0.7s ease, transform 0.7s ease;
         }
-        .lp-nav-links { display: flex; gap: 32px; list-style: none; }
+        .lp-nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
         .lp-nav-link { font-size: 0.875rem; color: ${C.inkSoft}; text-decoration: none; transition: color 0.2s; }
         .lp-nav-link:hover { color: ${C.sage}; }
+        .lp-nav-login { font-size: 0.875rem; font-weight: 500; color: ${C.inkMid}; text-decoration: none; padding: 8px 16px; border-radius: 100px; border: 1px solid ${C.rule}; transition: border-color 0.2s, color 0.2s; }
+        .lp-nav-login:hover { border-color: ${C.sage}; color: ${C.sage}; }
         .lp-nav-cta { font-size: 0.875rem; font-weight: 500; color: ${C.white} !important; background: ${C.sage}; padding: 8px 20px; border-radius: 100px; text-decoration: none; transition: background 0.2s; }
         .lp-nav-cta:hover { background: ${C.forest} !important; }
         .lp-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: ${C.sage}; color: ${C.white}; font-size: 1rem; font-weight: 500; padding: 14px 32px; border-radius: 100px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
@@ -99,10 +111,10 @@ export default function LandingPage() {
         .lp-step:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(45,79,56,0.08); }
         .lp-feature-card { padding: 36px; border: 1px solid ${C.rule}; border-radius: 16px; background: ${C.white}; transition: border-color 0.2s, box-shadow 0.2s; }
         .lp-feature-card:hover { border-color: ${C.sage}; box-shadow: 0 8px 32px rgba(74,124,89,0.08); }
-        .lp-waitlist-input { flex: 1; min-width: 220px; padding: 14px 20px; border-radius: 100px; font-family: inherit; font-size: 0.95rem; color: ${C.ink}; background: ${C.white}; outline: none; transition: border-color 0.2s; }
-        .lp-waitlist-input:focus { border-color: ${C.sage}; }
-        .lp-waitlist-btn { padding: 14px 28px; background: ${C.sage}; color: ${C.white}; font-family: inherit; font-size: 0.95rem; font-weight: 500; border: none; border-radius: 100px; cursor: pointer; transition: background 0.2s; }
-        .lp-waitlist-btn:hover { background: ${C.forest}; }
+        .lp-share-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: ${C.sage}; color: ${C.white}; font-family: inherit; font-size: 0.95rem; font-weight: 500; border: none; border-radius: 100px; cursor: pointer; transition: background 0.2s; }
+        .lp-share-btn:hover { background: ${C.forest}; }
+        .lp-copy-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; background: transparent; color: ${C.inkMid}; font-family: inherit; font-size: 0.95rem; border: 1px solid ${C.rule}; border-radius: 100px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+        .lp-copy-btn:hover { border-color: ${C.sage}; color: ${C.sage}; }
         @media (max-width: 768px) {
           .lp-nav-links { display: none; }
           .lp-problem { grid-template-columns: 1fr !important; gap: 40px !important; }
@@ -124,8 +136,8 @@ export default function LandingPage() {
           <li><a href="#how" className="lp-nav-link">How it works</a></li>
           <li><a href="#features" className="lp-nav-link">Features</a></li>
           <li><a href="#story" className="lp-nav-link">Our story</a></li>
-          <li><Link href="/login" className="lp-nav-link" style={{ color: C.inkSoft }}>Sign in</Link></li>
-          <li><a href="#cta" className="lp-nav-cta">Get early access</a></li>
+          <li><Link href="/login" className="lp-nav-login">Log in</Link></li>
+          <li><Link href="/signup" className="lp-nav-cta">Get Started Free</Link></li>
         </ul>
       </nav>
 
@@ -135,7 +147,7 @@ export default function LandingPage() {
 
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.78rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, background: C.sagePale, padding: "6px 16px", borderRadius: "100px", marginBottom: 32, animation: "fadeUp 0.8s 0.2s both" }}>
           <span style={{ width: 6, height: 6, background: C.sage, borderRadius: "50%", display: "inline-block" }} />
-          Caregiver health tracking
+          Free for caregivers
         </div>
 
         <h1 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(2.8rem, 6vw, 5rem)", fontWeight: 500, lineHeight: 1.12, color: C.forest, maxWidth: 780, marginBottom: 12, animation: "fadeUp 0.8s 0.35s both" }}>
@@ -152,8 +164,8 @@ export default function LandingPage() {
         </p>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", animation: "fadeUp 0.8s 0.8s both" }}>
-          <a href="#cta" className="lp-btn-primary">Get early access →</a>
-          <a href="#how" className="lp-btn-ghost">See how it works</a>
+          <Link href="/signup" className="lp-btn-primary">Get Started Free →</Link>
+          <Link href="/login" className="lp-btn-ghost">Log in</Link>
         </div>
 
         <div style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", animation: "fadeUp 0.8s 1.2s both" }}>
@@ -197,7 +209,7 @@ export default function LandingPage() {
             Sixty seconds a day.<br />Everything the doctor needs.
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            Witness is designed for the caregiver who doesn't have time for another app — just a fast, focused daily check-in that builds into a complete health picture.
+            Witness is designed for the caregiver who doesn&apos;t have time for another app — just a fast, focused daily check-in that builds into a complete health picture.
           </p>
         </div>
         <div className="lp-steps" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
@@ -226,14 +238,12 @@ export default function LandingPage() {
           </h2>
         </div>
         <div className="lp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24, marginTop: 64 }}>
-
-          {/* Featured card */}
           <div className="lp-featured-card lp-reveal" style={{ gridColumn: "span 2", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center", padding: 36, borderRadius: 16, background: C.forest, border: `1px solid ${C.forest}` }}>
             <div>
               <div style={{ width: 48, height: 48, background: "rgba(255,255,255,0.1)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", marginBottom: 20 }}>📋</div>
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.white, marginBottom: 10 }}>Doctor-ready clinical summaries</div>
               <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
-                Witness takes everything you've logged and generates a structured summary organized by symptom category, medication history, and trend analysis — formatted the way clinicians actually read patient information.
+                Witness takes everything you&apos;ve logged and generates a structured summary organized by symptom category, medication history, and trend analysis — formatted the way clinicians actually read patient information.
               </div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 28, border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -251,7 +261,6 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-
           {[
             { title: "60-second daily check-in", body: "No long forms. No medical jargon. Just a fast, focused daily entry that a non-technical caregiver can complete in under a minute." },
             { title: "Trend detection", body: "Witness automatically surfaces changes in symptom patterns, medication adherence, and wellbeing — things that are invisible day-to-day but obvious over time." },
@@ -271,15 +280,15 @@ export default function LandingPage() {
         <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sageLight, marginBottom: 32 }}>Why we built this</div>
         <div className="lp-reveal" style={{ maxWidth: 640, margin: "0 auto 48px" }}>
           <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontStyle: "italic", color: C.white, lineHeight: 1.45 }}>
-            "The doctor sees a chart.<br />
-            <em style={{ color: C.sageLight, fontStyle: "italic" }}>The mother sees a son.</em>"
+            &ldquo;The doctor sees a chart.<br />
+            <em style={{ color: C.sageLight }}>The mother sees a son.</em>&rdquo;
           </blockquote>
         </div>
         <div className="lp-reveal" style={{ maxWidth: 540, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
           <p>My mother has been caring for my brother since he was eighteen. He was diagnosed with schizophrenia, and from that day forward, she became his primary advocate — mostly on her own, for years.</p>
-          <p style={{ marginTop: 16 }}>I watched her carry everything in her head. Every symptom shift. Every medication adjustment. Every pattern she noticed but couldn't quite articulate when the appointment finally came. The doctor had fifteen minutes. She had years of observations and nowhere to put them.</p>
-          <p style={{ marginTop: 16 }}>So I built Witness for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn't expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son's care.</p>
-          <p style={{ marginTop: 16 }}>That's when I knew this wasn't just a tool. It was a shift in who gets to understand the patient.</p>
+          <p style={{ marginTop: 16 }}>I watched her carry everything in her head. Every symptom shift. Every medication adjustment. Every pattern she noticed but couldn&apos;t quite articulate when the appointment finally came. The doctor had fifteen minutes. She had years of observations and nowhere to put them.</p>
+          <p style={{ marginTop: 16 }}>So I built Witness for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
+          <p style={{ marginTop: 16 }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
         </div>
       </section>
 
@@ -307,35 +316,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* ── SHARE CTA ── */}
       <section id="cta" style={{ padding: "100px 24px", textAlign: "center", background: C.sageMist, borderTop: `1px solid ${C.rule}` }}>
-        <div className="lp-reveal" style={{ maxWidth: 600, margin: "0 auto 48px" }}>
+        <div className="lp-reveal" style={{ maxWidth: 560, margin: "0 auto 48px" }}>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest, marginBottom: 16 }}>
-            Witness is almost here.
+            Know a caregiver<br />who needs this?
           </h2>
-          <p style={{ fontSize: "1.05rem", color: C.inkSoft, maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
-            We&apos;re putting the finishing touches on a product that&apos;s already working for real caregivers. Leave your email and you&apos;ll be first through the door.
+          <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
+            Witness is free. If someone in your life is carrying another person&apos;s health — a parent, a sibling, a partner — send them this.
           </p>
         </div>
-        <div className="lp-reveal">
-          {submitted ? (
-            <p style={{ color: C.sage, fontSize: "1rem" }}>✓ You&apos;re on the list. We&apos;ll be in touch.</p>
-          ) : (
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", maxWidth: 480, margin: "0 auto" }}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleWaitlist()}
-                placeholder="your@email.com"
-                className="lp-waitlist-input"
-                style={{ border: `1px solid ${emailError ? "#e07070" : C.rule}` }}
-              />
-              <button onClick={handleWaitlist} className="lp-waitlist-btn">
-                Join waitlist
-              </button>
-            </div>
-          )}
+
+        <div className="lp-reveal" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 24 }}>
+          <button onClick={handleShare} className="lp-share-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+            </svg>
+            Send Witness
+          </button>
+          <button onClick={handleCopy} className="lp-copy-btn">
+            {copied ? (
+              <>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Copied!
+              </>
+            ) : (
+              <>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+                Copy link
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="lp-reveal" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 20px", background: C.white, borderRadius: 100, border: `1px solid ${C.rule}` }}>
+          <span style={{ fontSize: "0.85rem", color: C.inkSoft, fontFamily: "monospace" }}>{SITE_URL}</span>
+        </div>
+
+        <div className="lp-reveal" style={{ marginTop: 64, paddingTop: 64, borderTop: `1px solid ${C.rule}` }}>
+          <p style={{ fontSize: "0.95rem", color: C.inkSoft, marginBottom: 24 }}>Ready to start yourself?</p>
+          <Link href="/signup" className="lp-btn-primary">Get Started Free →</Link>
         </div>
       </section>
 
