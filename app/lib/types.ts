@@ -25,9 +25,10 @@ export interface DashboardConfig {
   episode_label?: string;
   greeting?: string;
   lifestyle_flags?: Array<"smoked" | "alcohol" | "stressed" | "ate_well">;
-  substance_fields?: Array<"cigarettes" | "alcohol">;
+  substance_fields?: string[]; // "cigarettes", "alcohol", or any custom substance name
   condition_context?: string;
   summary_style?: "compassionate" | "clinical" | "adaptive";
+  dose_timing_mode?: "simple" | "exact";
 }
 
 export interface Patient {
@@ -65,6 +66,7 @@ export interface Vitals {
   cigarettes: string;
   alcohol: boolean;
   alcohol_drinks: string;
+  custom_substances?: Record<string, boolean>;
 }
 
 export interface SideEffect {

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from datetime import date, datetime
 from enum import Enum
 
@@ -38,6 +38,10 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+
+class UserConfigPatch(BaseModel):
+    updates: Dict[str, Any]
 
 
 # ── Medications ───────────────────────────────────────────────────────────────

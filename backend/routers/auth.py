@@ -45,3 +45,17 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserResponse)
 def me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/config", response_model=schemas.UserResponse)
+def update_config(
+    patch: schemas.UserConfigPatch,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    existing = dict(current_user.user_config or {})
+    existing.update(patch.updates)
+    current_user.user_config = existing
+    db.commit()
+    db.refresh(current_user)
+    return current_user

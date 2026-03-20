@@ -16,6 +16,20 @@ const SEVERITY_CHIPS = [
   { label: "Severe", value: 9 },
 ];
 
+const SIMPLE_DOSE_TIMES = [
+  { label: "Morning", time: "08:00" },
+  { label: "Afternoon", time: "13:00" },
+  { label: "Evening", time: "18:00" },
+  { label: "Night", time: "21:00" },
+];
+
+const SIMPLE_TIME_LABELS: Record<string, string> = {
+  "08:00": "Morning",
+  "13:00": "Afternoon",
+  "18:00": "Evening",
+  "21:00": "Night",
+};
+
 const SIDE_EFFECT_OPTIONS = [
   "Nausea", "Vomiting", "Constipation", "Diarrhea",
   "Dizziness", "Drowsiness", "Headache", "Rash",
@@ -148,6 +162,7 @@ interface Vitals {
   cigarettes: string;
   alcohol: boolean;
   alcohol_drinks: string;
+  custom_substances?: Record<string, boolean>;
 }
 
 const LIFESTYLE_LABELS: Record<string, string> = {
@@ -231,6 +246,11 @@ function fmt12(time: string): string {
   const ampm = h >= 12 ? "pm" : "am";
   const h12 = h % 12 || 12;
   return `${h12}:${String(m).padStart(2, "0")}${ampm}`;
+}
+
+function displayDoseTime(time: string | null): string {
+  if (!time) return "";
+  return SIMPLE_TIME_LABELS[time] ?? fmt12(time);
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -353,6 +373,11 @@ export default function LogPage() {
   function confirmDose(medId: number) {
     if (!addDoseTime) return;
     update({ medicationsTaken: [...draft!.medicationsTaken, { medication_id: medId, taken: true, time_taken: addDoseTime }] });
+    setAddDoseOpenFor(null);
+  }
+
+  function confirmDoseSimple(medId: number, time: string) {
+    update({ medicationsTaken: [...draft!.medicationsTaken, { medication_id: medId, taken: true, time_taken: time }] });
     setAddDoseOpenFor(null);
   }
 
@@ -509,7 +534,7 @@ export default function LogPage() {
         lifestyle: hasLifestyle ? lifestyleData : null,
         notes: draft.notes || null,
         episode: draft.episode,
-        vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks)
+        vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks || Object.values(draft.vitals.custom_substances ?? {}).some(Boolean))
           ? draft.vitals
           : null,
         photo: draft.photo || null,
@@ -553,8 +578,12 @@ export default function LogPage() {
   const configLifestyleFlags: Array<keyof Lifestyle> =
     (user?.user_config?.lifestyle_flags ?? patient?.dashboard_config?.lifestyle_flags ?? ["smoked", "alcohol", "stressed", "ate_well"]) as Array<keyof Lifestyle>;
 
-  const configSubstanceFields: Array<"cigarettes" | "alcohol"> =
+  const configSubstanceFields: string[] =
     user?.user_config?.substance_fields ?? patient?.dashboard_config?.substance_fields ?? ["cigarettes", "alcohol"];
+
+  const customSubstanceNames = configSubstanceFields.filter(s => s !== "cigarettes" && s !== "alcohol");
+
+  const doseTimingMode: "simple" | "exact" = user?.user_config?.dose_timing_mode ?? "simple";
 
   const totalDoses = draft.medicationsTaken.filter(m => m.taken).length;
   const medsText = totalDoses > 0 ? `${totalDoses} dose${totalDoses !== 1 ? "s" : ""} logged` : "Nothing logged yet";
@@ -616,7 +645,7 @@ export default function LogPage() {
                     <p className="text-base font-semibold text-navy">{med.name}</p>
                     {doses.length > 0 ? (
                       <p className="text-sm" style={{ color: "#0D9488" }}>
-                        taken {doses.length}× today — {doses.map(d => fmt12(d.time_taken ?? "")).join(", ")}
+                        taken {doses.length}× today — {doses.map(d => displayDoseTime(d.time_taken)).join(", ")}
                       </p>
                     ) : (
                       <p className="text-sm text-slate-400">{med.time_of_day} · not logged yet</p>
@@ -638,7 +667,7 @@ export default function LogPage() {
                     {doses.map((d, i) => (
                       <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
                         style={{ background: "#CCFBF1", color: "#065F46" }}>
-                        {fmt12(d.time_taken ?? "")}
+                        {displayDoseTime(d.time_taken)}
                         <button type="button" onClick={() => removeDose(med.id, d.time_taken)}
                           className="text-teal-700 hover:text-red-500 leading-none transition-colors">×</button>
                       </span>
@@ -647,7 +676,27 @@ export default function LogPage() {
                 )}
 
                 {/* Inline add-dose panel */}
-                {doseOpen && (
+                {doseOpen && doseTimingMode === "simple" && (
+                  <div className="bg-white rounded-xl px-3 py-3 border border-amber-200 space-y-2">
+                    <div className="grid grid-cols-4 gap-2">
+                      {SIMPLE_DOSE_TIMES.map(({ label, time }) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => confirmDoseSimple(med.id, time)}
+                          className="py-2 rounded-lg text-sm font-semibold border-2 transition-all active:scale-95"
+                          style={{ borderColor: "#0D9488", color: "#0D9488", background: "white" }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <button type="button" onClick={() => setAddDoseOpenFor(null)}
+                      className="text-xs text-slate-400 w-full text-center">Cancel</button>
+                  </div>
+                )}
+
+                {doseOpen && doseTimingMode === "exact" && (
                   <div className="flex gap-2 items-center bg-white rounded-xl px-3 py-2.5 border border-amber-200">
                     <input
                       type="time"
@@ -987,6 +1036,20 @@ export default function LogPage() {
                   )}
                 </div>
               )}
+
+              {/* Custom substances */}
+              {customSubstanceNames.map(name => {
+                const val = draft.vitals.custom_substances?.[name] ?? false;
+                return (
+                  <div key={name} className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-slate-700">{name} today?</label>
+                    <Toggle
+                      value={val}
+                      onChange={v => updateVitals({ custom_substances: { ...draft.vitals.custom_substances, [name]: v } })}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </AccordionSection>
         )}

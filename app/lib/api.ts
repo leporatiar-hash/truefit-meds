@@ -93,6 +93,10 @@ export const api = {
   getLogs: (patientId: number) => request(`/logs/${patientId}`),
   getTodayLog: (patientId: number) => request(`/logs/${patientId}/today`),
 
+  // User config
+  updateUserConfig: (updates: object) =>
+    request("/auth/config", { method: "PATCH", body: JSON.stringify({ updates }) }),
+
   // Summary
   generateSummary: (patientId: number) =>
     request(`/summary/${patientId}`, { method: "POST" }),
