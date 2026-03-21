@@ -255,6 +255,7 @@ export default function LogPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [draft, setDraft] = useState<LogDraft | null>(null);
+  const [loadedFromServer, setLoadedFromServer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -310,6 +311,7 @@ export default function LogPage() {
 
       const todayLog = await api.getTodayLog(p.id) as Record<string, unknown> | null;
       if (todayLog) {
+        setLoadedFromServer(true);
         const ep = todayLog.episode as Episode | null;
         const vt = todayLog.vitals as Vitals | null;
         // Load saved doses — filter to only taken:true entries for history
@@ -355,6 +357,13 @@ export default function LogPage() {
 
   function update(patch: Partial<LogDraft>) {
     setDraft(d => d ? { ...d, ...patch } : d);
+  }
+
+  function startFresh() {
+    if (!patient) return;
+    localStorage.removeItem(LS_KEY);
+    setDraft(defaultDraft(patient.id, patient.medications));
+    setLoadedFromServer(false);
   }
 
   // ── Medication multi-dose ─────────────────────────────────────────────────
@@ -603,6 +612,20 @@ export default function LogPage() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
+
+        {loadedFromServer && (
+          <div className="flex items-center justify-between rounded-xl px-4 py-3 text-sm" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+            <span style={{ color: "#1D4ED8" }}>Previous entry loaded. Want to start fresh?</span>
+            <button
+              type="button"
+              onClick={startFresh}
+              className="ml-3 font-semibold underline underline-offset-2 flex-shrink-0"
+              style={{ color: "#1D4ED8" }}
+            >
+              Clear form
+            </button>
+          </div>
+        )}
 
         {/* ── Medications ── */}
         <AccordionSection id="medications" title="Medications" summaryLine={medsText}
