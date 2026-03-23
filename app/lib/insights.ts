@@ -292,7 +292,7 @@ export function computeObservations(logs: DailyLog[]): Observation[] {
 
 // ── Build all metric rows ─────────────────────────────────────────────────────
 
-export function buildMetricRows(logs: DailyLog[], medications: Medication[]): MetricRow[] {
+export function buildMetricRows(logs: DailyLog[], medications: Medication[], configuredSymptoms: string[] = []): MetricRow[] {
   const sorted = [...logs].sort((a, b) => a.date.localeCompare(b.date));
 
   function row(
@@ -328,10 +328,12 @@ export function buildMetricRows(logs: DailyLog[], medications: Medication[]): Me
 
   const rows: MetricRow[] = [];
 
-  // Collect all unique symptom names from logs (dynamic — no hardcoded list)
-  const allSymptomNames = Array.from(
-    new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? []))
-  );
+  // Use configured symptom list if available; otherwise fall back to whatever is in log data.
+  // This ensures adding/removing symptoms in settings is immediately reflected here.
+  const allSymptomNames = configuredSymptoms.length > 0
+    ? configuredSymptoms
+    : Array.from(new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? [])));
+
   for (const name of allSymptomNames) {
     const r = row(nameToKey(name), name, "/10", false, extractSymptom(sorted, name));
     if (r) rows.push(r);

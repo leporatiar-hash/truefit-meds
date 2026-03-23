@@ -295,18 +295,30 @@ export default function InsightsPage() {
     if (!isLoading && user) loadData();
   }, [user, isLoading, loadData, router]);
 
-  // Refresh when window regains focus (e.g. after logging)
+  // Refresh when the tab becomes visible again (e.g. after logging in another tab or returning from settings)
   useEffect(() => {
-    function onFocus() { if (!dataLoading) loadData(); }
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [loadData, dataLoading]);
+    function onVisible() {
+      if (document.visibilityState === "visible") loadData();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadData]);
 
-  // Precompute metric rows only when logs change
-  const allMedications = patient?.medications ?? [];
+  // Stable references for memo deps
+  const allMedications = useMemo(() => patient?.medications ?? [], [patient]);
+
+  // Symptom list from user config — controls which symptoms appear in insights.
+  // Adding/removing symptoms in settings updates this and immediately re-filters the rows.
+  const configuredSymptoms = useMemo(() => {
+    if (user?.user_config?.symptoms?.length) return user.user_config.symptoms as string[];
+    if (patient?.dashboard_config?.symptoms?.length) return patient.dashboard_config.symptoms as string[];
+    return [] as string[];
+  }, [user, patient]);
+
+  // Precompute metric rows only when logs, meds, or symptom config change
   const metricRows = useMemo(
-    () => buildMetricRows(logs, allMedications),
-    [logs, allMedications]
+    () => buildMetricRows(logs, allMedications, configuredSymptoms),
+    [logs, allMedications, configuredSymptoms]
   );
 
   // Sort symptoms by severity descending
