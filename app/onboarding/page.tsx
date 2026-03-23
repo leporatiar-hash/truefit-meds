@@ -147,7 +147,7 @@ export default function OnboardingPage() {
   const progressSteps = [1, 2, 3, 4] as const;
 
   return (
-    <div className="min-h-screen px-4 py-8 max-w-lg mx-auto" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen px-4 py-8 max-w-lg mx-auto" style={{ background: "#faf9f6" }}>
       {/* Progress indicator */}
       {step !== 3 && (
         <div className="flex items-center gap-2 mb-8">
@@ -155,7 +155,7 @@ export default function OnboardingPage() {
             <div
               key={s}
               className="flex-1 h-1.5 rounded-full"
-              style={{ background: step >= s ? "#0D9488" : "#E2E8F0" }}
+              style={{ background: step >= s ? "#4a7c59" : "#E2E8F0" }}
             />
           ))}
         </div>
@@ -178,7 +178,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setPatientName(e.target.value)}
                 placeholder="Full name"
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                style={{ "--tw-ring-color": "#0D9488" } as React.CSSProperties}
+                style={{ "--tw-ring-color": "#4a7c59" } as React.CSSProperties}
               />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function OnboardingPage() {
               type="submit"
               disabled={submitting}
               className="w-full py-3.5 rounded-xl font-semibold text-white text-sm mt-2 disabled:opacity-60"
-              style={{ background: "#0D9488" }}
+              style={{ background: "#4a7c59" }}
             >
               {submitting ? "Saving…" : "Continue →"}
             </button>
@@ -247,8 +247,8 @@ export default function OnboardingPage() {
                     onClick={() => setRelationship(r.toLowerCase())}
                     className="px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all"
                     style={{
-                      borderColor: relationship === r.toLowerCase() ? "#0D9488" : "#CBD5E1",
-                      background: relationship === r.toLowerCase() ? "#0D9488" : "white",
+                      borderColor: relationship === r.toLowerCase() ? "#4a7c59" : "#CBD5E1",
+                      background: relationship === r.toLowerCase() ? "#4a7c59" : "white",
                       color: relationship === r.toLowerCase() ? "white" : "#334155",
                     }}
                   >{r}</button>
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setCondition(e.target.value)}
                 placeholder="e.g. Parkinson&apos;s, anxiety disorder, recovering from surgery…"
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none focus:ring-2 focus:border-transparent mb-2"
-                style={{ "--tw-ring-color": "#0D9488" } as React.CSSProperties}
+                style={{ "--tw-ring-color": "#4a7c59" } as React.CSSProperties}
               />
               <div className="flex flex-wrap gap-2">
                 {CONDITION_SUGGESTIONS.map(s => (
@@ -276,9 +276,9 @@ export default function OnboardingPage() {
                     onClick={() => setCondition(s)}
                     className="px-3 py-1.5 rounded-lg border text-xs font-medium transition-all"
                     style={{
-                      borderColor: condition === s ? "#0D9488" : "#E2E8F0",
-                      background: condition === s ? "#CCFBF1" : "#F8FAFC",
-                      color: condition === s ? "#0D9488" : "#64748B",
+                      borderColor: condition === s ? "#4a7c59" : "#E2E8F0",
+                      background: condition === s ? "#e8f0eb" : "#faf9f6",
+                      color: condition === s ? "#4a7c59" : "#64748B",
                     }}
                   >{s}</button>
                 ))}
@@ -299,14 +299,14 @@ export default function OnboardingPage() {
                       onClick={() => toggleModule(m.value)}
                       className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium text-left transition-all"
                       style={{
-                        borderColor: active ? "#0D9488" : "#CBD5E1",
-                        background: active ? "#CCFBF1" : "white",
-                        color: active ? "#0D9488" : "#334155",
+                        borderColor: active ? "#4a7c59" : "#CBD5E1",
+                        background: active ? "#e8f0eb" : "white",
+                        color: active ? "#4a7c59" : "#334155",
                       }}
                     >
                       <div
                         className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: active ? "#0D9488" : "#E2E8F0" }}
+                        style={{ background: active ? "#4a7c59" : "#E2E8F0" }}
                       >
                         {active && (
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,8 +333,8 @@ export default function OnboardingPage() {
                     onClick={() => setMedicationsDaily(opt.value)}
                     className="py-4 rounded-xl border-2 text-base font-semibold transition-all"
                     style={{
-                      borderColor: medicationsDaily === opt.value ? "#0D9488" : "#CBD5E1",
-                      background: medicationsDaily === opt.value ? "#0D9488" : "white",
+                      borderColor: medicationsDaily === opt.value ? "#4a7c59" : "#CBD5E1",
+                      background: medicationsDaily === opt.value ? "#4a7c59" : "white",
                       color: medicationsDaily === opt.value ? "white" : "#334155",
                     }}
                   >{opt.label}</button>
@@ -360,7 +360,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-              style={{ background: "#0D9488" }}
+              style={{ background: "#4a7c59" }}
             >
               Personalize Dashboard →
             </button>
@@ -373,7 +373,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <div
             className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: "#0D9488", borderTopColor: "transparent" }}
+            style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }}
           />
           <div className="text-center">
             <p className="text-xl font-bold text-navy">Personalizing your dashboard…</p>
@@ -439,7 +439,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={() => setMeds((p) => [...p, emptyMed()])}
               className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 text-sm font-medium hover:border-teal hover:text-teal transition-colors"
-              style={{ "--tw-hover-border-color": "#0D9488" } as React.CSSProperties}
+              style={{ "--tw-hover-border-color": "#4a7c59" } as React.CSSProperties}
             >
               + Add another medication
             </button>
@@ -456,7 +456,7 @@ export default function OnboardingPage() {
                 type="submit"
                 disabled={submitting}
                 className="flex-1 py-3.5 rounded-xl font-semibold text-white text-sm disabled:opacity-60"
-                style={{ background: "#0D9488" }}
+                style={{ background: "#4a7c59" }}
               >
                 {submitting ? "Saving…" : "Go to Dashboard"}
               </button>

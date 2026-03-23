@@ -60,7 +60,7 @@ export default function NewPatientPage() {
   if (isLoading) return null;
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-24" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6">
@@ -174,7 +174,7 @@ export default function NewPatientPage() {
             type="submit"
             disabled={submitting}
             className="w-full py-4 rounded-2xl font-bold text-white text-base shadow-lg disabled:opacity-60"
-            style={{ background: "#0D9488" }}
+            style={{ background: "#4a7c59" }}
           >
             {submitting ? "Creating…" : "Create Patient Profile"}
           </button>

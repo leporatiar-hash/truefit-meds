@@ -39,7 +39,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       type="button"
       onClick={() => onChange(!value)}
       className="relative w-14 h-7 rounded-full transition-all flex-shrink-0"
-      style={{ background: value ? "#0D9488" : "#CBD5E1" }}
+      style={{ background: value ? "#4a7c59" : "#CBD5E1" }}
     >
       <span
         className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform"
@@ -51,8 +51,8 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 function Chip({ label, onRemove, color = "green" }: { label: string; onRemove: () => void; color?: "green" | "orange" | "blue" }) {
   const styles = {
-    green:  { background: "#F0FDF4", color: "#166534", border: "1px solid #86EFAC", hover: "hover:bg-green-200" },
-    orange: { background: "#FFF7ED", color: "#9A3412", border: "1px solid #FDBA74", hover: "hover:bg-orange-200" },
+    green:  { background: "#f2f7f3", color: "#166534", border: "1px solid #d4e0d7", hover: "hover:bg-green-200" },
+    orange: { background: "#f2f7f3", color: "#9A3412", border: "1px solid #d4e0d7", hover: "hover:bg-orange-200" },
     blue:   { background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #93C5FD", hover: "hover:bg-blue-200" },
   }[color];
 
@@ -76,7 +76,7 @@ function Chip({ label, onRemove, color = "green" }: { label: string; onRemove: (
 }
 
 function AddInput({
-  placeholder, onAdd, borderColor = "#86EFAC", buttonColor = "#166534",
+  placeholder, onAdd, borderColor = "#d4e0d7", buttonColor = "#166534",
 }: {
   placeholder: string;
   onAdd: (val: string) => void;
@@ -302,8 +302,8 @@ export default function CustomizePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -311,7 +311,7 @@ export default function CustomizePage() {
   const activeMeds = patient?.medications.filter(m => m.active) ?? [];
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
@@ -373,7 +373,7 @@ export default function CustomizePage() {
                   onClick={handleAddMed}
                   disabled={!newMedName.trim() || addingMed}
                   className="w-full py-2.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-40"
-                  style={{ background: "#0D9488" }}
+                  style={{ background: "#4a7c59" }}
                 >
                   {addingMed ? "Adding…" : "Add Medication"}
                 </button>
@@ -472,7 +472,7 @@ export default function CustomizePage() {
           <AddInput
             placeholder="Add custom substance (e.g. Cannabis, Opioids…)"
             onAdd={addCustomSubstance}
-            borderColor="#FDBA74"
+            borderColor="#d4e0d7"
             buttonColor="#9A3412"
           />
         </Section>
@@ -487,15 +487,15 @@ export default function CustomizePage() {
                 onClick={() => setDoseTimingMode(mode)}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
                 style={{
-                  borderColor: doseTimingMode === mode ? "#0D9488" : "#CBD5E1",
-                  background: doseTimingMode === mode ? "#F0FDFA" : "white",
+                  borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1",
+                  background: doseTimingMode === mode ? "#f2f7f3" : "white",
                 }}
               >
                 <div
                   className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                  style={{ borderColor: doseTimingMode === mode ? "#0D9488" : "#CBD5E1" }}
+                  style={{ borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1" }}
                 >
-                  {doseTimingMode === mode && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0D9488" }} />}
+                  {doseTimingMode === mode && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#4a7c59" }} />}
                 </div>
                 <div>
                   <p className="text-base font-semibold text-navy">
@@ -515,7 +515,7 @@ export default function CustomizePage() {
           onClick={handleSave}
           disabled={saving}
           className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
-          style={{ background: saving ? "#0B7A70" : "linear-gradient(135deg, #0D9488, #0B7A70)", opacity: saving ? 0.9 : 1 }}
+          style={{ background: saving ? "#2d4f38" : "linear-gradient(135deg, #4a7c59, #2d4f38)", opacity: saving ? 0.9 : 1 }}
         >
           {saving ? "Saving…" : "Save Changes"}
         </button>

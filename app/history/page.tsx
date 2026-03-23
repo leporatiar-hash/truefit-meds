@@ -27,7 +27,7 @@ function fmtMonthGroup(dateStr: string) {
 
 function moodColor(score: number) {
   if (score >= 8) return "#16A34A";
-  if (score >= 6) return "#0D9488";
+  if (score >= 6) return "#4a7c59";
   if (score >= 4) return "#D97706";
   return "#DC2626";
 }
@@ -185,7 +185,7 @@ function DayRow({ log }: { log: DailyLog }) {
   return (
     <div
       className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
-      style={{ borderColor: hasEpisode ? "#FECACA" : undefined }}
+      style={{ borderColor: hasEpisode ? "#d4e0d7" : undefined }}
     >
       <button
         type="button"
@@ -201,7 +201,7 @@ function DayRow({ log }: { log: DailyLog }) {
         {/* Summary pills */}
         <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
           {log.mood_score !== null && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F8FAFC", color: moodColor(log.mood_score), border: `1px solid ${moodColor(log.mood_score)}22` }}>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#faf9f6", color: moodColor(log.mood_score), border: `1px solid ${moodColor(log.mood_score)}22` }}>
               Mood {log.mood_score}/10
             </span>
           )}
@@ -213,20 +213,20 @@ function DayRow({ log }: { log: DailyLog }) {
           {symptomCount > 0 && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
               style={{
-                background: maxSeverity >= 8 ? "#FEE2E2" : maxSeverity >= 5 ? "#FEF3C7" : "#F1F5F9",
-                color: maxSeverity >= 8 ? "#DC2626" : maxSeverity >= 5 ? "#D97706" : "#64748B",
+                background: maxSeverity >= 8 ? "#FEF3C7" : "#e8f0eb",
+                color: maxSeverity >= 8 ? "#92400E" : "#2d4f38",
               }}>
               {symptomCount} symptom{symptomCount !== 1 ? "s" : ""}
             </span>
           )}
           {meds && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: meds.allTaken ? "#DCFCE7" : "#FEE2E2", color: meds.allTaken ? "#16A34A" : "#DC2626" }}>
+              style={{ background: meds.allTaken ? "#e8f0eb" : "#FEF3C7", color: meds.allTaken ? "#2d4f38" : "#92400E" }}>
               Meds {meds.taken}/{meds.total}
             </span>
           )}
           {hasEpisode && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">Episode</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid #d4e0d7" }}>Episode</span>
           )}
         </div>
 
@@ -278,8 +278,8 @@ export default function HistoryPage() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -306,7 +306,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
@@ -338,8 +338,8 @@ export default function HistoryPage() {
         {/* Empty state */}
         {logs.length === 0 && (
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-3 text-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#CCFBF1" }}>
-              <svg className="w-7 h-7" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#e8f0eb" }}>
+              <svg className="w-7 h-7" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>

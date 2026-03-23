@@ -216,8 +216,8 @@ export default function SummaryPage() {
 
   if (isLoading || pageLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -227,7 +227,7 @@ export default function SummaryPage() {
   return (
     <>
       <style>{PRINT_STYLE}</style>
-    <div className="min-h-screen pb-28 print-container" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28 print-container" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
@@ -264,8 +264,8 @@ export default function SummaryPage() {
         {/* Generate prompt */}
         {!summary && !generating && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-5">
-            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "#CCFBF1" }}>
-              <svg className="w-7 h-7" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "#e8f0eb" }}>
+              <svg className="w-7 h-7" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -278,7 +278,7 @@ export default function SummaryPage() {
             <button
               onClick={handleGenerate}
               className="w-full py-4 rounded-2xl font-bold text-white text-base"
-              style={{ background: "linear-gradient(135deg, #0D9488, #0B7A70)" }}
+              style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
             >
               Generate Insights
             </button>
@@ -288,7 +288,7 @@ export default function SummaryPage() {
         {/* Loading */}
         {generating && (
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-5">
-            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
             <div className="text-center">
               <p className="text-lg font-semibold text-navy">Analyzing 30 days of data</p>
               <p className="text-base text-slate-400 mt-1">Reviewing logs, calculating patterns, drafting your summary.</p>
@@ -322,13 +322,13 @@ export default function SummaryPage() {
             </div>
 
             {/* Executive Summary */}
-            <InsightCard title="Executive Summary" accentColor="#0D1B2A" bgColor="white" borderColor="#E2E8F0">
+            <InsightCard title="Executive Summary" accentColor="#1a2420" bgColor="white" borderColor="#d4e0d7">
               <p className="text-base leading-relaxed text-slate-700">{summary.executive_summary}</p>
             </InsightCard>
 
             {/* Adherence */}
             {summary.adherence?.length > 0 && (
-              <InsightCard title="Adherence" accentColor="#0D9488" bgColor="#F0FDFA" borderColor="#99F6E4">
+              <InsightCard title="Adherence" accentColor="#2d4f38" bgColor="#f2f7f3" borderColor="#d4e0d7">
                 <div className="space-y-5">
                   {summary.adherence.map((item, i) => <AdherenceBar key={i} item={item} />)}
                 </div>
@@ -337,10 +337,10 @@ export default function SummaryPage() {
 
             {/* Patterns */}
             {summary.patterns?.length > 0 && (
-              <InsightCard title="Patterns" accentColor="#1E40AF" bgColor="#F0F9FF" borderColor="#BAE6FD">
+              <InsightCard title="Patterns" accentColor="#3d4f47" bgColor="#f2f7f3" borderColor="#d4e0d7">
                 <div className="space-y-3">
                   {summary.patterns.map((p, i) => (
-                    <div key={i} className="finding-card rounded-xl p-4 border-l-4" style={{ background: "white", borderColor: "#1E40AF" }}>
+                    <div key={i} className="finding-card rounded-xl p-4 border-l-4" style={{ background: "white", borderColor: "#4a7c59" }}>
                       <p className="text-base font-semibold text-navy">{p.finding}</p>
                       <p className="finding-significance text-sm text-slate-500 mt-1">{p.significance}</p>
                     </div>
@@ -351,11 +351,11 @@ export default function SummaryPage() {
 
             {/* Lifestyle */}
             {summary.lifestyle_notes?.length > 0 && (
-              <InsightCard title="Lifestyle Notes" accentColor="#166534" bgColor="#F0FDF4" borderColor="#86EFAC">
+              <InsightCard title="Lifestyle Notes" accentColor="#4a7c59" bgColor="#f2f7f3" borderColor="#d4e0d7">
                 <ul className="space-y-2">
                   {summary.lifestyle_notes.map((note, i) => (
                     <li key={i} className="flex items-start gap-3 text-base text-slate-700">
-                      <span className="lifestyle-dot w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ background: "#0D9488" }} />
+                      <span className="lifestyle-dot w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ background: "#4a7c59" }} />
                       {note}
                     </li>
                   ))}
@@ -365,11 +365,11 @@ export default function SummaryPage() {
 
             {/* Discussion items */}
             {summary.discussion_items?.length > 0 && (
-              <InsightCard title="Bring Up at the Appointment" accentColor="#92400E" bgColor="#FFFBF0" borderColor="#FDE68A">
+              <InsightCard title="Bring Up at the Appointment" accentColor="#2d4f38" bgColor="#f2f7f3" borderColor="#d4e0d7">
                 <div className="space-y-3">
                   {summary.discussion_items.map((item, i) => (
                     <div key={i} className="discussion-item flex items-start gap-3 p-4 rounded-xl bg-white">
-                      <span className="discussion-num text-base font-bold flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "#92400E" }}>
+                      <span className="discussion-num text-base font-bold flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ background: "#4a7c59" }}>
                         {i + 1}
                       </span>
                       <p className="text-base text-slate-700">{item}</p>

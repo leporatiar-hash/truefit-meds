@@ -98,7 +98,7 @@ function QuickPhotoCard({
           />
           <div className="flex-1 min-w-0">
             <p className="text-base font-semibold text-navy">Today&apos;s Photo</p>
-            <p className="text-sm font-medium mt-0.5" style={{ color: "#0D9488" }}>Saved</p>
+            <p className="text-sm font-medium mt-0.5" style={{ color: "#4a7c59" }}>Saved</p>
           </div>
           <button
             type="button"
@@ -116,7 +116,7 @@ function QuickPhotoCard({
               <p className="text-sm text-slate-400 mt-0.5">Add a daily photo for the timeline</p>
             </div>
             {loading && (
-              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin flex-shrink-0" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin flex-shrink-0" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
             )}
           </div>
           <div className="flex gap-3">
@@ -125,7 +125,7 @@ function QuickPhotoCard({
               disabled={loading}
               onClick={() => cameraRef.current?.click()}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-colors active:opacity-90 disabled:opacity-50"
-              style={{ background: "#0D9488" }}
+              style={{ background: "#4a7c59" }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -180,10 +180,10 @@ function TodayRow({
       {/* Status icon */}
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: done ? "#CCFBF1" : "#F1F5F9" }}
+        style={{ background: done ? "#e8f0eb" : "#F1F5F9" }}
       >
         {done ? (
-          <svg className="w-4 h-4" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         ) : (
@@ -193,8 +193,8 @@ function TodayRow({
 
       {/* Label + summary */}
       <div className="flex-1 min-w-0">
-        <p className="text-base font-semibold" style={{ color: done ? "#0D1B2A" : "#334155" }}>{label}</p>
-        <p className="text-sm mt-0.5" style={{ color: done ? "#0B7A70" : "#94A3B8" }}>{summary}</p>
+        <p className="text-base font-semibold" style={{ color: done ? "#1a2420" : "#334155" }}>{label}</p>
+        <p className="text-sm mt-0.5" style={{ color: done ? "#2d4f38" : "#94A3B8" }}>{summary}</p>
       </div>
 
       {/* Chevron */}
@@ -327,14 +327,14 @@ export default function DashboardPage() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
@@ -348,7 +348,7 @@ export default function DashboardPage() {
             {patient ? `Here's how ${patient.name} is doing.` : "Welcome back."}
           </p>
           {user?.user_config?.greeting && (
-            <p className="text-sm font-medium mt-1" style={{ color: "#0D9488" }}>
+            <p className="text-sm font-medium mt-1" style={{ color: "#4a7c59" }}>
               {user.user_config.greeting}
             </p>
           )}
@@ -357,20 +357,20 @@ export default function DashboardPage() {
         {patient ? (
           <>
             {/* Patient card — compact */}
-            <div className="rounded-2xl px-5 py-4 flex items-center justify-between text-white" style={{ background: "#0D1B2A" }}>
+            <div className="rounded-2xl px-5 py-4 flex items-center justify-between text-white" style={{ background: "#1a2420" }}>
               <div>
                 <p className="text-slate-400 text-sm font-medium">{patient.diagnosis}</p>
                 <p className="text-xl font-bold mt-0.5">{patient.name}</p>
               </div>
               <div className="text-right">
                 <p className="text-slate-400 text-sm">Streak</p>
-                <p className="text-3xl font-bold" style={{ color: "#0D9488" }}>{calcStreak}<span className="text-base font-normal text-slate-400 ml-1">days</span></p>
+                <p className="text-3xl font-bold" style={{ color: "#4a7c59" }}>{calcStreak}<span className="text-base font-normal text-slate-400 ml-1">days</span></p>
               </div>
             </div>
 
             {/* Streak = 0 nudge */}
             {calcStreak === 0 && (
-              <div className="rounded-2xl px-5 py-4 border" style={{ background: "#FFF8EC", borderColor: "#FDE68A" }}>
+              <div className="rounded-2xl px-5 py-4 border" style={{ background: "#FFF8EC", borderColor: "#d4e0d7" }}>
                 <p className="text-base font-medium" style={{ color: "#92400E" }}>
                   Start logging today — every entry helps {patient.name}&apos;s doctor understand them better.
                 </p>
@@ -381,7 +381,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="px-5 pt-4 pb-3 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-navy">Today</h2>
-                <span className="text-sm font-semibold" style={{ color: completedCount === totalRequired ? "#0D9488" : "#94A3B8" }}>
+                <span className="text-sm font-semibold" style={{ color: completedCount === totalRequired ? "#4a7c59" : "#94A3B8" }}>
                   {completedCount}/{totalRequired} done
                 </span>
               </div>
@@ -398,7 +398,7 @@ export default function DashboardPage() {
                 <div className="w-full h-2 rounded-full" style={{ background: "#E2E8F0" }}>
                   <div
                     className="h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(completedCount / totalRequired) * 100}%`, background: "#0D9488" }}
+                    style={{ width: `${(completedCount / totalRequired) * 100}%`, background: "#4a7c59" }}
                   />
                 </div>
               </div>
@@ -411,7 +411,7 @@ export default function DashboardPage() {
             <Link
               href={ctaHref}
               className="block w-full py-5 rounded-3xl text-center text-white font-bold text-xl shadow-lg transition-transform active:scale-[0.98]"
-              style={{ background: allDone ? "#0B7A70" : "linear-gradient(135deg, #0D9488, #0B7A70)" }}
+              style={{ background: allDone ? "#2d4f38" : "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
             >
               {ctaLabel}
             </Link>
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                 <p className="text-base font-semibold text-navy">AI Insights</p>
                 <p className="text-sm text-slate-500 mt-0.5">Generate a doctor-ready summary</p>
               </div>
-              <svg className="w-5 h-5" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                 <p className="text-base font-semibold text-navy">Print Report</p>
                 <p className="text-sm text-slate-500 mt-0.5">Last 7 or 30 days — formatted for doctor</p>
               </div>
-              <svg className="w-5 h-5" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
             </Link>
@@ -463,7 +463,7 @@ export default function DashboardPage() {
                 <p className="text-base font-semibold text-navy">Photo Timeline</p>
                 <p className="text-sm text-slate-500 mt-0.5">Scroll through photos by date</p>
               </div>
-              <svg className="w-5 h-5" style={{ color: "#0D9488" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -472,7 +472,7 @@ export default function DashboardPage() {
         ) : (
           <div className="text-center py-16">
             <p className="text-slate-500 text-base mb-4">No patient profile yet.</p>
-            <Link href="/onboarding" className="inline-block px-6 py-3 rounded-xl text-white font-semibold text-base" style={{ background: "#0D9488" }}>
+            <Link href="/onboarding" className="inline-block px-6 py-3 rounded-xl text-white font-semibold text-base" style={{ background: "#4a7c59" }}>
               Set up patient
             </Link>
           </div>

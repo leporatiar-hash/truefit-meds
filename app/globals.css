@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #0D1B2A;
-  --color-navy-light: #1a2f47;
-  --color-teal: #0D9488;
-  --color-teal-dark: #0B7A70;
-  --color-teal-light: #CCFBF1;
+  --color-navy: #1a2420;
+  --color-navy-light: #3d4f47;
+  --color-teal: #4a7c59;
+  --color-teal-dark: #2d4f38;
+  --color-teal-light: #e8f0eb;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0D1B2A;
+  --background: #faf9f6;
+  --foreground: #1a2420;
 }
 
 body {
@@ -28,7 +28,7 @@ input[type="range"] {
   appearance: none;
   height: 6px;
   border-radius: 3px;
-  background: #E2E8F0;
+  background: #d4e0d7;
   outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -37,7 +37,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #0D9488;
+  background: #4a7c59;
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
@@ -46,7 +46,7 @@ input[type="range"]::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #0D9488;
+  background: #4a7c59;
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);

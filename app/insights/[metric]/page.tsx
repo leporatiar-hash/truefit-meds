@@ -61,7 +61,7 @@ function LineChart({
 
   if (points.length === 0) {
     return (
-      <div className="w-full rounded-2xl flex items-center justify-center" style={{ height: 200, background: "#F8FAFC" }}>
+      <div className="w-full rounded-2xl flex items-center justify-center" style={{ height: 200, background: "#faf9f6" }}>
         <p className="text-slate-400 text-sm">No data for this period</p>
       </div>
     );
@@ -197,7 +197,7 @@ function LineChart({
             <line x1={tooltip.x} y1={CY} x2={tooltip.x} y2={CY + CH} stroke="#CBD5E1" strokeWidth={1} strokeDasharray="3,2" />
             <circle cx={tooltip.x} cy={tooltip.y} r={5} fill={color} stroke="white" strokeWidth={2} />
             {/* Tooltip bubble */}
-            <rect x={tipX} y={tipY} width={tipW} height={tipH} rx={6} fill="#0D1B2A" opacity={0.92} />
+            <rect x={tipX} y={tipY} width={tipW} height={tipH} rx={6} fill="#1a2420" opacity={0.92} />
             <text x={tipX + tipW / 2} y={tipY + 13} textAnchor="middle" fontSize={10} fontWeight="700" fill="white">
               {tooltip.value}
             </text>
@@ -247,7 +247,7 @@ function TimeframeSelector({ current, onChange }: { current: Timeframe; onChange
           onClick={() => onChange(tf)}
           className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
           style={{
-            background: current === tf ? "#0D1B2A" : "transparent",
+            background: current === tf ? "#1a2420" : "transparent",
             color: current === tf ? "white" : "#64748B",
           }}
         >{tf}</button>
@@ -320,18 +320,18 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="min-h-screen" style={{ background: "#F8FAFC" }}>
+      <div className="min-h-screen" style={{ background: "#faf9f6" }}>
         <NavBar />
         <div className="max-w-lg mx-auto px-4 pt-6">
-          <Link href="/insights" className="text-base font-semibold" style={{ color: "#0D9488" }}>
+          <Link href="/insights" className="text-base font-semibold" style={{ color: "#4a7c59" }}>
             Back to Insights
           </Link>
           <p className="text-slate-500 mt-4">Metric not found.</p>
@@ -341,13 +341,13 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-5 space-y-5">
 
         {/* Back nav */}
-        <Link href="/insights" className="flex items-center gap-1.5 text-base font-semibold" style={{ color: "#0D9488" }}>
+        <Link href="/insights" className="flex items-center gap-1.5 text-base font-semibold" style={{ color: "#4a7c59" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -405,8 +405,8 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
             <h2 className="text-base font-bold text-navy">Observations</h2>
             <p className="text-xs text-slate-400">Based on {logs.length} days of data. Descriptive only — does not imply causation.</p>
             {observations.map((obs, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "#F8FAFC" }}>
-                <div className="w-1 h-full rounded-full flex-shrink-0 self-stretch" style={{ background: "#0D9488", minHeight: 16 }} />
+              <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "#faf9f6" }}>
+                <div className="w-1 h-full rounded-full flex-shrink-0 self-stretch" style={{ background: "#4a7c59", minHeight: 16 }} />
                 <p className="text-sm text-slate-700 leading-relaxed">{obs.text}</p>
               </div>
             ))}
@@ -436,7 +436,7 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
                   { label: "Best", value: fmt(min) },
                   { label: "Worst", value: fmt(max) },
                 ].map((stat) => (
-                  <div key={stat.label} className="text-center rounded-xl py-3" style={{ background: "#F8FAFC" }}>
+                  <div key={stat.label} className="text-center rounded-xl py-3" style={{ background: "#faf9f6" }}>
                     <p className="text-base font-bold text-navy">{stat.value}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
                   </div>

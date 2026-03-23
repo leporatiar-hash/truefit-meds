@@ -90,7 +90,7 @@ function LabeledSlider({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-base font-semibold text-slate-700">{label}</label>
-        <span className="text-base font-bold" style={{ color: "#0D9488" }}>
+        <span className="text-base font-bold" style={{ color: "#4a7c59" }}>
           {value !== null ? `${value}${unit}` : "—"}
         </span>
       </div>
@@ -115,7 +115,7 @@ function Tile({ label, active, onClick }: { label: string; active: boolean; onCl
     <button
       type="button" onClick={onClick}
       className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 text-center transition-all min-h-[72px]"
-      style={{ borderColor: active ? "#0D9488" : "#CBD5E1", background: active ? "#0D9488" : "white" }}
+      style={{ borderColor: active ? "#4a7c59" : "#CBD5E1", background: active ? "#4a7c59" : "white" }}
     >
       {active ? (
         <svg className="w-5 h-5" style={{ color: "white" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +136,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <button
       type="button" onClick={() => onChange(!value)}
       className="relative w-14 h-7 rounded-full transition-all flex-shrink-0"
-      style={{ background: value ? "#0D9488" : "#CBD5E1" }}
+      style={{ background: value ? "#4a7c59" : "#CBD5E1" }}
     >
       <span
         className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform"
@@ -547,8 +547,8 @@ export default function LogPage() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -602,7 +602,7 @@ export default function LogPage() {
   })();
 
   return (
-    <div className="min-h-screen pb-36" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-36" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-4">
@@ -629,7 +629,7 @@ export default function LogPage() {
 
         {/* ── Medications ── */}
         <AccordionSection id="medications" title="Medications" summaryLine={medsText}
-          bgColor="#FFFBF0" borderColor="#FDE68A" headingColor="#92400E"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "medications"} onToggle={() => toggle("medications")}>
 
           {activeMeds.length === 0 && (
@@ -651,7 +651,7 @@ export default function LogPage() {
                   <div>
                     <p className="text-base font-semibold text-navy">{med.name}</p>
                     {doses.length > 0 ? (
-                      <p className="text-sm" style={{ color: "#0D9488" }}>
+                      <p className="text-sm" style={{ color: "#4a7c59" }}>
                         taken {doses.length}× today — {doses.map(d => displayDoseTime(d.time_taken)).join(", ")}
                       </p>
                     ) : (
@@ -662,7 +662,7 @@ export default function LogPage() {
                     type="button"
                     onClick={() => doseOpen ? setAddDoseOpenFor(null) : openAddDose(med.id)}
                     className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
-                    style={{ background: "#0D9488" }}
+                    style={{ background: "#4a7c59" }}
                   >
                     + Dose
                   </button>
@@ -673,7 +673,7 @@ export default function LogPage() {
                   <div className="flex flex-wrap gap-2">
                     {doses.map((d, i) => (
                       <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
-                        style={{ background: "#CCFBF1", color: "#065F46" }}>
+                        style={{ background: "#e8f0eb", color: "#065F46" }}>
                         {displayDoseTime(d.time_taken)}
                         <button type="button" onClick={() => removeDose(med.id, d.time_taken)}
                           className="text-teal-700 hover:text-red-500 leading-none transition-colors">×</button>
@@ -692,7 +692,7 @@ export default function LogPage() {
                           type="button"
                           onClick={() => confirmDoseSimple(med.id, time)}
                           className="py-2 rounded-lg text-sm font-semibold border-2 transition-all active:scale-95"
-                          style={{ borderColor: "#0D9488", color: "#0D9488", background: "white" }}
+                          style={{ borderColor: "#4a7c59", color: "#4a7c59", background: "white" }}
                         >
                           {label}
                         </button>
@@ -713,7 +713,7 @@ export default function LogPage() {
                     />
                     <button type="button" onClick={() => confirmDose(med.id)}
                       className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white"
-                      style={{ background: "#0D9488" }}>Log</button>
+                      style={{ background: "#4a7c59" }}>Log</button>
                     <button type="button" onClick={() => setAddDoseOpenFor(null)}
                       className="text-slate-400 text-lg leading-none">×</button>
                   </div>
@@ -801,13 +801,13 @@ export default function LogPage() {
                     {["morning", "noon", "night"].map(t => (
                       <button key={t} type="button" onClick={() => setNewMedTime(t)}
                         className="flex-1 py-2 rounded-xl border text-sm font-medium capitalize transition-all"
-                        style={{ borderColor: newMedTime === t ? "#0D9488" : "#CBD5E1", background: newMedTime === t ? "#0D9488" : "white", color: newMedTime === t ? "white" : "#64748B" }}
+                        style={{ borderColor: newMedTime === t ? "#4a7c59" : "#CBD5E1", background: newMedTime === t ? "#4a7c59" : "white", color: newMedTime === t ? "white" : "#64748B" }}
                       >{t}</button>
                     ))}
                   </div>
                   <button type="button" onClick={handleAddMed} disabled={addingMed || !newMedName.trim()}
                     className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                    style={{ background: newMedName.trim() ? "#0D9488" : "#CBD5E1" }}
+                    style={{ background: newMedName.trim() ? "#4a7c59" : "#CBD5E1" }}
                   >{addingMed ? "Adding…" : "Add medication"}</button>
                 </div>
               </div>
@@ -817,7 +817,7 @@ export default function LogPage() {
 
         {/* ── Symptoms ── */}
         <AccordionSection id="symptoms" title="Symptoms" summaryLine={symptomsText}
-          bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
+          bgColor="white" borderColor="#d4e0d7" headingColor="#1a2420"
           isOpen={openSection === "symptoms"} onToggle={() => toggle("symptoms")}>
 
           {symptomNames.map(name => {
@@ -834,9 +834,9 @@ export default function LogPage() {
                     onClick={() => update({ symptoms: draft!.symptoms.filter(s => s.name !== name) })}
                     className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
                     style={{
-                      borderColor: isNone ? "#0D9488" : "#CBD5E1",
-                      background: isNone ? "#CCFBF1" : "white",
-                      color: isNone ? "#0D9488" : "#334155",
+                      borderColor: isNone ? "#4a7c59" : "#CBD5E1",
+                      background: isNone ? "#e8f0eb" : "white",
+                      color: isNone ? "#4a7c59" : "#334155",
                     }}
                   >None</button>
                   {SEVERITY_CHIPS.map(chip => {
@@ -847,8 +847,8 @@ export default function LogPage() {
                         onClick={() => setSymptomSeverity(name, chip.value)}
                         className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
                         style={{
-                          borderColor: isActive ? "#0D9488" : "#CBD5E1",
-                          background: isActive ? "#0D9488" : "white",
+                          borderColor: isActive ? "#4a7c59" : "#CBD5E1",
+                          background: isActive ? "#4a7c59" : "white",
                           color: isActive ? "white" : "#334155",
                         }}
                       >{chip.label}</button>
@@ -862,7 +862,7 @@ export default function LogPage() {
 
         {/* ── Episode ── */}
         <AccordionSection id="episode" title="Episode" summaryLine={episodeText}
-          bgColor="#FFF1F2" borderColor="#FECDD3" headingColor="#9F1239"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "episode"} onToggle={() => toggle("episode")}>
 
           <div className="space-y-4">
@@ -898,7 +898,7 @@ export default function LogPage() {
 
         {/* ── Vitals ── */}
         <AccordionSection id="vitals" title="Vitals" summaryLine={vitalsText}
-          bgColor="#F0F9FF" borderColor="#BAE6FD" headingColor="#1E40AF"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "vitals"} onToggle={() => toggle("vitals")}>
 
           <div className="space-y-4">
@@ -923,7 +923,7 @@ export default function LogPage() {
 
         {/* ── Sleep ── */}
         <AccordionSection id="sleep" title="Sleep" summaryLine={sleepText}
-          bgColor="#F0F9FF" borderColor="#BAE6FD" headingColor="#1E40AF"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "sleep"} onToggle={() => toggle("sleep")}>
 
           <LabeledSlider label="Hours of sleep last night" value={draft.sleepHours}
@@ -933,7 +933,7 @@ export default function LogPage() {
 
         {/* ── Hydration ── */}
         <AccordionSection id="hydration" title="Hydration" summaryLine={hydrationText}
-          bgColor="#F0F9FF" borderColor="#BAE6FD" headingColor="#1E40AF"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "hydration"} onToggle={() => toggle("hydration")}>
 
           <div className="space-y-2">
@@ -948,8 +948,8 @@ export default function LogPage() {
                     onClick={() => update({ hydration: isActive ? null : preset.label })}
                     className="py-4 rounded-xl border-2 text-base font-semibold transition-all"
                     style={{
-                      borderColor: isActive ? "#0D9488" : "#CBD5E1",
-                      background: isActive ? "#0D9488" : "white",
+                      borderColor: isActive ? "#4a7c59" : "#CBD5E1",
+                      background: isActive ? "#4a7c59" : "white",
                       color: isActive ? "white" : "#334155",
                     }}
                   >{preset.label}</button>
@@ -961,7 +961,7 @@ export default function LogPage() {
 
         {/* ── Activities ── */}
         <AccordionSection id="activities" title="Activities" summaryLine={activitiesText}
-          bgColor="#F0FDF4" borderColor="#86EFAC" headingColor="#166534"
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "activities"} onToggle={() => toggle("activities")}>
 
           <div className="grid grid-cols-3 gap-3">
@@ -976,7 +976,7 @@ export default function LogPage() {
         {/* ── Substances ── */}
         {configSubstanceFields.length > 0 && (
           <AccordionSection id="substances" title="Substances" summaryLine={substancesText}
-            bgColor="#FFF7ED" borderColor="#FDBA74" headingColor="#9A3412"
+            bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
             isOpen={openSection === "substances"} onToggle={() => toggle("substances")}>
 
             <div className="space-y-5">
@@ -1043,7 +1043,7 @@ export default function LogPage() {
 
         {/* ── Today's Photo ── */}
         <AccordionSection id="photo" title="Today's Photo" summaryLine={photoText}
-          bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
+          bgColor="white" borderColor="#d4e0d7" headingColor="#1a2420"
           isOpen={openSection === "photo"} onToggle={() => toggle("photo")}>
 
           {/* Hidden file inputs */}
@@ -1080,7 +1080,7 @@ export default function LogPage() {
               <p className="text-sm text-slate-400">One photo per day. Saves with the log and appears in the photo timeline.</p>
               {photoLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+                  <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
                 </div>
               ) : (
                 <div className="flex gap-3">
@@ -1109,7 +1109,7 @@ export default function LogPage() {
 
         {/* ── Notes ── */}
         <AccordionSection id="notes" title="Notes" summaryLine={notesText}
-          bgColor="white" borderColor="#E2E8F0" headingColor="#0D1B2A"
+          bgColor="white" borderColor="#d4e0d7" headingColor="#1a2420"
           isOpen={openSection === "notes"} onToggle={() => toggle("notes")}>
 
           <div className="flex justify-between mb-1">
@@ -1133,7 +1133,7 @@ export default function LogPage() {
           <button
             onClick={handleSubmit} disabled={saving || saved}
             className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
-            style={{ background: saved ? "#16A34A" : saving ? "#0B7A70" : "linear-gradient(135deg, #0D9488, #0B7A70)", opacity: saving ? 0.9 : 1 }}
+            style={{ background: saved ? "#16A34A" : saving ? "#2d4f38" : "linear-gradient(135deg, #4a7c59, #2d4f38)", opacity: saving ? 0.9 : 1 }}
           >
             {saved ? "Saved" : saving ? "Saving…" : "Save Log"}
           </button>

@@ -17,9 +17,9 @@ import type { Patient, DailyLog } from "../lib/types";
 // Avoid alarming labels like "Critical" that escalate beyond what was logged.
 
 function severityLevel(value: number): { label: string; color: string; bg: string } {
-  if (value >= 8) return { label: "Severe",   color: "#EA580C", bg: "#FFF7ED" };
+  if (value >= 8) return { label: "Severe",   color: "#EA580C", bg: "#f2f7f3" };
   if (value >= 4) return { label: "Moderate", color: "#D97706", bg: "#FFFBEB" };
-  return           { label: "Mild",     color: "#16A34A", bg: "#F0FDF4" };
+  return           { label: "Mild",     color: "#16A34A", bg: "#f2f7f3" };
 }
 
 // ── Sparkline ─────────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ function MetricRowItem({ row }: { row: MetricRow }) {
 
       {/* Value + trend badge */}
       <div className="text-right flex-shrink-0 min-w-[80px] flex flex-col items-end gap-1">
-        <p className="text-base font-bold" style={{ color: sev ? sev.color : "#0D1B2A" }}>{primaryText}</p>
+        <p className="text-base font-bold" style={{ color: sev ? sev.color : "#1a2420" }}>{primaryText}</p>
         <TrendBadge row={row} />
       </div>
 
@@ -177,7 +177,7 @@ function HighlightsCard({ symptomRows }: { symptomRows: MetricRow[] }) {
       label: "Improving",
       symptom: improving.label,
       valueText: `${improving.change7d.toFixed(1)} this week`,
-      color: "#0D9488",
+      color: "#4a7c59",
     });
   }
 
@@ -197,7 +197,7 @@ function HighlightsCard({ symptomRows }: { symptomRows: MetricRow[] }) {
   return (
     <div
       className="rounded-2xl shadow-sm border overflow-hidden"
-      style={{ background: "#FFFBF5", borderColor: "#FDE68A" }}
+      style={{ background: "#FFFBF5", borderColor: "#d4e0d7" }}
     >
       {highlights.length > 0 && (
         <>
@@ -229,7 +229,7 @@ function HighlightsCard({ symptomRows }: { symptomRows: MetricRow[] }) {
 
       {netChanges.length > 0 && (
         <>
-          <div className="px-5 pt-4 pb-2" style={{ borderTop: highlights.length > 0 ? "1px solid #FDE68A" : "none" }}>
+          <div className="px-5 pt-4 pb-2" style={{ borderTop: highlights.length > 0 ? "1px solid #d4e0d7" : "none" }}>
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#92400E" }}>
               Net Changes This Week
             </p>
@@ -332,14 +332,14 @@ export default function InsightsPage() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8FAFC" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#0D9488", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#F8FAFC" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto pt-6 px-4 space-y-5">
@@ -360,7 +360,7 @@ export default function InsightsPage() {
             <Link
               href="/log"
               className="inline-block mt-5 px-6 py-3 rounded-2xl text-white font-semibold text-base"
-              style={{ background: "#0D9488" }}
+              style={{ background: "#4a7c59" }}
             >
               Log Today
             </Link>
@@ -414,7 +414,7 @@ export default function InsightsPage() {
 
         {/* Scale legend */}
         {symptomRows.length > 0 && (
-          <div className="rounded-xl px-4 py-3 flex flex-wrap gap-x-5 gap-y-1.5" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+          <div className="rounded-xl px-4 py-3 flex flex-wrap gap-x-5 gap-y-1.5" style={{ background: "#faf9f6", border: "1px solid #E2E8F0" }}>
             <p className="w-full text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Symptom scale</p>
             {[
               { label: "Mild", color: "#16A34A" },
