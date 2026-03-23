@@ -13,12 +13,13 @@ import {
 import type { Patient, DailyLog } from "../lib/types";
 
 // ── Severity helpers ──────────────────────────────────────────────────────────
+// Values are always 6 (Moderate) or 9 (Severe) — matching caregiver's own words.
+// Avoid alarming labels like "Critical" that escalate beyond what was logged.
 
 function severityLevel(value: number): { label: string; color: string; bg: string } {
-  if (value >= 9) return { label: "Critical", color: "#DC2626", bg: "#FEE2E2" };
-  if (value >= 6) return { label: "Severe",   color: "#F97316", bg: "#FEF3C7" };
-  if (value >= 3) return { label: "Moderate", color: "#F59E0B", bg: "#FEF9C3" };
-  return           { label: "Mild",     color: "#16A34A", bg: "#DCFCE7" };
+  if (value >= 8) return { label: "Severe",   color: "#EA580C", bg: "#FFF7ED" };
+  if (value >= 4) return { label: "Moderate", color: "#D97706", bg: "#FFFBEB" };
+  return           { label: "Mild",     color: "#16A34A", bg: "#F0FDF4" };
 }
 
 // ── Sparkline ─────────────────────────────────────────────────────────────────
@@ -64,18 +65,18 @@ function TrendBadge({ row }: { row: MetricRow }) {
 }
 
 function MetricRowItem({ row }: { row: MetricRow }) {
-  const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#DC2626" : "#94A3B8";
-  const latestText = row.latestValue !== null ? formatValue(row.latestValue, row.unit) : "—";
+  const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#EA580C" : "#94A3B8";
 
   const isSymptom = row.unit === "/10";
   const sev = isSymptom && row.latestValue !== null ? severityLevel(row.latestValue) : null;
 
+  // For symptoms, show the severity label as primary text (not raw number)
+  const primaryText = sev ? sev.label : (row.latestValue !== null ? formatValue(row.latestValue, row.unit) : "—");
   const subLabel = row.unit === "days" ? "lifestyle"
     : row.unit === "%" ? "adherence"
-    : row.unit === "hrs" ? "hrs"
+    : row.unit === "hrs" ? "sleep"
     : row.unit === "oz" ? "hydration"
-    : sev ? sev.label
-    : "severity";
+    : "";
 
   return (
     <Link
@@ -94,12 +95,9 @@ function MetricRowItem({ row }: { row: MetricRow }) {
       {/* Name */}
       <div className="flex-1 min-w-0">
         <p className="text-base font-semibold text-navy truncate">{row.label}</p>
-        <p
-          className="text-sm mt-0.5 font-medium"
-          style={{ color: sev ? sev.color : "#94A3B8" }}
-        >
-          {subLabel}
-        </p>
+        {subLabel && (
+          <p className="text-sm mt-0.5 font-medium text-slate-400">{subLabel}</p>
+        )}
       </div>
 
       {/* Sparkline */}
@@ -107,7 +105,7 @@ function MetricRowItem({ row }: { row: MetricRow }) {
 
       {/* Value + trend badge */}
       <div className="text-right flex-shrink-0 min-w-[80px] flex flex-col items-end gap-1">
-        <p className="text-base font-bold text-navy">{latestText}</p>
+        <p className="text-base font-bold" style={{ color: sev ? sev.color : "#0D1B2A" }}>{primaryText}</p>
         <TrendBadge row={row} />
       </div>
 
@@ -412,6 +410,23 @@ export default function InsightsPage() {
           <p className="text-sm text-slate-400 text-center px-4">
             Log at least 7 days to see trend changes. Correlation insights appear after 21 days.
           </p>
+        )}
+
+        {/* Scale legend */}
+        {symptomRows.length > 0 && (
+          <div className="rounded-xl px-4 py-3 flex flex-wrap gap-x-5 gap-y-1.5" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+            <p className="w-full text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Symptom scale</p>
+            {[
+              { label: "Mild", color: "#16A34A" },
+              { label: "Moderate", color: "#D97706" },
+              { label: "Severe", color: "#EA580C" },
+            ].map(({ label, color }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+                <span className="text-xs text-slate-500">{label}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import {
   EVENT_COLORS, EVENT_LABELS,
   type MetricPoint, type EventMarker, type Timeframe,
 } from "../../lib/insights";
+import { localDateStr } from "../../lib/api";
 import type { Patient, DailyLog } from "../../lib/types";
 
 // ── Chart constants ───────────────────────────────────────────────────────────
@@ -307,7 +308,7 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
     const days = timeframe === "1W" ? 7 : timeframe === "1M" ? 30 : timeframe === "3M" ? 90 : 365;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    return allEvents.filter((e) => e.date >= cutoff.toISOString().split("T")[0]);
+    return allEvents.filter((e) => e.date >= localDateStr(cutoff));
   }, [allEvents, timeframe]);
 
   const observations = useMemo(() => computeObservations(logs), [logs]);
@@ -355,14 +356,25 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
 
         {/* Metric header */}
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">{config.unit === "/10" ? "Severity" : config.unit === "%" ? "Adherence" : "Metric"}</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+            {config.unit === "/10" ? "Symptom" : config.unit === "%" ? "Adherence" : "Metric"}
+          </p>
           <h1 className="text-3xl font-bold text-navy mt-0.5">{config.label}</h1>
           <div className="flex items-baseline gap-3 mt-2">
-            <span className="text-4xl font-bold" style={{ color: config.color }}>
-              {latestValue !== null ? formatValue(latestValue, config.unit) : "—"}
-            </span>
+            {config.unit === "/10" && latestValue !== null ? (
+              <>
+                <span className="text-2xl font-bold" style={{ color: latestValue >= 8 ? "#EA580C" : latestValue >= 4 ? "#D97706" : "#16A34A" }}>
+                  {latestValue >= 8 ? "Severe" : latestValue >= 4 ? "Moderate" : "Mild"}
+                </span>
+                <span className="text-base text-slate-400">last recorded</span>
+              </>
+            ) : (
+              <span className="text-4xl font-bold" style={{ color: config.color }}>
+                {latestValue !== null ? formatValue(latestValue, config.unit) : "—"}
+              </span>
+            )}
             {changeInfo && changeInfo.direction !== "neutral" && (
-              <span className="text-lg font-semibold" style={{ color: changeInfo.color }}>
+              <span className="text-base font-semibold" style={{ color: changeInfo.color }}>
                 {changeInfo.direction === "up" ? "▲" : "▼"} {changeInfo.text} vs prior 7d
               </span>
             )}
@@ -380,6 +392,11 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
           <div className="mt-4">
             <TimeframeSelector current={timeframe} onChange={setTimeframe} />
           </div>
+          {chartPoints.length > 0 && chartPoints.length === allPoints.length && timeframe !== "3M" && (
+            <p className="text-xs text-slate-400 text-center mt-2">
+              Showing all {allPoints.length} logged {allPoints.length === 1 ? "day" : "days"} — no earlier data available
+            </p>
+          )}
         </div>
 
         {/* Observations */}
@@ -407,16 +424,24 @@ export default function MetricDetailPage({ params }: { params: Promise<{ metric:
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
             <h2 className="text-base font-bold text-navy mb-3">This period</h2>
             <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Average", value: formatValue(chartPoints.reduce((s, p) => s + p.value, 0) / chartPoints.length, config.unit) },
-                { label: "Min", value: formatValue(Math.min(...chartPoints.map(p => p.value)), config.unit) },
-                { label: "Max", value: formatValue(Math.max(...chartPoints.map(p => p.value)), config.unit) },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center rounded-xl py-3" style={{ background: "#F8FAFC" }}>
-                  <p className="text-lg font-bold text-navy">{stat.value}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
-                </div>
-              ))}
+              {(() => {
+                const avg = chartPoints.reduce((s, p) => s + p.value, 0) / chartPoints.length;
+                const min = Math.min(...chartPoints.map(p => p.value));
+                const max = Math.max(...chartPoints.map(p => p.value));
+                const fmt = (v: number) => config.unit === "/10"
+                  ? (v >= 8 ? "Severe" : v >= 4 ? "Moderate" : "Mild")
+                  : formatValue(v, config.unit);
+                return [
+                  { label: "Average", value: fmt(avg) },
+                  { label: "Best", value: fmt(min) },
+                  { label: "Worst", value: fmt(max) },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center rounded-xl py-3" style={{ background: "#F8FAFC" }}>
+                    <p className="text-base font-bold text-navy">{stat.value}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
