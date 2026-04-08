@@ -1,3 +1,8 @@
+import os
+import secrets
+from datetime import datetime, timedelta
+
+import resend
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -7,6 +12,8 @@ import schemas
 from auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter()
+
+resend.api_key = os.getenv("RESEND_API_KEY", "")
 
 
 @router.post("/register", response_model=schemas.Token)
@@ -45,6 +52,73 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserResponse)
 def me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password")
+def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == body.email).first()
+    # Always return 200 to avoid leaking which emails are registered
+    if not user:
+        return {"message": "If that email is registered, a reset link has been sent."}
+
+    # Invalidate any existing unused tokens for this user
+    db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.user_id == user.id,
+        models.PasswordResetToken.used == False,  # noqa: E712
+    ).update({"used": True})
+
+    token = secrets.token_urlsafe(32)
+    reset_token = models.PasswordResetToken(
+        token=token,
+        user_id=user.id,
+        expires_at=datetime.utcnow() + timedelta(hours=1),
+    )
+    db.add(reset_token)
+    db.commit()
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    reset_link = f"{frontend_url}/reset-password?token={token}"
+    from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+
+    resend.Emails.send({
+        "from": from_email,
+        "to": user.email,
+        "subject": "Reset your Witness password",
+        "html": f"""
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2 style="color: #2d4f38;">Reset your password</h2>
+          <p style="color: #1a2420;">Hi {user.name},</p>
+          <p style="color: #6b7d74;">We received a request to reset your Witness password. Click the button below — this link expires in 1 hour.</p>
+          <a href="{reset_link}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#4a7c59;color:#fff;border-radius:50px;text-decoration:none;font-weight:600;">
+            Reset password
+          </a>
+          <p style="color: #6b7d74; font-size: 0.85rem;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+        """,
+    })
+
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(body: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    reset_token = db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.token == body.token,
+        models.PasswordResetToken.used == False,  # noqa: E712
+    ).first()
+
+    if not reset_token or reset_token.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link.")
+
+    user = db.query(models.User).filter(models.User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link.")
+
+    user.password_hash = get_password_hash(body.new_password)
+    reset_token.used = True
+    db.commit()
+
+    return {"message": "Password updated successfully."}
 
 
 @router.patch("/config", response_model=schemas.UserResponse)

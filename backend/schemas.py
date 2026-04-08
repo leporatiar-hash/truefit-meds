@@ -44,6 +44,15 @@ class UserConfigPatch(BaseModel):
     updates: Dict[str, Any]
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
 # ── Medications ───────────────────────────────────────────────────────────────
 
 class MedicationCreate(BaseModel):

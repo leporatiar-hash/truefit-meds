@@ -100,6 +100,12 @@ export const api = {
   // Summary
   generateSummary: (patientId: number) =>
     request(`/summary/${patientId}`, { method: "POST" }),
+
+  // Password reset
+  forgotPassword: (email: string) =>
+    request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, new_password: string) =>
+    request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token, new_password }) }),
 };
 
 // Utility: get local date string (YYYY-MM-DD) — avoids UTC offset shifting the date
