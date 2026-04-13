@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { api, localDateStr } from "../lib/api";
@@ -501,7 +502,14 @@ export default function LogPage() {
   }
 
   function toggle(id: string) {
-    setOpenSection(prev => prev === id ? null : id);
+    const el = document.getElementById(id);
+    const beforeTop = el?.getBoundingClientRect().top ?? 0;
+    flushSync(() => {
+      setOpenSection(prev => prev === id ? null : id);
+    });
+    const afterTop = el?.getBoundingClientRect().top ?? 0;
+    const delta = afterTop - beforeTop;
+    if (delta !== 0) window.scrollBy({ top: delta, behavior: "instant" });
   }
 
   async function handleSubmit() {
