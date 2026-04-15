@@ -17,7 +17,7 @@ import type { Patient, DailyLog } from "../lib/types";
 // Avoid alarming labels like "Critical" that escalate beyond what was logged.
 
 function severityLevel(value: number): { label: string; color: string; bg: string } {
-  if (value >= 8) return { label: "Severe",   color: "#EA580C", bg: "#f2f7f3" };
+  if (value >= 8) return { label: "High",     color: "#EA580C", bg: "#f2f7f3" };
   if (value >= 4) return { label: "Moderate", color: "#D97706", bg: "#FFFBEB" };
   return           { label: "Mild",     color: "#16A34A", bg: "#f2f7f3" };
 }
@@ -25,13 +25,17 @@ function severityLevel(value: number): { label: string; color: string; bg: strin
 // ── Sparkline ─────────────────────────────────────────────────────────────────
 
 function Sparkline({ points, color }: { points: MetricPoint[]; color: string }) {
+  const W = 48, H = 24, P = 2;
   if (points.length < 2) {
-    return <div style={{ width: 64, height: 28, background: "#F1F5F9", borderRadius: 4 }} />;
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="flex-shrink-0">
+        <line x1={P} y1={H / 2} x2={W - P} y2={H / 2} stroke="#B4B2A9" strokeWidth={1.5} strokeLinecap="round" />
+      </svg>
+    );
   }
   const vals = points.map((p) => p.value);
   const minV = Math.min(...vals), maxV = Math.max(...vals);
   const range = maxV - minV || 1;
-  const W = 64, H = 28, P = 2;
   const xs = points.map((_, i) => P + (i / (points.length - 1)) * (W - P * 2));
   const ys = points.map((p) => H - P - ((p.value - minV) / range) * (H - P * 2));
   const d = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
@@ -44,33 +48,12 @@ function Sparkline({ points, color }: { points: MetricPoint[]; color: string }) 
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 
-function TrendBadge({ row }: { row: MetricRow }) {
-  if (!row.trend || row.trend === "stable" || !row.trendLabel) {
-    return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">—</span>;
-  }
-  const isImproving = row.trend === "improving";
-  const bg = isImproving ? "#DCFCE7" : "#FEE2E2";
-  const color = isImproving ? "#16A34A" : "#DC2626";
-  const arrow = isImproving
-    ? (row.higherIsBetter ? "↑" : "↓")
-    : (row.higherIsBetter ? "↓" : "↑");
-  return (
-    <span
-      className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-      style={{ background: bg, color }}
-    >
-      {arrow} {row.trendLabel}
-    </span>
-  );
-}
-
 function MetricRowItem({ row }: { row: MetricRow }) {
-  const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#EA580C" : "#94A3B8";
+  const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#EA580C" : "#B4B2A9";
 
   const isSymptom = row.unit === "/10";
   const sev = isSymptom && row.latestValue !== null ? severityLevel(row.latestValue) : null;
 
-  // For symptoms, show the severity label as primary text (not raw number)
   const primaryText = sev ? sev.label : (row.latestValue !== null ? formatValue(row.latestValue, row.unit) : "—");
   const subLabel = row.unit === "days" ? "lifestyle"
     : row.unit === "%" ? "adherence"
@@ -78,35 +61,41 @@ function MetricRowItem({ row }: { row: MetricRow }) {
     : row.unit === "oz" ? "hydration"
     : "";
 
+  const hasTrend = row.trend && row.trend !== "stable" && row.trendLabel;
+  const isImproving = row.trend === "improving";
+  const deltaArrow = hasTrend
+    ? (isImproving ? (row.higherIsBetter ? "↑" : "↓") : (row.higherIsBetter ? "↓" : "↑"))
+    : null;
+  const deltaColor = hasTrend ? (isImproving ? "#16A34A" : "#EA580C") : "#B4B2A9";
+
   return (
     <Link
       href={`/insights/${row.key}`}
-      className="flex items-center gap-3 px-5 py-4 transition-colors active:bg-slate-50"
-      style={{ borderBottom: "1px solid #F1F5F9" }}
+      className="flex items-center gap-3 px-5 py-3.5 transition-colors active:bg-slate-50"
+      style={{ borderBottom: "0.5px solid #F1F5F9" }}
     >
-      {/* Severity dot for symptoms */}
+      {/* Severity dot */}
       {sev && (
-        <div
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ background: sev.color }}
-        />
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sev.color }} />
       )}
 
       {/* Name */}
       <div className="flex-1 min-w-0">
         <p className="text-base font-semibold text-navy truncate">{row.label}</p>
         {subLabel && (
-          <p className="text-sm mt-0.5 font-medium text-slate-400">{subLabel}</p>
+          <p className="text-xs mt-0.5 font-medium text-slate-400">{subLabel}</p>
         )}
       </div>
 
-      {/* Sparkline */}
+      {/* Sparkline — 48×24, clean stroke only */}
       <Sparkline points={row.points7d} color={sparkColor} />
 
-      {/* Value + trend badge */}
-      <div className="text-right flex-shrink-0 min-w-[80px] flex flex-col items-end gap-1">
-        <p className="text-base font-bold" style={{ color: sev ? sev.color : "#1a2420" }}>{primaryText}</p>
-        <TrendBadge row={row} />
+      {/* Severity + delta stacked */}
+      <div className="text-right flex-shrink-0 min-w-[68px] flex flex-col items-end gap-0.5">
+        <p className="text-sm font-bold" style={{ color: sev ? sev.color : "#1a2420" }}>{primaryText}</p>
+        <p className="font-semibold" style={{ fontSize: 11, color: deltaColor }}>
+          {hasTrend ? `${deltaArrow} ${row.trendLabel}` : "—"}
+        </p>
       </div>
 
       <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#CBD5E1" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
