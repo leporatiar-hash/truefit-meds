@@ -22,7 +22,7 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite="none",
         max_age=86400,
     )
 
@@ -64,7 +64,7 @@ def login(credentials: schemas.UserLogin, response: Response, db: Session = Depe
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key="access_token", httponly=True, secure=True, samesite="lax")
+    response.delete_cookie(key="access_token", httponly=True, secure=True, samesite="none")
     return {"message": "Logged out"}
 
 
