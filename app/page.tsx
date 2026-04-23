@@ -33,7 +33,7 @@ const C = {
   rule:      "#d4e0d7",
 };
 
-const SITE_URL = "https://usewitnes.com";
+const SITE_URL = "https://advocatetrack.com";
 
 export default function LandingPage() {
   const [copied, setCopied] = useState(false);
