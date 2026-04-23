@@ -38,7 +38,7 @@ app = FastAPI(title="TrueFit Meds API", version="1.0.0")
 # ALLOWED_ORIGINS: comma-separated explicit origins
 _origins_env = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,https://truefit-meds.vercel.app",
+    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,https://truefit-meds.vercel.app,capacitor://localhost",
 )
 allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 

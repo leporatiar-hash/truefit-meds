@@ -41,7 +41,7 @@ const MODULE_OPTIONS = [
 ];
 
 export default function OnboardingPage() {
-  const { user, isLoading, login, token } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [submitting, setSubmitting] = useState(false);
@@ -108,7 +108,7 @@ export default function OnboardingPage() {
         medications_daily: medicationsDaily ?? false,
         good_day: goodDay || null,
       }) as User;
-      if (token) login(token, updatedUser);
+      login(updatedUser);
 
       // Also keep patient.dashboard_config in sync
       await api.generateConfig(patientId, {
@@ -132,7 +132,7 @@ export default function OnboardingPage() {
       for (const med of validMeds) {
         await api.addMedication(patientId, med);
       }
-      toast.success("All set! Welcome to Witness.");
+      toast.success("All set! Welcome to Advocate.");
       router.push("/dashboard");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to save medications");

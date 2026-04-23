@@ -38,8 +38,8 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await api.register({ name, email, password, role: "caregiver" }) as { access_token: string; user: User };
-      login(res.access_token, res.user);
+      const res = await api.register({ name, email, password, role: "caregiver" }) as { user: User };
+      login(res.user);
       toast.success(`Welcome, ${res.user.name}!`);
       router.push("/onboarding");
     } catch (err: unknown) {
@@ -62,9 +62,9 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <Image src="/witness-icon.png" alt="Witness" width={56} height={56} className="mx-auto mb-4 rounded-2xl" style={{ boxShadow: "0 2px 12px rgba(45,79,56,0.10)" }} />
+          <Image src="/advocate-icon.png" alt="Advocate" width={56} height={56} unoptimized className="mx-auto mb-4 rounded-2xl" style={{ boxShadow: "0 2px 12px rgba(45,79,56,0.10)" }} />
           <h1 style={{ fontFamily: "var(--font-lora), serif", fontStyle: "italic", fontWeight: 500, fontSize: "1.75rem", color: C.forest, letterSpacing: "-0.01em" }}>
-            Witness
+            Advocate
           </h1>
           <p style={{ color: C.inkSoft, fontSize: "0.9rem", marginTop: 4 }}>Free for caregivers</p>
         </div>

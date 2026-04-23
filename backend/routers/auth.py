@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime, timedelta
 
 import resend
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -16,8 +16,19 @@ router = APIRouter()
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 
 
-@router.post("/register", response_model=schemas.Token)
-def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def _set_auth_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=86400,
+    )
+
+
+@router.post("/register", response_model=schemas.AuthResponse)
+def register(user_data: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -33,11 +44,12 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
 
     token = create_access_token({"sub": user.email})
-    return {"access_token": token, "token_type": "bearer", "user": user}
+    _set_auth_cookie(response, token)
+    return {"user": user}
 
 
-@router.post("/login", response_model=schemas.Token)
-def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+@router.post("/login", response_model=schemas.AuthResponse)
+def login(credentials: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
@@ -46,7 +58,14 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
         )
 
     token = create_access_token({"sub": user.email})
-    return {"access_token": token, "token_type": "bearer", "user": user}
+    _set_auth_cookie(response, token)
+    return {"user": user}
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(key="access_token", httponly=True, secure=True, samesite="lax")
+    return {"message": "Logged out"}
 
 
 @router.get("/me", response_model=schemas.UserResponse)
@@ -83,12 +102,12 @@ def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(g
     resend.Emails.send({
         "from": from_email,
         "to": user.email,
-        "subject": "Reset your Witness password",
+        "subject": "Reset your Advocate password",
         "html": f"""
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
           <h2 style="color: #2d4f38;">Reset your password</h2>
           <p style="color: #1a2420;">Hi {user.name},</p>
-          <p style="color: #6b7d74;">We received a request to reset your Witness password. Click the button below — this link expires in 1 hour.</p>
+          <p style="color: #6b7d74;">We received a request to reset your Advocate password. Click the button below — this link expires in 1 hour.</p>
           <a href="{reset_link}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#4a7c59;color:#fff;border-radius:50px;text-decoration:none;font-weight:600;">
             Reset password
           </a>

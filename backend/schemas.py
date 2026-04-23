@@ -40,6 +40,10 @@ class Token(BaseModel):
     user: UserResponse
 
 
+class AuthResponse(BaseModel):
+    user: UserResponse
+
+
 class UserConfigPatch(BaseModel):
     updates: Dict[str, Any]
 

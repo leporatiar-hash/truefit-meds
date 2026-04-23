@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { api } from "../lib/api";
 import { User } from "../lib/types";
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
   isLoading: boolean;
 }
@@ -16,35 +16,32 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
-    if (savedToken && savedUser) {
+    if (savedUser) {
       try {
-        setToken(savedToken);
         setUser(JSON.parse(savedUser));
       } catch {
-        localStorage.removeItem("token");
         localStorage.removeItem("user");
       }
     }
     setIsLoading(false);
   }, []);
 
-  const login = (tok: string, u: User) => {
-    setToken(tok);
+  const login = (u: User) => {
     setUser(u);
-    localStorage.setItem("token", tok);
     localStorage.setItem("user", JSON.stringify(u));
   };
 
-  const logout = () => {
-    setToken(null);
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Continue with local logout even if the server call fails
+    }
     setUser(null);
-    localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
 
@@ -54,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -67,7 +67,7 @@ export default function LandingPage() {
   function handleShare() {
     if (navigator.share) {
       navigator.share({
-        title: "Witness — Care, Documented",
+        title: "Advocate — Care, Documented",
         text: "A free tool that turns daily caregiver notes into doctor-ready summaries.",
         url: SITE_URL,
       });
@@ -130,7 +130,7 @@ export default function LandingPage() {
       {/* ── NAV ── */}
       <nav className="lp-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 48px", height: 64, background: "rgba(250,249,246,0.88)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.rule}` }}>
         <a href="#" style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.2rem", fontWeight: 500, color: C.forest, letterSpacing: "0.02em", textDecoration: "none" }}>
-          Witness
+          Advocate
         </a>
         <ul className="lp-nav-links">
           <li><a href="#how" className="lp-nav-link">How it works</a></li>
@@ -160,7 +160,7 @@ export default function LandingPage() {
         </p>
 
         <p style={{ fontSize: "1.05rem", color: C.inkMid, maxWidth: 540, lineHeight: 1.7, marginBottom: 48, animation: "fadeUp 0.8s 0.65s both" }}>
-          Witness turns daily caregiver observations into structured, doctor-ready health summaries — so nothing important gets lost between appointments.
+          Advocate turns daily caregiver observations into structured, doctor-ready health summaries — so nothing important gets lost between appointments.
         </p>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", animation: "fadeUp 0.8s 0.8s both" }}>
@@ -209,13 +209,13 @@ export default function LandingPage() {
             Sixty seconds a day.<br />Everything the doctor needs.
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            Witness is designed for the caregiver who doesn&apos;t have time for another app — just a fast, focused daily check-in that builds into a complete health picture.
+            Advocate is designed for the caregiver who doesn&apos;t have time for another app — just a fast, focused daily check-in that builds into a complete health picture.
           </p>
         </div>
         <div className="lp-steps" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
           {[
             { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple 60-second daily check-in built for non-technical caregivers." },
-            { num: "02", title: "Patterns emerge", body: "Witness surfaces trends across your entries — flagging changes in symptom frequency, medication adherence, and wellbeing over time." },
+            { num: "02", title: "Patterns emerge", body: "Advocate surfaces trends across your entries — flagging changes in symptom frequency, medication adherence, and wellbeing over time." },
             { num: "03", title: "Walk in prepared", body: "Before each appointment, generate a clean clinical summary organized by system — the kind of structured input that changes what a doctor can do in 15 minutes." },
           ].map((step) => (
             <div key={step.num} className="lp-step lp-reveal">
@@ -247,7 +247,7 @@ export default function LandingPage() {
               </div>
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.white, marginBottom: 10 }}>Doctor-ready clinical summaries</div>
               <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
-                Witness takes everything you&apos;ve logged and generates a structured summary organized by symptom category, medication history, and trend analysis — formatted the way clinicians actually read patient information.
+                Advocate takes everything you&apos;ve logged and generates a structured summary organized by symptom category, medication history, and trend analysis — formatted the way clinicians actually read patient information.
               </div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 28, border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -267,9 +267,9 @@ export default function LandingPage() {
           </div>
           {[
             { title: "60-second daily check-in", body: "No long forms. No medical jargon. Just a fast, focused daily entry that a non-technical caregiver can complete in under a minute." },
-            { title: "Trend detection", body: "Witness automatically surfaces changes in symptom patterns, medication adherence, and wellbeing — things that are invisible day-to-day but obvious over time." },
+            { title: "Trend detection", body: "Advocate automatically surfaces changes in symptom patterns, medication adherence, and wellbeing — things that are invisible day-to-day but obvious over time." },
             { title: "Medication tracking", body: "Log medications with dosage, timing, and adherence. Build a complete medication history that travels with you to every appointment." },
-            { title: "Private by default", body: "Your loved one's health data stays yours. Witness is built with privacy as a foundation — not an afterthought." },
+            { title: "Private by default", body: "Your loved one's health data stays yours. Advocate is built with privacy as a foundation — not an afterthought." },
           ].map((f) => (
             <div key={f.title} className="lp-feature-card lp-reveal">
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.forest, marginBottom: 10 }}>{f.title}</div>
@@ -291,7 +291,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ maxWidth: 540, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
           <p>My mother has been caring for my brother since he was eighteen. He was diagnosed with schizophrenia, and from that day forward, she became his primary advocate — mostly on her own, for years.</p>
           <p style={{ marginTop: 16 }}>I watched her carry everything in her head. Every symptom shift. Every medication adjustment. Every pattern she noticed but couldn&apos;t quite articulate when the appointment finally came. The doctor had fifteen minutes. She had years of observations and nowhere to put them.</p>
-          <p style={{ marginTop: 16 }}>So I built Witness for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
+          <p style={{ marginTop: 16 }}>So I built Advocate for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
           <p style={{ marginTop: 16 }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
         </div>
       </section>
@@ -310,7 +310,7 @@ export default function LandingPage() {
           {[
             { title: "Parents & family members", body: "Caring for a loved one with a chronic illness or mental health condition — navigating complex medication regimens, unpredictable symptoms, and appointments that never feel long enough." },
             { title: "Long-term caregivers", body: "People who have been doing this for years, largely alone, with deep knowledge of their loved one that rarely makes it into the medical record." },
-            { title: "Anyone who advocates", body: "If you are the person who tracks, remembers, notices, and speaks up — Witness is built for you." },
+            { title: "Anyone who advocates", body: "If you are the person who tracks, remembers, notices, and speaks up — Advocate is built for you." },
           ].map((card) => (
             <div key={card.title} className="lp-reveal" style={{ background: C.sageMist, borderRadius: 16, padding: "36px 28px", border: `1px solid ${C.rule}` }}>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.05rem", fontWeight: 500, color: C.forest, marginBottom: 10 }}>{card.title}</h3>
@@ -327,7 +327,7 @@ export default function LandingPage() {
             Know a caregiver<br />who needs this?
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            Witness is free. If someone in your life is carrying another person&apos;s health — a parent, a sibling, a partner — send them this.
+            Advocate is free. If someone in your life is carrying another person&apos;s health — a parent, a sibling, a partner — send them this.
           </p>
         </div>
 
@@ -336,7 +336,7 @@ export default function LandingPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
             </svg>
-            Send Witness
+            Send Advocate
           </button>
           <button onClick={handleCopy} className="lp-copy-btn">
             {copied ? (
@@ -370,8 +370,8 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className="lp-footer" style={{ padding: "40px 48px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${C.rule}` }}>
-        <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1rem", fontWeight: 500, color: C.forest }}>Witness</div>
-        <div style={{ fontSize: "0.83rem", color: C.inkSoft }}>© 2026 Witness. Built in Charleston, SC.</div>
+        <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1rem", fontWeight: 500, color: C.forest }}>Advocate</div>
+        <div style={{ fontSize: "0.83rem", color: C.inkSoft }}>© 2026 Advocate. Built in Charleston, SC.</div>
       </footer>
     </div>
   );

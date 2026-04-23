@@ -26,8 +26,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.login({ email, password }) as { access_token: string; user: User };
-      login(res.access_token, res.user);
+      const res = await api.login({ email, password }) as { user: User };
+      login(res.user);
       router.push("/dashboard");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Login failed");
@@ -49,9 +49,9 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <Image src="/witness-icon.png" alt="Witness" width={56} height={56} className="mx-auto mb-4 rounded-2xl" style={{ boxShadow: "0 2px 12px rgba(45,79,56,0.10)" }} />
+          <Image src="/advocate-icon.png" alt="Advocate" width={56} height={56} unoptimized className="mx-auto mb-4 rounded-2xl" style={{ boxShadow: "0 2px 12px rgba(45,79,56,0.10)" }} />
           <h1 style={{ fontFamily: "var(--font-lora), serif", fontStyle: "italic", fontWeight: 500, fontSize: "1.75rem", color: C.forest, letterSpacing: "-0.01em" }}>
-            Witness
+            Advocate
           </h1>
           <p style={{ color: C.inkSoft, fontSize: "0.9rem", marginTop: 4 }}>Welcome back</p>
         </div>

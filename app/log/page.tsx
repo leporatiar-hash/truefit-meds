@@ -147,10 +147,6 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
-// ── Local storage ─────────────────────────────────────────────────────────────
-
-const LS_KEY = "truefit_log_draft";
-
 interface Episode {
   occurred: boolean;
   time: string;
@@ -292,23 +288,6 @@ export default function LogPage() {
       setPatient(p);
 
       const today = localDateStr();
-      const savedDraft = localStorage.getItem(LS_KEY);
-      if (savedDraft) {
-        const parsed: LogDraft = JSON.parse(savedDraft);
-        if (parsed.date === today && parsed.patientId === p.id) {
-          if (!parsed.episode) parsed.episode = { occurred: false, time: "", description: "" };
-          if (!parsed.vitals) parsed.vitals = emptyVitals();
-          else {
-            // Ensure substances fields exist for older drafts
-            if (parsed.vitals.cigarettes === undefined) parsed.vitals.cigarettes = "";
-            if (parsed.vitals.alcohol === undefined) parsed.vitals.alcohol = false;
-            if (parsed.vitals.alcohol_drinks === undefined) parsed.vitals.alcohol_drinks = "";
-          }
-          if (parsed.hydration === undefined) parsed.hydration = null;
-          if (!parsed.lifestyle) parsed.lifestyle = { smoked: false, alcohol: false, stressed: false, ate_well: false };
-          setDraft(parsed); setLoading(false); return;
-        }
-      }
 
       const todayLog = await api.getTodayLog(p.id) as Record<string, unknown> | null;
       if (todayLog) {
@@ -352,17 +331,12 @@ export default function LogPage() {
     if (!isLoading && user) loadPatient();
   }, [user, isLoading, loadPatient, router]);
 
-  useEffect(() => {
-    if (draft) localStorage.setItem(LS_KEY, JSON.stringify(draft));
-  }, [draft]);
-
   function update(patch: Partial<LogDraft>) {
     setDraft(d => d ? { ...d, ...patch } : d);
   }
 
   function startFresh() {
     if (!patient) return;
-    localStorage.removeItem(LS_KEY);
     setDraft(defaultDraft(patient.id, patient.medications));
     setLoadedFromServer(false);
   }
@@ -543,7 +517,6 @@ export default function LogPage() {
           : null,
         photo: draft.photo || null,
       });
-      localStorage.removeItem(LS_KEY);
       setSaved(true);
       setTimeout(() => { router.push("/dashboard"); }, 800);
     } catch (err: unknown) {

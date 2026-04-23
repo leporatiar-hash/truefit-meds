@@ -265,12 +265,12 @@ export default function DashboardPage() {
       const minute = now.getMinutes();
       if ((hour === 19 || hour === 20) && minute === 0) {
         const todayStr = now.toISOString().split("T")[0];
-        const key = `witness_reminder_${todayStr}_h${hour}`;
+        const key = `advocate_reminder_${todayStr}_h${hour}`;
         if (localStorage.getItem(key)) return; // already fired today
         localStorage.setItem(key, "1");
 
         if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Witness — Evening reminder", {
+          new Notification("Advocate — Evening reminder", {
             body: "Don't forget to complete today's log.",
             icon: "/favicon.ico",
           });

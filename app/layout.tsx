@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./components/AuthProvider";
-import { UpdateBanner } from "./components/UpdateBanner";
 import { Toaster } from "react-hot-toast";
 
 const geist = Geist({
@@ -10,17 +9,25 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
-  title: "Witness",
+  title: "Advocate",
   description: "Caregiver health tracking & doctor-ready summaries",
   icons: {
-    icon: "/witness-icon.png",
+    icon: "/advocate-icon.png",
     apple: "/apple-icon.png",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Witness",
+    title: "Advocate",
   },
 };
 
@@ -31,7 +38,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.variable} antialiased`}>
         <AuthProvider>
-          <UpdateBanner />
           {children}
           <Toaster
             position="top-center"

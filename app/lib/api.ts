@@ -30,22 +30,16 @@ function normalizeApiBase(rawValue: string | undefined): string {
 
 const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
-}
-
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
+    credentials: "include",
     // Never serve stale API data from the browser cache
     cache: "no-store",
   });
@@ -67,6 +61,8 @@ export const api = {
     request("/auth/register", { method: "POST", body: JSON.stringify(data) }),
   login: (data: object) =>
     request("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+  logout: () =>
+    request("/auth/logout", { method: "POST" }),
   me: () => request("/auth/me"),
 
   // Patients
