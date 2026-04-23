@@ -45,7 +45,7 @@ def register(user_data: schemas.UserCreate, response: Response, db: Session = De
 
     token = create_access_token({"sub": user.email})
     _set_auth_cookie(response, token)
-    return {"user": user}
+    return {"user": user, "access_token": token, "token_type": "bearer"}
 
 
 @router.post("/login", response_model=schemas.AuthResponse)
@@ -59,7 +59,7 @@ def login(credentials: schemas.UserLogin, response: Response, db: Session = Depe
 
     token = create_access_token({"sub": user.email})
     _set_auth_cookie(response, token)
-    return {"user": user}
+    return {"user": user, "access_token": token, "token_type": "bearer"}
 
 
 @router.post("/logout")

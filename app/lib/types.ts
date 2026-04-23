@@ -7,6 +7,12 @@ export interface User {
   user_config: DashboardConfig | null;
 }
 
+export interface AuthResponse {
+  user: User;
+  access_token: string;
+  token_type: "bearer";
+}
+
 export interface Medication {
   id: number;
   patient_id: number;
