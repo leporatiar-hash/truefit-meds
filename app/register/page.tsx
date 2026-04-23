@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { Lora, DM_Sans } from "next/font/google";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
-import type { User } from "../lib/types";
+import type { AuthResponse } from "../lib/types";
 
 const lora = Lora({ subsets: ["latin"], variable: "--font-lora", weight: ["400", "500", "600"], style: ["normal", "italic"], display: "swap" });
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", weight: ["300", "400", "500"], display: "swap" });
@@ -38,8 +38,8 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await api.register({ name, email, password, role: "caregiver" }) as { user: User };
-      login(res.user);
+      const res = await api.register({ name, email, password, role: "caregiver" }) as AuthResponse;
+      login(res.user, res.access_token);
       toast.success(`Welcome, ${res.user.name}!`);
       router.push("/onboarding");
     } catch (err: unknown) {

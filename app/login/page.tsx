@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { Lora, DM_Sans } from "next/font/google";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
-import type { User } from "../lib/types";
+import type { AuthResponse } from "../lib/types";
 
 const lora = Lora({ subsets: ["latin"], variable: "--font-lora", weight: ["400", "500", "600"], style: ["normal", "italic"], display: "swap" });
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", weight: ["300", "400", "500"], display: "swap" });
@@ -26,8 +26,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.login({ email, password }) as { user: User };
-      login(res.user);
+      const res = await api.login({ email, password }) as AuthResponse;
+      login(res.user, res.access_token);
       router.push("/dashboard");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Login failed");
