@@ -121,7 +121,7 @@ def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(g
     db.commit()
 
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    reset_link = f"{frontend_url}/reset-password?token={token}"
+    reset_link = f"{frontend_url}/reset-password/?token={token}"
     from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     try:
