@@ -29,11 +29,16 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (!agreedToTerms) {
+      toast.error("Please agree to the Terms of Service to continue");
       return;
     }
     setLoading(true);
@@ -109,10 +114,26 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* ToS checkbox */}
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, accentColor: C.sage, flexShrink: 0, cursor: "pointer" }}
+              />
+              <span style={{ fontSize: "0.83rem", color: C.inkSoft, lineHeight: 1.5 }}>
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" style={{ color: C.sage, fontWeight: 500, textDecoration: "none" }}>Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" style={{ color: C.sage, fontWeight: 500, textDecoration: "none" }}>Privacy Policy</Link>
+              </span>
+            </label>
+
             <button
               type="submit"
-              disabled={loading}
-              style={{ marginTop: 4, width: "100%", padding: "0.85rem", borderRadius: 50, border: "none", background: loading ? "#6a9f78" : C.sage, color: C.white, fontWeight: 600, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", transition: "background 0.2s", fontFamily: "var(--font-dm-sans), sans-serif" }}
+              disabled={loading || !agreedToTerms}
+              style={{ marginTop: 4, width: "100%", padding: "0.85rem", borderRadius: 50, border: "none", background: loading || !agreedToTerms ? "#6a9f78" : C.sage, color: C.white, fontWeight: 600, fontSize: "0.95rem", cursor: loading || !agreedToTerms ? "not-allowed" : "pointer", transition: "background 0.2s", fontFamily: "var(--font-dm-sans), sans-serif" }}
             >
               {loading ? "Creating account…" : "Get started free"}
             </button>
