@@ -1,5 +1,8 @@
+import logging
 import os
 import secrets
+import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import resend
@@ -12,9 +15,27 @@ import models
 import schemas
 from auth import get_password_hash, verify_password, create_access_token, get_current_user
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
+
+# Rate limiting: max 3 reset attempts per email per 15 minutes (in-memory, resets on restart)
+_reset_attempts: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT_WINDOW = 900
+_RATE_LIMIT_MAX = 3
+
+
+def _rate_limit_ok(email: str) -> bool:
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW
+    recent = [t for t in _reset_attempts[email] if t > cutoff]
+    _reset_attempts[email] = recent
+    if len(recent) >= _RATE_LIMIT_MAX:
+        return False
+    recent.append(now)
+    return True
 
 
 def _set_auth_cookie(response: Response, token: str) -> None:
@@ -76,8 +97,11 @@ def me(current_user: models.User = Depends(get_current_user)):
 
 @router.post("/forgot-password")
 def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # Rate limit silently — always return 200 to avoid leaking info
+    if not _rate_limit_ok(body.email.lower()):
+        return {"message": "If that email is registered, a reset link has been sent."}
+
     user = db.query(models.User).filter(models.User.email == body.email).first()
-    # Always return 200 to avoid leaking which emails are registered
     if not user:
         return {"message": "If that email is registered, a reset link has been sent."}
 
@@ -100,22 +124,25 @@ def forgot_password(body: schemas.ForgotPasswordRequest, db: Session = Depends(g
     reset_link = f"{frontend_url}/reset-password?token={token}"
     from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
-    resend.Emails.send({
-        "from": from_email,
-        "to": user.email,
-        "subject": "Reset your Advocate password",
-        "html": f"""
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
-          <h2 style="color: #2d4f38;">Reset your password</h2>
-          <p style="color: #1a2420;">Hi {user.name},</p>
-          <p style="color: #6b7d74;">We received a request to reset your Advocate password. Click the button below — this link expires in 1 hour.</p>
-          <a href="{reset_link}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#4a7c59;color:#fff;border-radius:50px;text-decoration:none;font-weight:600;">
-            Reset password
-          </a>
-          <p style="color: #6b7d74; font-size: 0.85rem;">If you didn't request this, you can safely ignore this email.</p>
-        </div>
-        """,
-    })
+    try:
+        resend.Emails.send({
+            "from": from_email,
+            "to": user.email,
+            "subject": "Reset your Advocate password",
+            "html": f"""
+            <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+              <h2 style="color: #2d4f38;">Reset your password</h2>
+              <p style="color: #1a2420;">Hi {user.name},</p>
+              <p style="color: #6b7d74;">We received a request to reset your Advocate password. Click the button below — this link expires in 1 hour.</p>
+              <a href="{reset_link}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#4a7c59;color:#fff;border-radius:50px;text-decoration:none;font-weight:600;">
+                Reset password
+              </a>
+              <p style="color: #6b7d74; font-size: 0.85rem;">If you didn't request this, you can safely ignore this email.</p>
+            </div>
+            """,
+        })
+    except Exception:
+        logger.error("Failed to send password reset email to %s", user.email, exc_info=True)
 
     return {"message": "If that email is registered, a reset link has been sent."}
 
