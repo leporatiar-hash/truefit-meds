@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password/",
+      "permanent": false
+    }
+  ]
+}
