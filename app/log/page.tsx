@@ -136,7 +136,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <button
       type="button" onClick={() => onChange(!value)}
-      className="relative w-14 h-7 rounded-full transition-all flex-shrink-0"
+      className="relative w-14 h-7 rounded-full transition-colors flex-shrink-0"
       style={{ background: value ? "#4a7c59" : "#CBD5E1" }}
     >
       <span
