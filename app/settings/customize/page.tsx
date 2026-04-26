@@ -38,7 +38,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <button
       type="button"
       onClick={() => onChange(!value)}
-      className="relative w-14 h-7 rounded-full transition-all flex-shrink-0"
+      className="relative w-14 h-7 rounded-full transition-colors flex-shrink-0"
       style={{ background: value ? "#4a7c59" : "#CBD5E1" }}
     >
       <span
@@ -237,8 +237,8 @@ export default function CustomizePage() {
     const next = [...symptoms, n];
     setSymptoms(next);
     try {
-      const updated = await api.updateUserConfig({ symptoms: next }) as User;
-      updateUser(updated);
+      await api.updateUserConfig({ symptoms: next });
+      if (user) updateUser({ ...user, user_config: { ...(user.user_config || {}), symptoms: next } as typeof user.user_config });
       toast.success(`${n} added`);
     } catch {
       setSymptoms(prev => prev.filter(s => s !== n));
@@ -250,8 +250,8 @@ export default function CustomizePage() {
     const next = symptoms.filter(s => s !== name);
     setSymptoms(next);
     try {
-      const updated = await api.updateUserConfig({ symptoms: next }) as User;
-      updateUser(updated);
+      await api.updateUserConfig({ symptoms: next });
+      if (user) updateUser({ ...user, user_config: { ...(user.user_config || {}), symptoms: next } as typeof user.user_config });
     } catch {
       setSymptoms(prev => [...prev, name]);
       toast.error("Failed to remove symptom");
