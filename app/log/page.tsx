@@ -57,12 +57,13 @@ function AccordionSection({
       >
         <div className="flex-1 min-w-0 pr-3">
           <p className="text-lg font-bold" style={{ color: headingColor }}>{title}</p>
-          {!isOpen && (
-            <p className="text-sm mt-0.5 truncate" style={{ color: headingColor + "99" }}>{summaryLine}</p>
-          )}
+          <p
+            className="text-sm mt-0.5 truncate transition-opacity duration-200"
+            style={{ color: headingColor + "99", opacity: isOpen ? 0 : 1 }}
+          >{summaryLine}</p>
         </div>
         <svg
-          className="w-5 h-5 flex-shrink-0 transition-transform"
+          className="w-5 h-5 flex-shrink-0 transition-transform duration-200"
           style={{ color: headingColor, transform: isOpen ? "rotate(180deg)" : "none" }}
           fill="none" stroke="currentColor" viewBox="0 0 24 24"
         >
@@ -70,11 +71,20 @@ function AccordionSection({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="px-5 pb-5 space-y-4" style={{ background: bgColor }}>
-          {children}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateRows: isOpen ? "1fr" : "0fr",
+          transition: "grid-template-rows 0.25s ease",
+          background: bgColor,
+        }}
+      >
+        <div style={{ overflow: "hidden" }}>
+          <div className="px-5 pb-5 space-y-4">
+            {children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
