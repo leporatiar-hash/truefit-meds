@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import resend
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from database import get_db
 import models
@@ -149,6 +150,7 @@ def update_config(
     existing = dict(current_user.user_config or {})
     existing.update(patch.updates)
     current_user.user_config = existing
+    flag_modified(current_user, "user_config")
     db.commit()
     db.refresh(current_user)
     return current_user

@@ -231,11 +231,32 @@ export default function CustomizePage() {
 
   // ── Symptoms ──────────────────────────────────────────────────────────────
 
-  function addSymptom(name: string) {
+  async function handleAddSymptom(name: string) {
     const n = name.charAt(0).toUpperCase() + name.slice(1);
-    if (!symptoms.includes(n)) setSymptoms(prev => [...prev, n]);
+    if (symptoms.includes(n)) return;
+    const next = [...symptoms, n];
+    setSymptoms(next);
+    try {
+      const updated = await api.updateUserConfig({ symptoms: next }) as User;
+      updateUser(updated);
+      toast.success(`${n} added`);
+    } catch {
+      setSymptoms(prev => prev.filter(s => s !== n));
+      toast.error("Failed to save symptom");
+    }
   }
-  function removeSymptom(name: string) { setSymptoms(prev => prev.filter(s => s !== name)); }
+
+  async function handleRemoveSymptom(name: string) {
+    const next = symptoms.filter(s => s !== name);
+    setSymptoms(next);
+    try {
+      const updated = await api.updateUserConfig({ symptoms: next }) as User;
+      updateUser(updated);
+    } catch {
+      setSymptoms(prev => [...prev, name]);
+      toast.error("Failed to remove symptom");
+    }
+  }
 
   // ── Tracking ──────────────────────────────────────────────────────────────
 
@@ -389,12 +410,12 @@ export default function CustomizePage() {
           {symptoms.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {symptoms.map(s => (
-                <Chip key={s} label={s} onRemove={() => removeSymptom(s)} color="green" />
+                <Chip key={s} label={s} onRemove={() => handleRemoveSymptom(s)} color="green" />
               ))}
             </div>
           )}
           {symptoms.length === 0 && <p className="text-sm text-slate-400">No symptoms added yet.</p>}
-          <AddInput placeholder="e.g. Spasticity, Tremor, Vision Issues…" onAdd={addSymptom} />
+          <AddInput placeholder="e.g. Spasticity, Tremor, Vision Issues…" onAdd={handleAddSymptom} />
         </Section>
 
         {/* ── Tracking ── */}
