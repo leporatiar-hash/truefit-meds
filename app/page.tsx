@@ -158,11 +158,11 @@ export default function LandingPage() {
         </h1>
 
         <p style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.1rem, 2vw, 1.35rem)", fontStyle: "italic", color: C.inkSoft, marginBottom: 40, animation: "fadeUp 0.8s 0.5s both" }}>
-          Care, documented.
+          You notice everything. Now there&apos;s a place to put it.
         </p>
 
         <p style={{ fontSize: "1.05rem", color: C.inkMid, maxWidth: 540, lineHeight: 1.7, marginBottom: 48, animation: "fadeUp 0.8s 0.65s both" }}>
-          Advocate turns daily caregiver observations into structured, doctor-ready health summaries — so nothing important gets lost between appointments.
+          You notice the small changes: the missed dose, the rough night, the mood that&apos;s been off for two weeks. This is where those observations go, and how they get in front of the doctor.
         </p>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", animation: "fadeUp 0.8s 0.8s both" }}>
@@ -182,10 +182,10 @@ export default function LandingPage() {
         <div className="lp-reveal">
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 20 }}>The problem</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest, marginBottom: 24 }}>
-            Critical details disappear between visits
+            The things you notice disappear between visits
           </h2>
           <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 16 }}>
-            Caregivers spend hours observing their loved ones — tracking symptoms, medications, mood shifts, and patterns. But when the appointment arrives, that knowledge lives in scattered notes, memory, and text threads.
+            Caregivers spend hours observing their loved ones, tracking symptoms, medications, mood shifts, and patterns. When the appointment finally arrives, that knowledge lives in scattered notes, old texts, and memory.
           </p>
           <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75 }}>
             Doctors make decisions in 15-minute windows. Without structured input, the most important observations never make it into the chart.
@@ -208,17 +208,17 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 72px" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>How it works</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest, marginBottom: 16 }}>
-            Sixty seconds a day.<br />Everything the doctor needs.
+            A 60-second daily log<br />your doctor can actually use.
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            Advocate is designed for the caregiver who doesn&apos;t have time for another app — just a fast, focused daily check-in that builds into a complete health picture.
+            It&apos;s not another app to manage. A fast daily check-in that builds into a complete health picture over time.
           </p>
         </div>
         <div className="lp-steps" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
           {[
             { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple 60-second daily check-in built for non-technical caregivers." },
-            { num: "02", title: "Patterns emerge", body: "Advocate surfaces trends across your entries — flagging changes in symptom frequency, medication adherence, and wellbeing over time." },
-            { num: "03", title: "Walk in prepared", body: "Before each appointment, generate a clean clinical summary organized by system — the kind of structured input that changes what a doctor can do in 15 minutes." },
+            { num: "02", title: "Patterns emerge", body: "Trends surface across your entries over time. Changes in symptom frequency, medication adherence, and wellbeing become visible week by week." },
+            { num: "03", title: "Ready for the appointment", body: "Before each appointment, generate a clinical summary organized by symptom and system. It's the kind of input that changes what a doctor can do in a 15-minute visit." },
           ].map((step) => (
             <div key={step.num} className="lp-step lp-reveal">
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "2.5rem", fontWeight: 400, color: C.sagePale, lineHeight: 1, marginBottom: 20 }}>{step.num}</div>
@@ -239,7 +239,7 @@ export default function LandingPage() {
             Everything in one place.<br />Ready before every appointment.
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            From the 60-second daily check-in to the AI summary you walk in with — here&apos;s how Advocate works.
+            A daily check-in and a summary before every appointment. Here&apos;s what it looks like in practice.
           </p>
         </div>
 
@@ -248,12 +248,7 @@ export default function LandingPage() {
           {/* Row 1 — Dashboard: image left, text right */}
           <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <div style={{ width: 260, borderRadius: 42, background: "linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 100%)", padding: 10, boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 32px 80px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2)" }}>
-                <div style={{ borderRadius: 33, overflow: "hidden", background: "#111", position: "relative", aspectRatio: "9/19.5" }}>
-                  <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
-                  <div style={{ position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)", width: 96, height: 26, background: "#000", borderRadius: 13, zIndex: 10, pointerEvents: "none" }} />
-                </div>
-              </div>
+              <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
             </div>
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
@@ -264,14 +259,14 @@ export default function LandingPage() {
                 Your daily command center
               </h3>
               <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
-                At a glance, see what&apos;s been logged today, track adherence over time, and access everything before the next appointment — organized around one person.
+                At a glance, see what&apos;s been logged today, track adherence over time, and find everything you need before the next appointment. All of it organized around one person.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
                   "Daily checklist keeps you on track without feeling clinical",
-                  "Adherence percentage built automatically from your logs",
-                  "One tap to generate an AI summary or print a doctor report",
-                  "Streak tracking keeps caregivers consistent over time",
+                  "Your adherence percentage calculates itself from what you log",
+                  "One tap to generate a summary or print a report for the doctor",
+                  "A streak counter that keeps you coming back, even on hard days",
                 ].map((b, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
@@ -292,17 +287,17 @@ export default function LandingPage() {
                 Daily log
               </div>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
-                60 seconds. Everything the doctor needs.
+                It takes about 60 seconds to log a full day.
               </h3>
               <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
-                No medical jargon, no long forms. A fast, structured daily entry any caregiver can complete in under a minute — and that builds into a complete health picture over time.
+                No medical jargon, no long forms. Any caregiver can fill it out in under a minute, and each entry adds to a picture that tells the whole story over time.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  "Tracks medications, symptoms, episodes, vitals, sleep, and hydration",
-                  "Episode logging captures time, duration, and context",
-                  "Previous entry pre-loaded — never starting from scratch",
-                  "Every entry feeds automatically into the AI summary",
+                  "You log medications, symptoms, vitals, sleep, hydration, and any episodes",
+                  "Episode entries include the time, how long it lasted, and what was happening",
+                  "The previous day loads automatically, so you're never starting from scratch",
+                  "Each entry carries forward into the summary you bring to the appointment",
                 ].map((b, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
@@ -312,12 +307,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="showcase-img-mobile-first" style={{ display: "flex", justifyContent: "center" }}>
-              <div style={{ width: 260, borderRadius: 42, background: "linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 100%)", padding: 10, boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 32px 80px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2)" }}>
-                <div style={{ borderRadius: 33, overflow: "hidden", background: "#111", position: "relative", aspectRatio: "9/19.5" }}>
-                  <img src="/Advocate_Daily_log.png" alt="Advocate Daily Log" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
-                  <div style={{ position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)", width: 96, height: 26, background: "#000", borderRadius: 13, zIndex: 10, pointerEvents: "none" }} />
-                </div>
-              </div>
+              <img src="/Advocate_Daily_log.png" alt="Advocate Daily Log" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
             </div>
           </div>
 
@@ -326,23 +316,7 @@ export default function LandingPage() {
           {/* Row 3 — Doctor Summary: image left (laptop frame), text right */}
           <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <div style={{ width: "100%", maxWidth: 480 }}>
-                <div style={{ background: "#ddd", borderRadius: "10px 10px 0 0", padding: "9px 14px 7px", display: "flex", alignItems: "center", gap: 10, border: "1px solid #c4c4c4", borderBottom: "none" }}>
-                  <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#ff5f57", border: "0.5px solid rgba(0,0,0,0.12)" }} />
-                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#febc2e", border: "0.5px solid rgba(0,0,0,0.12)" }} />
-                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28c840", border: "0.5px solid rgba(0,0,0,0.12)" }} />
-                  </div>
-                  <div style={{ flex: 1, background: "#f5f5f5", borderRadius: 5, padding: "3px 10px", fontSize: "0.7rem", color: "#777", textAlign: "center", border: "1px solid #d0d0d0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-                    advocatetrack.com/summary
-                  </div>
-                </div>
-                <div style={{ overflow: "hidden", border: "1px solid #c4c4c4", background: "#fff" }}>
-                  <img src="/AdvocateSummary.png" alt="Advocate Doctor Summary" style={{ width: "100%", display: "block" }} />
-                </div>
-                <div style={{ height: 16, background: "linear-gradient(to bottom, #cacaca, #b8b8b8)", border: "1px solid #b0b0b0", borderTop: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
-                <div style={{ height: 7, background: "linear-gradient(to bottom, #adadad, #999)", borderRadius: "0 0 10px 10px", margin: "0 -18px", boxShadow: "0 4px 10px rgba(0,0,0,0.18)" }} />
-              </div>
+              <img src="/AdvocateSummary.png" alt="Advocate Doctor Summary" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
             </div>
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
@@ -350,17 +324,17 @@ export default function LandingPage() {
                 Doctor-ready summary
               </div>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
-                Walk in prepared.
+                You&apos;ll have something concrete to hand the doctor.
               </h3>
               <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
-                Advocate takes everything you&apos;ve logged and generates a structured clinical summary — medication adherence, symptom patterns, and a numbered list of exactly what to bring up at the appointment.
+                Everything you&apos;ve logged becomes a structured clinical summary before the appointment. Medication adherence, symptom patterns, and a numbered list of what to bring up.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  "Executive summary written for a clinician's 15-minute window",
-                  "Adherence tracked with percentage and trend notes per medication",
-                  "AI-detected patterns across symptoms, sleep, and behavior",
-                  '"Bring Up at the Appointment" — a prioritized agenda, ready to print',
+                  "A brief executive summary written with the doctor's 15-minute window in mind",
+                  "Each medication shows its adherence percentage and any notes on trends",
+                  "Patterns across symptoms, sleep, and behavior get surfaced automatically",
+                  '"Bring Up at the Appointment" is a numbered list you can hand straight to the doctor',
                 ].map((b, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
@@ -381,7 +355,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>Features</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest }}>
-            Built around the caregiver,<br />designed for the doctor.
+            What caregivers need.<br />What doctors can actually use.
           </h2>
         </div>
         <div className="lp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24, marginTop: 64 }}>
@@ -394,7 +368,7 @@ export default function LandingPage() {
               </div>
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.white, marginBottom: 10 }}>Doctor-ready clinical summaries</div>
               <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
-                Advocate takes everything you&apos;ve logged and generates a structured summary organized by symptom category, medication history, and trend analysis — formatted the way clinicians actually read patient information.
+                Everything you&apos;ve logged becomes a structured summary organized by symptom category, medication history, and trend analysis. Formatted the way clinicians actually read patient information.
               </div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 28, border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -414,9 +388,9 @@ export default function LandingPage() {
           </div>
           {[
             { title: "60-second daily check-in", body: "No long forms. No medical jargon. Just a fast, focused daily entry that a non-technical caregiver can complete in under a minute." },
-            { title: "Trend detection", body: "Advocate automatically surfaces changes in symptom patterns, medication adherence, and wellbeing — things that are invisible day-to-day but obvious over time." },
-            { title: "Medication tracking", body: "Log medications with dosage, timing, and adherence. Build a complete medication history that travels with you to every appointment." },
-            { title: "Private by default", body: "Your loved one's health data stays yours. Advocate is built with privacy as a foundation — not an afterthought." },
+            { title: "Trend detection", body: "Changes in symptom patterns, medication adherence, and wellbeing surface automatically. Things that are hard to see day-to-day become clear across weeks." },
+            { title: "Medication tracking", body: "Log each medication with dosage and timing. Every entry builds a history you can bring to any appointment." },
+            { title: "Private by default", body: "Your loved one's health data stays yours. Privacy isn't a feature added on top. It's how the app was built from the start." },
           ].map((f) => (
             <div key={f.title} className="lp-feature-card lp-reveal">
               <div style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.forest, marginBottom: 10 }}>{f.title}</div>
@@ -436,9 +410,9 @@ export default function LandingPage() {
           </blockquote>
         </div>
         <div className="lp-reveal" style={{ maxWidth: 540, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
-          <p>My mother has been caring for my brother since he was eighteen. He was diagnosed with schizophrenia, and from that day forward, she became his primary advocate — mostly on her own, for years.</p>
+          <p>My mother has been caring for my brother since he was eighteen. He was diagnosed with schizophrenia, and from that day forward, she became his primary advocate, mostly on her own, for years.</p>
           <p style={{ marginTop: 16 }}>I watched her carry everything in her head. Every symptom shift. Every medication adjustment. Every pattern she noticed but couldn&apos;t quite articulate when the appointment finally came. The doctor had fifteen minutes. She had years of observations and nowhere to put them.</p>
-          <p style={{ marginTop: 16 }}>So I built Advocate for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
+          <p style={{ marginTop: 16 }}>So I built Advocate for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next. She started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
           <p style={{ marginTop: 16 }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
         </div>
       </section>
@@ -455,9 +429,9 @@ export default function LandingPage() {
         </div>
         <div className="lp-who-cards" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
           {[
-            { title: "Parents & family members", body: "Caring for a loved one with a chronic illness or mental health condition — navigating complex medication regimens, unpredictable symptoms, and appointments that never feel long enough." },
+            { title: "Parents & family members", body: "Caring for a loved one with a chronic illness or mental health condition, navigating medication regimens, unpredictable symptoms, and appointments that never feel long enough." },
             { title: "Long-term caregivers", body: "People who have been doing this for years, largely alone, with deep knowledge of their loved one that rarely makes it into the medical record." },
-            { title: "Anyone who advocates", body: "If you are the person who tracks, remembers, notices, and speaks up — Advocate is built for you." },
+            { title: "Anyone who advocates", body: "If you're the person who tracks, remembers, notices, and speaks up, this was made for you." },
           ].map((card) => (
             <div key={card.title} className="lp-reveal" style={{ background: C.sageMist, borderRadius: 16, padding: "36px 28px", border: `1px solid ${C.rule}` }}>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.05rem", fontWeight: 500, color: C.forest, marginBottom: 10 }}>{card.title}</h3>
@@ -474,7 +448,7 @@ export default function LandingPage() {
             Know a caregiver<br />who needs this?
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
-            Advocate is free. If someone in your life is carrying another person&apos;s health — a parent, a sibling, a partner — send them this.
+            Advocate is free. If someone you know is carrying another person&apos;s health, a parent, a sibling, a partner, send them this.
           </p>
         </div>
 
