@@ -232,7 +232,7 @@ export default function LandingPage() {
       <div style={{ height: 1, background: C.rule }} />
 
       {/* ── APP SHOWCASE ── */}
-      <section id="app" style={{ padding: "100px 24px" }}>
+      <section id="app" style={{ padding: "100px 24px", background: "#f5f7f4" }}>
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 80px" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#1B3A2D", marginBottom: 16 }}>The app</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: "#1B3A2D", marginBottom: 16 }}>
@@ -247,8 +247,9 @@ export default function LandingPage() {
 
           {/* Row 1 — Dashboard: image left, text right */}
           <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
+            <div style={{ position: "relative", display: "flex", justifyContent: "center", margin: "-20px 0" }}>
+              <div style={{ position: "absolute", top: -60, left: -60, right: -60, bottom: -60, background: "radial-gradient(ellipse at 50% 50%, rgba(27,58,45,0.1) 0%, transparent 65%)", filter: "blur(28px)", zIndex: 0, pointerEvents: "none" }} />
+              <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.12)", transform: "rotate(-4deg)", transformOrigin: "center", position: "relative", zIndex: 1 }} />
             </div>
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
@@ -306,8 +307,9 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-            <div className="showcase-img-mobile-first" style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/Advocate_Daily_log.png" alt="Advocate Daily Log" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
+            <div className="showcase-img-mobile-first" style={{ position: "relative", display: "flex", justifyContent: "center", margin: "-20px 0" }}>
+              <div style={{ position: "absolute", top: -60, left: -60, right: -60, bottom: -60, background: "radial-gradient(ellipse at 50% 50%, rgba(27,58,45,0.1) 0%, transparent 65%)", filter: "blur(28px)", zIndex: 0, pointerEvents: "none" }} />
+              <img src="/Advocate_Daily_log.png" alt="Advocate Daily Log" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.12)", transform: "rotate(4deg)", transformOrigin: "center", position: "relative", zIndex: 1 }} />
             </div>
           </div>
 
@@ -315,8 +317,9 @@ export default function LandingPage() {
 
           {/* Row 3 — Doctor Summary: image left (laptop frame), text right */}
           <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/AdvocateSummary.png" alt="Advocate Doctor Summary" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)" }} />
+            <div style={{ position: "relative", display: "flex", justifyContent: "center", margin: "-20px 0" }}>
+              <div style={{ position: "absolute", top: -60, left: -60, right: -60, bottom: -60, background: "radial-gradient(ellipse at 50% 50%, rgba(27,58,45,0.1) 0%, transparent 65%)", filter: "blur(28px)", zIndex: 0, pointerEvents: "none" }} />
+              <img src="/AdvocateSummary.png" alt="Advocate Doctor Summary" style={{ width: "100%", display: "block", borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.12)", position: "relative", zIndex: 1 }} />
             </div>
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
