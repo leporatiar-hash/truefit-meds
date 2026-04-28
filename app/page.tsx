@@ -128,7 +128,7 @@ export default function LandingPage() {
           .showcase-img-mobile-first { order: -1 !important; }
           .phone-image-wrapper { border-radius: 32px !important; }
         }
-        .phone-image-wrapper { border-radius: 44px; overflow: hidden; position: relative; display: flex; justify-content: center; }
+        .phone-image-wrapper { border-radius: 52px; overflow: hidden; position: relative; display: flex; justify-content: center; }
       `}</style>
 
       {/* ── NAV ── */}
@@ -251,7 +251,7 @@ export default function LandingPage() {
           <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
             <div className="phone-image-wrapper" style={{ margin: "-20px 0" }}>
               <div style={{ position: "absolute", top: -60, left: -60, right: -60, bottom: -60, background: "radial-gradient(ellipse at 50% 50%, rgba(27,58,45,0.1) 0%, transparent 65%)", filter: "blur(28px)", zIndex: 0, pointerEvents: "none" }} />
-              <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", display: "block", boxShadow: "0 24px 60px rgba(0,0,0,0.12)", transform: "rotate(-4deg)", transformOrigin: "center", position: "relative", zIndex: 1 }} />
+              <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", display: "block", filter: "drop-shadow(0 24px 40px rgba(0,0,0,0.18))", transform: "rotate(-4deg)", transformOrigin: "center", position: "relative", zIndex: 1 }} />
             </div>
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
