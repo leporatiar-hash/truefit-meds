@@ -124,6 +124,8 @@ export default function LandingPage() {
           .lp-who-cards { grid-template-columns: 1fr !important; }
           .lp-footer { flex-direction: column !important; gap: 12px !important; text-align: center !important; }
           .lp-nav { padding: 0 20px !important; }
+          .showcase-row { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .showcase-img-mobile-first { order: -1 !important; }
         }
       `}</style>
 
@@ -224,6 +226,151 @@ export default function LandingPage() {
               <p style={{ fontSize: "0.95rem", color: C.inkSoft, lineHeight: 1.7 }}>{step.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <div style={{ height: 1, background: C.rule }} />
+
+      {/* ── APP SHOWCASE ── */}
+      <section id="app" style={{ padding: "100px 24px" }}>
+        <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 80px" }}>
+          <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#1B3A2D", marginBottom: 16 }}>The app</div>
+          <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: "#1B3A2D", marginBottom: 16 }}>
+            Everything in one place.<br />Ready before every appointment.
+          </h2>
+          <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
+            From the 60-second daily check-in to the AI summary you walk in with — here&apos;s how Advocate works.
+          </p>
+        </div>
+
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+
+          {/* Row 1 — Dashboard: image left, text right */}
+          <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div style={{ width: 260, borderRadius: 42, background: "linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 100%)", padding: 10, boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 32px 80px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2)" }}>
+                <div style={{ borderRadius: 33, overflow: "hidden", background: "#111", position: "relative", aspectRatio: "9/19.5" }}>
+                  <img src="/AdvocateHome.png" alt="Advocate Dashboard" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
+                  <div style={{ position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)", width: 96, height: 26, background: "#000", borderRadius: 13, zIndex: 10, pointerEvents: "none" }} />
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1B3A2D", display: "inline-block" }} />
+                Dashboard
+              </div>
+              <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
+                Your daily command center
+              </h3>
+              <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
+                At a glance, see what&apos;s been logged today, track adherence over time, and access everything before the next appointment — organized around one person.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Daily checklist keeps you on track without feeling clinical",
+                  "Adherence percentage built automatically from your logs",
+                  "One tap to generate an AI summary or print a doctor report",
+                  "Streak tracking keeps caregivers consistent over time",
+                ].map((b, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.92rem", color: C.inkSoft, lineHeight: 1.65 }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: C.rule }} />
+
+          {/* Row 2 — Daily Log: text left, image right */}
+          <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1B3A2D", display: "inline-block" }} />
+                Daily log
+              </div>
+              <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
+                60 seconds. Everything the doctor needs.
+              </h3>
+              <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
+                No medical jargon, no long forms. A fast, structured daily entry any caregiver can complete in under a minute — and that builds into a complete health picture over time.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Tracks medications, symptoms, episodes, vitals, sleep, and hydration",
+                  "Episode logging captures time, duration, and context",
+                  "Previous entry pre-loaded — never starting from scratch",
+                  "Every entry feeds automatically into the AI summary",
+                ].map((b, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.92rem", color: C.inkSoft, lineHeight: 1.65 }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="showcase-img-mobile-first" style={{ display: "flex", justifyContent: "center" }}>
+              <div style={{ width: 260, borderRadius: 42, background: "linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 100%)", padding: 10, boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 32px 80px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2)" }}>
+                <div style={{ borderRadius: 33, overflow: "hidden", background: "#111", position: "relative", aspectRatio: "9/19.5" }}>
+                  <img src="/Advocate_Daily_log.png" alt="Advocate Daily Log" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
+                  <div style={{ position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)", width: 96, height: 26, background: "#000", borderRadius: 13, zIndex: 10, pointerEvents: "none" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: C.rule }} />
+
+          {/* Row 3 — Doctor Summary: image left (laptop frame), text right */}
+          <div className="showcase-row lp-reveal" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center", padding: "64px 0" }}>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div style={{ width: "100%", maxWidth: 480 }}>
+                <div style={{ background: "#ddd", borderRadius: "10px 10px 0 0", padding: "9px 14px 7px", display: "flex", alignItems: "center", gap: 10, border: "1px solid #c4c4c4", borderBottom: "none" }}>
+                  <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
+                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#ff5f57", border: "0.5px solid rgba(0,0,0,0.12)" }} />
+                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#febc2e", border: "0.5px solid rgba(0,0,0,0.12)" }} />
+                    <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28c840", border: "0.5px solid rgba(0,0,0,0.12)" }} />
+                  </div>
+                  <div style={{ flex: 1, background: "#f5f5f5", borderRadius: 5, padding: "3px 10px", fontSize: "0.7rem", color: "#777", textAlign: "center", border: "1px solid #d0d0d0", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    advocatetrack.com/summary
+                  </div>
+                </div>
+                <div style={{ overflow: "hidden", border: "1px solid #c4c4c4", background: "#fff" }}>
+                  <img src="/AdvocateSummary.png" alt="Advocate Doctor Summary" style={{ width: "100%", display: "block" }} />
+                </div>
+                <div style={{ height: 16, background: "linear-gradient(to bottom, #cacaca, #b8b8b8)", border: "1px solid #b0b0b0", borderTop: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                <div style={{ height: 7, background: "linear-gradient(to bottom, #adadad, #999)", borderRadius: "0 0 10px 10px", margin: "0 -18px", boxShadow: "0 4px 10px rgba(0,0,0,0.18)" }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#e8f0eb", color: "#1B3A2D", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 100, marginBottom: 20 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1B3A2D", display: "inline-block" }} />
+                Doctor-ready summary
+              </div>
+              <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
+                Walk in prepared.
+              </h3>
+              <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
+                Advocate takes everything you&apos;ve logged and generates a structured clinical summary — medication adherence, symptom patterns, and a numbered list of exactly what to bring up at the appointment.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Executive summary written for a clinician's 15-minute window",
+                  "Adherence tracked with percentage and trend notes per medication",
+                  "AI-detected patterns across symptoms, sleep, and behavior",
+                  '"Bring Up at the Appointment" — a prioritized agenda, ready to print',
+                ].map((b, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1B3A2D", marginTop: 8, flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.92rem", color: C.inkSoft, lineHeight: 1.65 }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
