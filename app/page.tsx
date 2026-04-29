@@ -37,6 +37,15 @@ const SITE_URL = "https://advocatetrack.com";
 
 export default function LandingPage() {
   const [copied, setCopied] = useState(false);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setIsScrolledPastHero(window.scrollY > window.innerHeight * 0.85);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -115,6 +124,11 @@ export default function LandingPage() {
         .lp-share-btn:hover { background: ${C.forest}; }
         .lp-copy-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; background: transparent; color: ${C.inkMid}; font-family: inherit; font-size: 0.95rem; border: 1px solid ${C.rule}; border-radius: 100px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
         .lp-copy-btn:hover { border-color: ${C.sage}; color: ${C.sage}; }
+        .lp-trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+        .lp-trust-card { background: ${C.white}; border-radius: 16px; padding: 40px 32px; border: 1px solid ${C.rule}; transition: transform 0.2s, box-shadow 0.2s; }
+        .lp-trust-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(45,79,56,0.08); }
+        .lp-nav-sticky-cta { display: inline-flex; align-items: center; font-size: 0.875rem; font-weight: 500; color: ${C.white}; background: ${C.sage}; padding: 8px 20px; border-radius: 100px; text-decoration: none; transition: background 0.2s, opacity 0.3s, transform 0.3s; white-space: nowrap; }
+        .lp-nav-sticky-cta:hover { background: ${C.forest}; }
         @media (max-width: 768px) {
           .lp-nav-links { display: none; }
           .lp-problem { grid-template-columns: 1fr !important; gap: 40px !important; }
@@ -127,12 +141,14 @@ export default function LandingPage() {
           .showcase-row { grid-template-columns: 1fr !important; gap: 40px !important; }
           .showcase-img-mobile-first { order: -1 !important; }
           .phone-image-wrapper { border-radius: 32px !important; }
+          .lp-trust-grid { grid-template-columns: 1fr !important; }
+          .lp-nav-sticky-cta { font-size: 0.8rem; padding: 7px 14px; }
         }
         .phone-image-wrapper { border-radius: 52px; overflow: hidden; position: relative; display: flex; justify-content: center; }
       `}</style>
 
       {/* ── NAV ── */}
-      <nav className="lp-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 48px", height: 64, background: "rgba(250,249,246,0.88)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.rule}` }}>
+      <nav className="lp-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 48px", height: 64, background: "rgba(250,249,246,0.88)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.rule}`, transition: "box-shadow 0.3s", boxShadow: isScrolledPastHero ? "0 2px 20px rgba(45,79,56,0.1)" : "none" }}>
         <a href="#" style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.2rem", fontWeight: 500, color: C.forest, letterSpacing: "0.02em", textDecoration: "none" }}>
           Advocate
         </a>
@@ -141,8 +157,14 @@ export default function LandingPage() {
           <li><a href="#features" className="lp-nav-link">Features</a></li>
           <li><a href="#story" className="lp-nav-link">Our story</a></li>
           <li><Link href="/login" className="lp-nav-login">Log in</Link></li>
-          <li><Link href="/signup" className="lp-nav-cta">Get Started Free</Link></li>
         </ul>
+        <Link
+          href="/signup"
+          className="lp-nav-sticky-cta"
+          style={{ opacity: isScrolledPastHero ? 1 : 0, transform: isScrolledPastHero ? "translateY(0)" : "translateY(-6px)", pointerEvents: isScrolledPastHero ? "auto" : "none" }}
+        >
+          Get Started Free →
+        </Link>
       </nav>
 
       {/* ── HERO ── */}
@@ -404,6 +426,64 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* ── TRUST & SECURITY ── */}
+      <section id="trust" style={{ background: C.sagePale, padding: "100px 24px" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 72px" }}>
+            <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest }}>
+              Your data is a sacred trust.
+            </h2>
+          </div>
+          <div className="lp-trust-grid">
+            {[
+              {
+                label: "Security",
+                headline: "HIPAA-Ready Standards.",
+                body: "We protect your loved one's data with the same encryption and privacy protocols used by leading health providers.",
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Privacy",
+                headline: "No Data Selling.",
+                body: "Your logs are private. We never sell health history or personal information to third parties. Period.",
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Clinical Value",
+                headline: "Doctor-Approved Format.",
+                body: "Our summaries are built based on physician feedback to ensure your observations are heard in a 15-minute visit.",
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.sage} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                  </svg>
+                ),
+              },
+            ].map((item) => (
+              <div key={item.label} className="lp-trust-card lp-reveal">
+                <div style={{ width: 56, height: 56, background: C.sageMist, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+                  {item.icon}
+                </div>
+                <div style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 10 }}>{item.label}</div>
+                <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.15rem", fontWeight: 500, color: C.forest, marginBottom: 12 }}>{item.headline}</h3>
+                <p style={{ fontSize: "0.95rem", color: C.inkSoft, lineHeight: 1.75 }}>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div style={{ height: 1, background: C.rule }} />
 
       {/* ── STORY ── */}
       <section id="story" style={{ background: C.forest, padding: "100px 24px", textAlign: "center" }}>
