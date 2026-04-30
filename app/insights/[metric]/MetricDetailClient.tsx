@@ -258,7 +258,7 @@ function TimeframeSelector({ current, onChange }: { current: Timeframe; onChange
 
 // ── Main client component ─────────────────────────────────────────────────────
 
-export default function MetricDetailClient({ metricKey }: { metricKey: string }) {
+export default function MetricDetailClient({ metricKey, onBack }: { metricKey: string; onBack?: () => void }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -330,9 +330,11 @@ export default function MetricDetailClient({ metricKey }: { metricKey: string })
       <div className="min-h-screen" style={{ background: "#faf9f6" }}>
         <NavBar />
         <div className="max-w-lg mx-auto px-4 pt-6">
-          <Link href="/insights" className="text-base font-semibold" style={{ color: "#4a7c59" }}>
-            Back to Insights
-          </Link>
+          {onBack ? (
+            <button onClick={onBack} className="text-base font-semibold" style={{ color: "#4a7c59" }}>Back to Insights</button>
+          ) : (
+            <Link href="/insights" className="text-base font-semibold" style={{ color: "#4a7c59" }}>Back to Insights</Link>
+          )}
           <p className="text-slate-500 mt-4">Metric not found.</p>
         </div>
       </div>
@@ -346,12 +348,21 @@ export default function MetricDetailClient({ metricKey }: { metricKey: string })
       <div className="max-w-lg mx-auto px-4 pt-5 space-y-5">
 
         {/* Back nav */}
-        <Link href="/insights" className="flex items-center gap-1.5 text-base font-semibold" style={{ color: "#4a7c59" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Insights
-        </Link>
+        {onBack ? (
+          <button onClick={onBack} className="flex items-center gap-1.5 text-base font-semibold" style={{ color: "#4a7c59" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Insights
+          </button>
+        ) : (
+          <Link href="/insights" className="flex items-center gap-1.5 text-base font-semibold" style={{ color: "#4a7c59" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Insights
+          </Link>
+        )}
 
         {/* Metric header */}
         <div>

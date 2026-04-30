@@ -11,6 +11,7 @@ import {
   type MetricRow, type MetricPoint,
 } from "../lib/insights";
 import type { Patient, DailyLog } from "../lib/types";
+import MetricDetailClient from "./[metric]/MetricDetailClient";
 
 // ── Severity helpers ──────────────────────────────────────────────────────────
 // Values are always 6 (Moderate) or 9 (Severe) — matching caregiver's own words.
@@ -48,7 +49,7 @@ function Sparkline({ points, color }: { points: MetricPoint[]; color: string }) 
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 
-function MetricRowItem({ row }: { row: MetricRow }) {
+function MetricRowItem({ row, onSelect }: { row: MetricRow; onSelect: () => void }) {
   const sparkColor = row.trend === "improving" ? "#16A34A" : row.trend === "worsening" ? "#EA580C" : "#B4B2A9";
 
   const isSymptom = row.unit === "/10";
@@ -69,9 +70,10 @@ function MetricRowItem({ row }: { row: MetricRow }) {
   const deltaColor = hasTrend ? (isImproving ? "#16A34A" : "#EA580C") : "#B4B2A9";
 
   return (
-    <Link
-      href={`/insights/${row.key}`}
-      className="flex items-center gap-3 px-5 py-3.5 transition-colors active:bg-slate-50"
+    <button
+      type="button"
+      onClick={onSelect}
+      className="w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors active:bg-slate-50"
       style={{ borderBottom: "0.5px solid #F1F5F9" }}
     >
       {/* Severity dot */}
@@ -101,7 +103,7 @@ function MetricRowItem({ row }: { row: MetricRow }) {
       <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#CBD5E1" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
-    </Link>
+    </button>
   );
 }
 
@@ -261,6 +263,7 @@ export default function InsightsPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -329,6 +332,11 @@ export default function InsightsPage() {
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
+      {selectedMetric && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: "#faf9f6" }}>
+          <MetricDetailClient metricKey={selectedMetric} onBack={() => setSelectedMetric(null)} />
+        </div>
+      )}
       <NavBar />
 
       <div className="max-w-lg mx-auto pt-6 px-4 space-y-5">
@@ -364,28 +372,28 @@ export default function InsightsPage() {
               {symptomRows.length > 0 && (
                 <>
                   <SectionHeader title="Symptoms" />
-                  {symptomRows.map((r) => <MetricRowItem key={r.key} row={r} />)}
+                  {symptomRows.map((r) => <MetricRowItem key={r.key} row={r} onSelect={() => setSelectedMetric(r.key)} />)}
                 </>
               )}
 
               {healthRows.length > 0 && (
                 <>
                   <SectionHeader title="Health" />
-                  {healthRows.map((r) => <MetricRowItem key={r.key} row={r} />)}
+                  {healthRows.map((r) => <MetricRowItem key={r.key} row={r} onSelect={() => setSelectedMetric(r.key)} />)}
                 </>
               )}
 
               {lifestyleRows.length > 0 && (
                 <>
                   <SectionHeader title="Lifestyle" />
-                  {lifestyleRows.map((r) => <MetricRowItem key={r.key} row={r} />)}
+                  {lifestyleRows.map((r) => <MetricRowItem key={r.key} row={r} onSelect={() => setSelectedMetric(r.key)} />)}
                 </>
               )}
 
               {adherenceRows.length > 0 && (
                 <>
                   <SectionHeader title="Adherence" />
-                  {adherenceRows.map((r) => <MetricRowItem key={r.key} row={r} />)}
+                  {adherenceRows.map((r) => <MetricRowItem key={r.key} row={r} onSelect={() => setSelectedMetric(r.key)} />)}
                 </>
               )}
 
