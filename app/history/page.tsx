@@ -106,12 +106,13 @@ function LogDetail({ log }: { log: DailyLog }) {
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Symptoms</p>
           <div className="flex flex-wrap gap-1.5">
             {(log.symptoms ?? []).map((s, i) => {
-              const sev = s.severity >= 8 ? { bg: "#FEE2E2", color: "#DC2626" }
-                : s.severity >= 5 ? { bg: "#FEF3C7", color: "#D97706" }
+              const sv = s.severity ?? 0;
+              const sev = sv >= 8 ? { bg: "#FEE2E2", color: "#DC2626" }
+                : sv >= 5 ? { bg: "#FEF3C7", color: "#D97706" }
                 : { bg: "#F1F5F9", color: "#475569" };
               return (
                 <span key={i} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: sev.bg, color: sev.color }}>
-                  {s.name} · {s.severity}/10
+                  {s.name}{s.severity != null ? ` · ${s.severity}/10` : ""}
                 </span>
               );
             })}
@@ -176,7 +177,7 @@ function DayRow({ log }: { log: DailyLog }) {
 
   const meds = medsStatus(log);
   const symptomCount = (log.symptoms ?? []).length;
-  const maxSeverity = symptomCount > 0 ? Math.max(...(log.symptoms ?? []).map(s => s.severity)) : 0;
+  const maxSeverity = symptomCount > 0 ? Math.max(...(log.symptoms ?? []).map(s => s.severity ?? 0)) : 0;
   const hasEpisode = log.episode?.occurred;
 
   const dateLabel = fmtDate(log.date);

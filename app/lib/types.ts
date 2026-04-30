@@ -58,7 +58,7 @@ export interface MedicationTaken {
 
 export interface Symptom {
   name: string;
-  severity: number;
+  severity?: number | null;
   worse_than_usual?: boolean;
 }
 

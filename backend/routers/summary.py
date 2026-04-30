@@ -70,7 +70,14 @@ def generate_summary(
     )
 
     if not logs:
-        raise HTTPException(status_code=404, detail="No logs found for the last 30 days")
+        return {
+            "executive_summary": "No health data has been logged in the past 30 days.",
+            "adherence": [],
+            "patterns": [],
+            "lifestyle_notes": [],
+            "discussion_items": [],
+            "adherence_data": {},
+        }
 
     medications = (
         db.query(models.Medication)
@@ -111,7 +118,9 @@ def generate_summary(
 
         for s in (log.symptoms or []):
             name = s["name"]
-            sev = s["severity"]
+            sev = s.get("severity")
+            if sev is None:
+                continue
             if sev >= 8:
                 symptom_counts[name]["severe"] += 1
             elif sev >= 5:
@@ -205,7 +214,7 @@ AGGREGATED STATISTICS:
 - Average mood score: {avg_mood}/10
 - Hydration days logged: Good={hydration_counts.get("Good", 0)}, Fair={hydration_counts.get("Fair", 0)}, Poor={hydration_counts.get("Poor", 0)}
 
-SYMPTOM TRACKING (Severity logged as Moderate or Severe — out of {total_logs} logged days):
+SYMPTOM TRACKING (Severity on a 1–10 scale — out of {total_logs} logged days):
 {symptom_tracking_text}
 
 ACTIVITY FREQUENCY (number of days each activity was logged):
@@ -250,8 +259,8 @@ Please generate a summary as JSON with exactly these fields:
         f"Patient context: {condition_context} "
         f"{style_instruction} "
         f"You receive structured daily health logs and produce a clear, doctor-ready summary. "
-        f"Be specific with numbers and patterns. Note that symptoms are logged as Moderate or Severe (not on a 1-10 scale) — "
-        f"report them as counts of Severe days and Moderate days, not as averages. "
+        f"Be specific with numbers and patterns. Symptoms are logged on a 1–10 severity scale. "
+        f"Report average severity and flag days where severity ≥ 8. "
         f"Highlight correlations between medication adherence, activities, and symptom severity. "
         f"Flag anything that warrants the doctor's attention. "
         f"Do not speculate beyond what the data shows. "

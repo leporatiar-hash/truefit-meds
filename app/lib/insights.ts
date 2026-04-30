@@ -44,8 +44,8 @@ function nameToKey(name: string): string {
 
 export function extractSymptom(logs: DailyLog[], name: string): MetricPoint[] {
   return logs
-    .filter((l) => l.symptoms?.some((s) => s.name === name))
-    .map((l) => ({ date: l.date, value: l.symptoms!.find((s) => s.name === name)!.severity }))
+    .filter((l) => l.symptoms?.some((s) => s.name === name && typeof s.severity === "number"))
+    .map((l) => ({ date: l.date, value: l.symptoms!.find((s) => s.name === name)!.severity as number }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -157,7 +157,7 @@ export function extractEvents(logs: DailyLog[]): EventMarker[] {
       markers.push({ date: log.date, type: "smoked", label: "Smoked" });
     if (log.sleep_hours != null && log.sleep_hours < 5)
       markers.push({ date: log.date, type: "low_sleep", label: `${log.sleep_hours}h sleep` });
-    if (log.symptoms?.some((s) => s.severity >= 7))
+    if (log.symptoms?.some((s) => (s.severity ?? 0) >= 7))
       markers.push({ date: log.date, type: "symptom_spike", label: "High symptom" });
   }
   return markers;
@@ -328,11 +328,12 @@ export function buildMetricRows(logs: DailyLog[], medications: Medication[], con
 
   const rows: MetricRow[] = [];
 
-  // Use configured symptom list if available; otherwise fall back to whatever is in log data.
-  // This ensures adding/removing symptoms in settings is immediately reflected here.
+  // Union configured symptoms with names actually in log data so legacy/renamed symptoms
+  // remain visible in insights even if they were removed from the current config.
+  const logSymptomNames = Array.from(new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? [])));
   const allSymptomNames = configuredSymptoms.length > 0
-    ? configuredSymptoms
-    : Array.from(new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? [])));
+    ? Array.from(new Set([...configuredSymptoms, ...logSymptomNames]))
+    : logSymptomNames;
 
   for (const name of allSymptomNames) {
     const r = row(nameToKey(name), name, "/10", false, extractSymptom(sorted, name));

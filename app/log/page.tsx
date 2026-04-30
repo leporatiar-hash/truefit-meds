@@ -12,10 +12,8 @@ import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constant
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SEVERITY_CHIPS = [
-  { label: "Moderate", value: 6 },
-  { label: "Severe", value: 9 },
-];
+const SEVERITY_LOW = [1, 2, 3, 4, 5];
+const SEVERITY_HIGH = [6, 7, 8, 9, 10];
 
 const SIMPLE_DOSE_TIMES = [
   { label: "Morning", time: "08:00" },
@@ -817,32 +815,47 @@ export default function LogPage() {
             const isNone = activeValue === null;
 
             return (
-              <div key={name} className="space-y-2">
+              <div key={name} className="space-y-1.5">
                 <p className="text-base font-semibold text-slate-700">{name}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => update({ symptoms: draft!.symptoms.filter(s => s.name !== name) })}
-                    className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
-                    style={{
-                      borderColor: isNone ? "#4a7c59" : "#CBD5E1",
-                      background: isNone ? "#e8f0eb" : "white",
-                      color: isNone ? "#4a7c59" : "#334155",
-                    }}
-                  >None</button>
-                  {SEVERITY_CHIPS.map(chip => {
-                    const isActive = activeValue === chip.value;
+                <button
+                  type="button"
+                  onClick={() => update({ symptoms: draft!.symptoms.filter(s => s.name !== name) })}
+                  className="w-full py-2 rounded-xl border-2 text-sm font-semibold transition-all"
+                  style={{
+                    borderColor: isNone ? "#4a7c59" : "#CBD5E1",
+                    background: isNone ? "#e8f0eb" : "white",
+                    color: isNone ? "#4a7c59" : "#334155",
+                  }}
+                >None</button>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {SEVERITY_LOW.map(n => {
+                    const isActive = activeValue === n;
                     return (
-                      <button
-                        key={chip.label} type="button"
-                        onClick={() => setSymptomSeverity(name, chip.value)}
-                        className="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                      <button key={n} type="button"
+                        onClick={() => setSymptomSeverity(name, n)}
+                        className="py-2.5 rounded-xl border-2 text-sm font-bold transition-all"
                         style={{
                           borderColor: isActive ? "#4a7c59" : "#CBD5E1",
                           background: isActive ? "#4a7c59" : "white",
                           color: isActive ? "white" : "#334155",
                         }}
-                      >{chip.label}</button>
+                      >{n}</button>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {SEVERITY_HIGH.map(n => {
+                    const isActive = activeValue === n;
+                    return (
+                      <button key={n} type="button"
+                        onClick={() => setSymptomSeverity(name, n)}
+                        className="py-2.5 rounded-xl border-2 text-sm font-bold transition-all"
+                        style={{
+                          borderColor: isActive ? "#EA580C" : "#CBD5E1",
+                          background: isActive ? "#EA580C" : "white",
+                          color: isActive ? "white" : "#334155",
+                        }}
+                      >{n}</button>
                     );
                   })}
                 </div>

@@ -137,7 +137,7 @@ class MedicationTaken(BaseModel):
 
 class Symptom(BaseModel):
     name: str
-    severity: int  # 1–10
+    severity: Optional[int] = None  # 1–10; None for legacy entries logged before severity was added
     worse_than_usual: Optional[bool] = None
 
 
