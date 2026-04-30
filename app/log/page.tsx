@@ -12,8 +12,6 @@ import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constant
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SEVERITY_LOW = [1, 2, 3, 4, 5];
-const SEVERITY_HIGH = [6, 7, 8, 9, 10];
 
 const SIMPLE_DOSE_TIMES = [
   { label: "Morning", time: "08:00" },
@@ -812,52 +810,30 @@ export default function LogPage() {
           {symptomNames.map(name => {
             const s = draft.symptoms.find(s => s.name === name);
             const activeValue = s?.severity ?? null;
-            const isNone = activeValue === null;
 
             return (
-              <div key={name} className="space-y-1.5">
-                <p className="text-base font-semibold text-slate-700">{name}</p>
-                <button
-                  type="button"
-                  onClick={() => update({ symptoms: draft!.symptoms.filter(s => s.name !== name) })}
-                  className="w-full py-2 rounded-xl border-2 text-sm font-semibold transition-all"
-                  style={{
-                    borderColor: isNone ? "#4a7c59" : "#CBD5E1",
-                    background: isNone ? "#e8f0eb" : "white",
-                    color: isNone ? "#4a7c59" : "#334155",
-                  }}
-                >None</button>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {SEVERITY_LOW.map(n => {
-                    const isActive = activeValue === n;
-                    return (
-                      <button key={n} type="button"
-                        onClick={() => setSymptomSeverity(name, n)}
-                        className="py-2.5 rounded-xl border-2 text-sm font-bold transition-all"
-                        style={{
-                          borderColor: isActive ? "#4a7c59" : "#CBD5E1",
-                          background: isActive ? "#4a7c59" : "white",
-                          color: isActive ? "white" : "#334155",
-                        }}
-                      >{n}</button>
-                    );
-                  })}
+              <div key={name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-slate-700">{name}</label>
+                  <span className="text-base font-bold" style={{ color: activeValue ? "#4a7c59" : "#94A3B8" }}>
+                    {activeValue ? `${activeValue} / 10` : "None"}
+                  </span>
                 </div>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {SEVERITY_HIGH.map(n => {
-                    const isActive = activeValue === n;
-                    return (
-                      <button key={n} type="button"
-                        onClick={() => setSymptomSeverity(name, n)}
-                        className="py-2.5 rounded-xl border-2 text-sm font-bold transition-all"
-                        style={{
-                          borderColor: isActive ? "#EA580C" : "#CBD5E1",
-                          background: isActive ? "#EA580C" : "white",
-                          color: isActive ? "white" : "#334155",
-                        }}
-                      >{n}</button>
-                    );
-                  })}
+                <input
+                  type="range" min={0} max={10} step={1}
+                  value={activeValue ?? 0}
+                  onChange={e => {
+                    const v = parseInt(e.target.value, 10);
+                    if (v === 0) {
+                      update({ symptoms: draft!.symptoms.filter(s => s.name !== name) });
+                    } else {
+                      setSymptomSeverity(name, v);
+                    }
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-sm text-slate-400">
+                  <span>None</span><span>10</span>
                 </div>
               </div>
             );

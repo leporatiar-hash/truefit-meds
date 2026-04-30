@@ -328,12 +328,11 @@ export function buildMetricRows(logs: DailyLog[], medications: Medication[], con
 
   const rows: MetricRow[] = [];
 
-  // Union configured symptoms with names actually in log data so legacy/renamed symptoms
-  // remain visible in insights even if they were removed from the current config.
-  const logSymptomNames = Array.from(new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? [])));
+  // Use configured list when available. Symptoms with no log data are filtered out
+  // below by row() returning null — so only actively-logged symptoms appear.
   const allSymptomNames = configuredSymptoms.length > 0
-    ? Array.from(new Set([...configuredSymptoms, ...logSymptomNames]))
-    : logSymptomNames;
+    ? configuredSymptoms
+    : Array.from(new Set(sorted.flatMap((l) => l.symptoms?.map((s) => s.name) ?? [])));
 
   for (const name of allSymptomNames) {
     const r = row(nameToKey(name), name, "/10", false, extractSymptom(sorted, name));
