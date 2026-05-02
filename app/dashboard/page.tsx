@@ -312,7 +312,7 @@ export default function DashboardPage() {
 
   const sleepDone = todayLog?.sleep_hours != null;
   const sleepSummary = sleepDone
-    ? `${todayLog!.sleep_hours}hrs sleep${todayLog!.water_intake_oz ? ` · ${todayLog!.water_intake_oz}oz water` : ""}`
+    ? `${todayLog!.sleep_hours}hrs sleep${todayLog!.water_intake_oz != null ? ` · ${todayLog!.water_intake_oz >= 70 ? "Good" : todayLog!.water_intake_oz >= 40 ? "Fair" : "Poor"} hydration` : ""}`
     : "Not recorded";
 
   const notesDone = !!(todayLog?.notes?.trim());
