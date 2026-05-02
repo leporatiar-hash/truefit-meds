@@ -7,6 +7,13 @@ import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, DailyLog, Medication, MedicationTaken } from "../lib/types";
 
+const SIMPLE_TIME_LABELS: Record<string, string> = {
+  "08:00": "Morning",
+  "13:00": "Afternoon",
+  "18:00": "Evening",
+  "21:00": "Night",
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtDate(dateStr: string) {
@@ -92,7 +99,7 @@ function LogDetail({ log, medications }: { log: DailyLog; medications: Medicatio
                 </span>
                 <span className={`text-sm ${m.taken ? "text-slate-700" : "text-slate-400 line-through"}`}>
                   {medications.find(med => med.id === m.medication_id)?.name ?? `Med ${m.medication_id}`}
-                  {m.time_taken ? <span className="text-slate-400 no-underline not-line-through"> · {m.time_taken}</span> : ""}
+                  {m.time_taken ? <span className="text-slate-400 no-underline not-line-through"> · {SIMPLE_TIME_LABELS[m.time_taken] ?? m.time_taken}</span> : ""}
                 </span>
               </div>
             ))}
