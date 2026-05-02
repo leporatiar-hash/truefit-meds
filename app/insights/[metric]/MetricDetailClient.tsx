@@ -88,7 +88,7 @@ function LineChart({
     : Array.from({ length: xTickCount }, (_, i) => Math.round(i * (points.length - 1) / (xTickCount - 1)));
 
   function formatXLabel(date: string): string {
-    const d = new Date(date);
+    const d = new Date(date + "T00:00:00");
     return `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}`;
   }
   function formatYLabel(v: number): string {
@@ -121,7 +121,7 @@ function LineChart({
       x: xs[idx],
       y: ys[idx],
       value: formatValue(points[idx].value, unit),
-      date: new Date(points[idx].date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      date: new Date(points[idx].date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     });
   }
 
@@ -210,7 +210,7 @@ function LineChart({
         {/* Event tooltip */}
         {activeEvent && (() => {
           const ex = dateToX(activeEvent.date, minDate, maxDate);
-          const label = `${new Date(activeEvent.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${activeEvent.label}`;
+          const label = `${new Date(activeEvent.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${activeEvent.label}`;
           return (
             <>
               <rect x={Math.min(ex - 4, CX + CW - 120)} y={CY + CH + 16} width={120} height={24} rx={4} fill="#1E293B" />

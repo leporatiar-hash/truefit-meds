@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { api, calculateStreak } from "../lib/api";
+import { api, calculateStreak, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import type { Patient, DailyLog } from "../lib/types";
@@ -53,7 +53,7 @@ function QuickPhotoCard({
     setLoading(true);
     try {
       const compressed = await compressPhoto(file);
-      const today = new Date().toISOString().split("T")[0];
+      const today = localDateStr();
       // Merge with existing log so we don't wipe symptoms/meds/etc.
       await api.createLog({
         patient_id: patient.id,
@@ -264,7 +264,7 @@ export default function DashboardPage() {
       const hour = now.getHours();
       const minute = now.getMinutes();
       if ((hour === 19 || hour === 20) && minute === 0) {
-        const todayStr = now.toISOString().split("T")[0];
+        const todayStr = localDateStr(now);
         const key = `advocate_reminder_${todayStr}_h${hour}`;
         if (localStorage.getItem(key)) return; // already fired today
         localStorage.setItem(key, "1");
@@ -290,7 +290,7 @@ export default function DashboardPage() {
   const thisMonth = (() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return logs.filter((l) => l.date >= start.toISOString().split("T")[0]);
+    return logs.filter((l) => l.date >= localDateStr(start));
   })();
 
   const monthAdherence = (() => {
