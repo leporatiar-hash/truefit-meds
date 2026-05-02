@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
+import { StepLoader } from "../components/StepLoader";
 import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle } from "../lib/types";
 import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constants";
 
@@ -1111,13 +1112,26 @@ export default function LogPage() {
       <div className="fixed bottom-0 left-0 right-0 z-30">
         <div className="max-w-lg mx-auto px-4 pb-[72px] pt-3"
           style={{ background: "linear-gradient(to top, rgba(248,250,252,1) 70%, transparent)" }}>
-          <button
-            onClick={handleSubmit} disabled={saving || saved}
-            className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
-            style={{ background: saved ? "#16A34A" : saving ? "#2d4f38" : "linear-gradient(135deg, #4a7c59, #2d4f38)", opacity: saving ? 0.9 : 1 }}
-          >
-            {saved ? "Saved" : saving ? "Saving…" : "Save Log"}
-          </button>
+          {saving ? (
+            <div className="flex items-center justify-center py-5">
+              <StepLoader
+                steps={["Saving your log...", "Updating your streak...", "Done."]}
+                intervalMs={1000}
+              />
+            </div>
+          ) : saved ? (
+            <div className="flex items-center justify-center py-5">
+              <p style={{ color: "#94a3b8", fontSize: "0.95rem", fontWeight: 400 }}>Done.</p>
+            </div>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
+            >
+              Save Log
+            </button>
+          )}
         </div>
       </div>
     </div>

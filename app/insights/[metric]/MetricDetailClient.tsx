@@ -319,8 +319,49 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
-        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
+      <div className="min-h-screen" style={{ background: "#faf9f6" }}>
+        <style>{`
+          @keyframes shimmer-ins {
+            from { background-position: 200% 0; }
+            to   { background-position: -200% 0; }
+          }
+          .sk-ins {
+            background: linear-gradient(90deg, #e8f0eb 25%, #d4e0d7 50%, #e8f0eb 75%);
+            background-size: 200% 100%;
+            animation: shimmer-ins 1.5s ease-in-out infinite;
+            border-radius: 8px;
+          }
+        `}</style>
+        <NavBar />
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-5">
+          {/* Back nav placeholder */}
+          <div className="sk-ins" style={{ width: 80, height: 18 }} />
+
+          {/* Metric header */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="sk-ins" style={{ width: 64, height: 12 }} />
+            <div className="sk-ins" style={{ width: 200, height: 36 }} />
+            <div className="sk-ins" style={{ width: 100, height: 28 }} />
+          </div>
+
+          {/* Chart card */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div className="sk-ins" style={{ width: "100%", height: 200, borderRadius: 12 }} />
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="sk-ins" style={{ width: 52, height: 32, borderRadius: 8 }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Observations card */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="sk-ins" style={{ width: 120, height: 20 }} />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="sk-ins" style={{ width: "100%", height: 52, borderRadius: 12 }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

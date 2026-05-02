@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
+import { StepLoader } from "../components/StepLoader";
 import type { User } from "../lib/types";
 
 interface MedForm {
@@ -370,17 +371,11 @@ export default function OnboardingPage() {
 
       {/* ── Step 3: Loading / AI generating ── */}
       {step === 3 && (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-          <div
-            className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <StepLoader
+            steps={["Reading your setup...", "Building your tracking plan...", "Almost ready..."]}
+            intervalMs={3000}
           />
-          <div className="text-center">
-            <p className="text-xl font-bold text-navy">Personalizing your dashboard…</p>
-            <p className="text-sm text-slate-400 mt-2">
-              Generating tracking options tailored to {patientName}&apos;s situation.
-            </p>
-          </div>
         </div>
       )}
 

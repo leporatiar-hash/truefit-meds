@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
+import { StepLoader } from "../components/StepLoader";
 import type { Patient, SummaryResponse, AdherenceItem } from "../lib/types";
 
 const PRINT_STYLE = `
@@ -262,12 +263,11 @@ export default function SummaryPage() {
 
         {/* Loading */}
         {generating && (
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-5">
-            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
-            <div className="text-center">
-              <p className="text-lg font-semibold text-navy">Analyzing 30 days of data</p>
-              <p className="text-base text-slate-400 mt-1">Reviewing logs, calculating patterns, drafting your summary.</p>
-            </div>
+          <div className="flex items-center justify-center py-16">
+            <StepLoader
+              steps={["Reviewing your logs...", "Identifying patterns...", "Writing summary..."]}
+              intervalMs={3000}
+            />
           </div>
         )}
 
