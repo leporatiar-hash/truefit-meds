@@ -97,9 +97,10 @@ function LabeledSlider({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-base font-semibold text-slate-700">{label}</label>
-        <span className="text-base font-bold" style={{ color: "#4a7c59" }}>
-          {value !== null ? `${value}${unit}` : "—"}
-        </span>
+        {value !== null
+          ? <span className="text-base font-bold" style={{ color: "#4a7c59" }}>{value}{unit}</span>
+          : <span className="text-sm font-medium" style={{ color: "#94A3B8" }}>Not logged</span>
+        }
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value ?? min}
@@ -833,7 +834,7 @@ export default function LogPage() {
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-slate-400">
-                  <span>None</span><span>10</span>
+                  <span>{activeValue ? "" : "None"}</span><span>10</span>
                 </div>
               </div>
             );
@@ -1079,7 +1080,7 @@ export default function LogPage() {
                     <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-sm font-semibold">From Library</span>
+                    <span className="text-sm font-semibold">Add Photo</span>
                   </button>
                 </div>
               )}

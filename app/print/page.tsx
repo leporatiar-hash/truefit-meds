@@ -173,7 +173,7 @@ const PRINT_STYLE = `
   .section-rule { border-top: 1.5px solid #000 !important; }
   .section-title { color: #000 !important; border-bottom: 1.5px solid #000 !important; }
   table { width: 100%; border-collapse: collapse; }
-  th { font-weight: bold; border-bottom: 1.5px solid #000; padding: 3pt 0; text-align: left; }
+  th { font-weight: bold; border-bottom: 1.5px solid #000; padding: 3pt 8pt 3pt 0; text-align: left; }
   td { border-bottom: 0.5px solid #bbb; padding: 3pt 8pt 3pt 0; vertical-align: top; }
   .status-badge { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; }
   h1 { font-size: 16pt; }

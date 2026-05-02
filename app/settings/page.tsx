@@ -39,6 +39,20 @@ export default function SettingsPage() {
           <p className="text-sm text-slate-500">{user.email}</p>
         </div>
 
+        {/* Change password */}
+        <Link
+          href="/forgot-password"
+          className="flex items-center justify-between w-full bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-5 transition-all active:scale-[0.98]"
+        >
+          <div>
+            <p className="text-lg font-bold text-navy">Change Password</p>
+            <p className="text-sm text-slate-500 mt-0.5">Send a reset link to {user.email}</p>
+          </div>
+          <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+
         {/* Customize button */}
         <Link
           href="/settings/customize"

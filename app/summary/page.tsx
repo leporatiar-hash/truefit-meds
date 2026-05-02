@@ -214,7 +214,7 @@ export default function SummaryPage() {
 
         {/* Header — screen only */}
         <div className="no-print">
-          <h1 className="text-3xl font-bold text-navy">Insights</h1>
+          <h1 className="text-3xl font-bold text-navy">Summary</h1>
           {patient && (
             <p className="text-base text-slate-500 mt-1">{patient.name} · {patient.diagnosis}</p>
           )}

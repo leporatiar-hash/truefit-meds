@@ -142,7 +142,7 @@ function QuickPhotoCard({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Upload
+              Add Photo
             </button>
           </div>
         </div>
@@ -318,8 +318,8 @@ export default function DashboardPage() {
   const notesDone = !!(todayLog?.notes?.trim());
   const notesSummary = notesDone ? "Added" : "Optional";
 
-  const completedCount = [medsDone, symptomsDone, sleepDone].filter(Boolean).length;
-  const totalRequired = 3;
+  const completedCount = [medsDone, symptomsDone, sleepDone, notesDone].filter(Boolean).length;
+  const totalRequired = 4;
   const allDone = completedCount === totalRequired;
 
   const ctaLabel = !todayLog ? "Start Today's Log" : allDone ? "Review Today's Log" : "Continue Today";
@@ -364,7 +364,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <p className="text-slate-400 text-sm">Streak</p>
-                <p className="text-3xl font-bold" style={{ color: "#4a7c59" }}>{calcStreak}<span className="text-base font-normal text-slate-400 ml-1">days</span></p>
+                <p className="text-3xl font-bold" style={{ color: "#4a7c59" }}>{calcStreak}<span className="text-base font-normal text-slate-400 ml-1">{calcStreak === 1 ? "day" : "days"}</span></p>
               </div>
             </div>
 
