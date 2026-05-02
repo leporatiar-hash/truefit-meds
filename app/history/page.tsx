@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
-import type { Patient, DailyLog, MedicationTaken } from "../lib/types";
+import type { Patient, DailyLog, Medication, MedicationTaken } from "../lib/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ function medsStatus(log: DailyLog) {
 
 // ── Expanded log detail ────────────────────────────────────────────────────────
 
-function LogDetail({ log }: { log: DailyLog }) {
+function LogDetail({ log, medications }: { log: DailyLog; medications: Medication[] }) {
   return (
     <div className="mt-3 space-y-3 text-sm border-t border-slate-100 pt-3">
 
@@ -91,7 +91,7 @@ function LogDetail({ log }: { log: DailyLog }) {
                   }
                 </span>
                 <span className={`text-sm ${m.taken ? "text-slate-700" : "text-slate-400 line-through"}`}>
-                  Med {m.medication_id}
+                  {medications.find(med => med.id === m.medication_id)?.name ?? `Med ${m.medication_id}`}
                   {m.time_taken ? <span className="text-slate-400 no-underline not-line-through"> · {m.time_taken}</span> : ""}
                 </span>
               </div>
@@ -172,7 +172,7 @@ function LogDetail({ log }: { log: DailyLog }) {
 
 // ── Day row ────────────────────────────────────────────────────────────────────
 
-function DayRow({ log }: { log: DailyLog }) {
+function DayRow({ log, medications }: { log: DailyLog; medications: Medication[] }) {
   const [open, setOpen] = useState(false);
 
   const meds = medsStatus(log);
@@ -242,7 +242,7 @@ function DayRow({ log }: { log: DailyLog }) {
 
       {open && (
         <div className="px-4 pb-4">
-          <LogDetail log={log} />
+          <LogDetail log={log} medications={medications} />
         </div>
       )}
     </div>
@@ -361,7 +361,7 @@ export default function HistoryPage() {
           <div key={group.month} className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">{group.month}</p>
             {group.logs.map(log => (
-              <DayRow key={log.id} log={log} />
+              <DayRow key={log.id} log={log} medications={patient?.medications ?? []} />
             ))}
           </div>
         ))}
