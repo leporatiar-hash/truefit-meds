@@ -132,8 +132,8 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading || !agreedToTerms}
-              style={{ marginTop: 4, width: "100%", padding: "0.85rem", borderRadius: 50, border: "none", background: loading || !agreedToTerms ? "#6a9f78" : C.sage, color: C.white, fontWeight: 600, fontSize: "0.95rem", cursor: loading || !agreedToTerms ? "not-allowed" : "pointer", transition: "background 0.2s", fontFamily: "var(--font-dm-sans), sans-serif" }}
+              disabled={loading}
+              style={{ marginTop: 4, width: "100%", padding: "0.85rem", borderRadius: 50, border: "none", background: loading ? "#6a9f78" : C.sage, color: C.white, fontWeight: 600, fontSize: "0.95rem", cursor: loading ? "not-allowed" : "pointer", transition: "background 0.2s", fontFamily: "var(--font-dm-sans), sans-serif" }}
             >
               {loading ? "Creating account…" : "Get started free"}
             </button>
