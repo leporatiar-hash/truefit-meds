@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { AuthProvider } from "./components/AuthProvider";
 import { Toaster } from "react-hot-toast";
+import TopProgressBar from "./components/TopProgressBar";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.variable} antialiased`}>
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
         <AuthProvider>
           {children}
           <Toaster

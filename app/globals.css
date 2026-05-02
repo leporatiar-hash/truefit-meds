@@ -58,3 +58,12 @@ input[type="range"]::-moz-range-thumb {
   body { background: white; }
   .print-container { padding: 0 !important; }
 }
+
+/* NProgress route transition bar — must be after nprogress.css in bundle */
+#nprogress .bar {
+  background: var(--color-teal);
+  height: 2px;
+}
+#nprogress .peg {
+  box-shadow: 0 0 6px var(--color-teal), 0 0 2px var(--color-teal);
+}

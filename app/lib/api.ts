@@ -128,6 +128,12 @@ export const api = {
   // Summary
   generateSummary: (patientId: number) =>
     request(`/summary/${patientId}`, { method: "POST" }),
+  saveSummary: (data: object) =>
+    request("/summaries/save", { method: "POST", body: JSON.stringify(data) }),
+  getSavedSummaries: () =>
+    request("/summaries/"),
+  deleteSavedSummary: (id: number) =>
+    request(`/summaries/${id}`, { method: "DELETE" }),
 
   // Password reset
   forgotPassword: (email: string) =>

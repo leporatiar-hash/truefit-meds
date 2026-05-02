@@ -201,3 +201,26 @@ class DailyLogResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Saved Summaries ───────────────────────────────────────────────────────────
+
+class SavedSummaryCreate(BaseModel):
+    patient_id: int
+    title: str
+    content: str
+    date_range_start: date
+    date_range_end: date
+
+
+class SavedSummaryResponse(BaseModel):
+    id: int
+    user_id: int
+    patient_id: int
+    title: str
+    content: str
+    date_range_start: date
+    date_range_end: date
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

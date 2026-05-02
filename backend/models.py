@@ -110,3 +110,18 @@ class PasswordResetToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User")
+
+
+class SavedSummary(Base):
+    __tablename__ = "saved_summaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    patient_id = Column(Integer, ForeignKey("patients.id"))
+    title = Column(String)
+    content = Column(Text)
+    date_range_start = Column(Date)
+    date_range_end = Column(Date)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])

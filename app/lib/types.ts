@@ -141,3 +141,14 @@ export interface SummaryResponse {
   discussion_items: string[];
   adherence_data?: Record<string, { name: string; percentage: number; days_taken: number; days_logged: number }>;
 }
+
+export interface SavedSummary {
+  id: number;
+  user_id: number;
+  patient_id: number;
+  title: string;
+  content: string;
+  date_range_start: string;
+  date_range_end: string;
+  created_at: string;
+}
