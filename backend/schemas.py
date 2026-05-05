@@ -164,6 +164,14 @@ class Lifestyle(BaseModel):
     ate_well: bool = False
 
 
+class Socialization(BaseModel):
+    left_house: Optional[bool] = None
+    had_contact: Optional[bool] = None
+    contact_ids: List[int] = []
+    quality: Optional[str] = None   # "good" | "neutral" | "difficult"
+    initiated_by: Optional[str] = None  # "self" | "other"
+
+
 class DailyLogCreate(BaseModel):
     patient_id: int
     date: date
@@ -218,14 +226,6 @@ class SocialContactResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
-
-class Socialization(BaseModel):
-    left_house: Optional[bool] = None
-    had_contact: Optional[bool] = None
-    contact_ids: List[int] = []
-    quality: Optional[str] = None   # "good" | "neutral" | "difficult"
-    initiated_by: Optional[str] = None  # "self" | "other"
 
 
 # ── Saved Summaries ───────────────────────────────────────────────────────────
