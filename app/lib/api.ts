@@ -135,6 +135,13 @@ export const api = {
   deleteSavedSummary: (id: number) =>
     request(`/summaries/${id}`, { method: "DELETE" }),
 
+  // Social contacts
+  getSocialContacts: () => request("/api/social-contacts/"),
+  createSocialContact: (name: string) =>
+    request("/api/social-contacts/", { method: "POST", body: JSON.stringify({ name }) }),
+  deleteSocialContact: (id: number) =>
+    request(`/api/social-contacts/${id}`, { method: "DELETE" }),
+
   // Password reset
   forgotPassword: (email: string) =>
     request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),

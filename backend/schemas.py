@@ -179,6 +179,7 @@ class DailyLogCreate(BaseModel):
     episode: Optional[Any] = None
     vitals: Optional[Any] = None
     photo: Optional[str] = None
+    socialization: Optional[Socialization] = None
 
 
 class DailyLogResponse(BaseModel):
@@ -198,9 +199,33 @@ class DailyLogResponse(BaseModel):
     episode: Optional[Any] = None
     vitals: Optional[Any] = None
     photo: Optional[str] = None
+    socialization: Optional[Any] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Social Contacts ───────────────────────────────────────────────────────────
+
+class SocialContactCreate(BaseModel):
+    name: str
+
+
+class SocialContactResponse(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class Socialization(BaseModel):
+    left_house: Optional[bool] = None
+    had_contact: Optional[bool] = None
+    contact_ids: List[int] = []
+    quality: Optional[str] = None   # "good" | "neutral" | "difficult"
+    initiated_by: Optional[str] = None  # "self" | "other"
 
 
 # ── Saved Summaries ───────────────────────────────────────────────────────────

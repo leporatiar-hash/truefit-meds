@@ -117,7 +117,23 @@ export interface DailyLog {
   episode: Episode | null;
   vitals: Vitals | null;
   photo: string | null;
+  socialization: Socialization | null;
   created_at: string;
+}
+
+export interface SocialContact {
+  id: number;
+  user_id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface Socialization {
+  left_house: boolean | null;
+  had_contact: boolean | null;
+  contact_ids: number[];
+  quality: "good" | "neutral" | "difficult" | null;
+  initiated_by: "self" | "other" | null;
 }
 
 export interface AdherenceItem {

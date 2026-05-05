@@ -93,10 +93,24 @@ class DailyLog(Base):
     # base64 JPEG data URL, compressed to ~50-100 KB before storing
     photo = Column(Text, nullable=True)
 
+    # {left_house: bool|null, had_contact: bool|null, contact_ids: [int], quality: str|null, initiated_by: str|null}
+    socialization = Column(JSON, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="daily_logs")
     logger = relationship("User", foreign_keys=[logged_by])
+
+
+class SocialContact(Base):
+    __tablename__ = "social_contacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
 
 
 class PasswordResetToken(Base):

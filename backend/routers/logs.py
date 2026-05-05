@@ -51,6 +51,7 @@ def create_or_update_log(
         "episode": log_data.episode,
         "vitals": log_data.vitals,
         "photo": log_data.photo,
+        "socialization": _serialize_log_field(log_data.socialization),
     }
 
     # Upsert: update if a log for this patient+date already exists

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
-import type { Patient, DailyLog, MedicationTaken, Vitals } from "../lib/types";
+import type { Patient, DailyLog, MedicationTaken, Vitals, SocialContact, Socialization } from "../lib/types";
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -163,6 +163,67 @@ function computeActivities(logs: DailyLog[]): ActivityRow[] {
     .sort((a, b) => b.daysActive - a.daysActive);
 }
 
+interface SocializationSummary {
+  daysTracked: number;
+  totalDays: number;
+  daysLeftHouse: number;
+  daysHadContact: number;
+  contactFrequency: { name: string; count: number }[];
+  qualityBreakdown: { good: number; neutral: number; difficult: number; total: number };
+  daysInitiatedBySelf: number;
+  totalInitiatedAnswered: number;
+}
+
+function computeSocialization(logs: DailyLog[], contacts: SocialContact[]): SocializationSummary | null {
+  const contactMap = new Map(contacts.map(c => [c.id, c.name]));
+  const contactCounts = new Map<number, number>();
+
+  let daysTracked = 0, daysLeftHouse = 0, daysHadContact = 0;
+  let good = 0, neutral = 0, difficult = 0, qualityTotal = 0;
+  let daysInitiatedBySelf = 0, totalInitiatedAnswered = 0;
+
+  for (const log of logs) {
+    const s = log.socialization as Socialization | null;
+    if (!s || (s.left_house === null && s.had_contact === null)) continue;
+    daysTracked++;
+    if (s.left_house === true) daysLeftHouse++;
+    if (s.had_contact === true) {
+      daysHadContact++;
+      for (const id of (s.contact_ids ?? [])) {
+        contactCounts.set(id, (contactCounts.get(id) ?? 0) + 1);
+      }
+    }
+    if (s.quality !== null && s.quality !== undefined) {
+      qualityTotal++;
+      if (s.quality === "good") good++;
+      else if (s.quality === "neutral") neutral++;
+      else if (s.quality === "difficult") difficult++;
+    }
+    if (s.initiated_by !== null && s.initiated_by !== undefined) {
+      totalInitiatedAnswered++;
+      if (s.initiated_by === "self") daysInitiatedBySelf++;
+    }
+  }
+
+  if (daysTracked === 0) return null;
+
+  const contactFrequency = Array.from(contactCounts.entries())
+    .map(([id, count]) => ({ name: contactMap.get(id) ?? `Contact #${id}`, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return {
+    daysTracked,
+    totalDays: logs.length,
+    daysLeftHouse,
+    daysHadContact,
+    contactFrequency,
+    qualityBreakdown: { good, neutral, difficult, total: qualityTotal },
+    daysInitiatedBySelf,
+    totalInitiatedAnswered,
+  };
+}
+
 // ── Print stylesheet ──────────────────────────────────────────────────────────
 
 const PRINT_STYLE = `
@@ -203,11 +264,12 @@ function Section({
 // ── Clinical report ───────────────────────────────────────────────────────────
 
 function ClinicalReport({
-  patient, logs, userName,
+  patient, logs, userName, contacts,
 }: {
   patient: Patient;
   logs: DailyLog[];
   userName: string | undefined;
+  contacts: SocialContact[];
 }) {
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const startDate = logs.length ? fmtShort(logs[0].date) : "—";
@@ -220,6 +282,7 @@ function ClinicalReport({
   const episodes = computeEpisodes(logs);
   const vitals = computeVitalsRange(logs);
   const activityRows = computeActivities(logs);
+  const socData = computeSocialization(logs, contacts);
   const noteEntries = [...logs]
     .filter(l => l.notes?.trim())
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -399,6 +462,44 @@ function ClinicalReport({
               </table>
             </Section>
           )}
+
+          {/* ── Socialization ── */}
+          {socData && (
+            <Section title="Socialization" accent="#0D7490">
+              <div className="space-y-1.5 text-sm">
+                <p className="text-slate-700">
+                  <span className="font-semibold text-navy">Days tracked:</span>{" "}
+                  {socData.daysTracked} / {socData.totalDays}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold text-navy">Left the house:</span>{" "}
+                  {socData.daysLeftHouse} day{socData.daysLeftHouse !== 1 ? "s" : ""}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold text-navy">Had social contact:</span>{" "}
+                  {socData.daysHadContact} day{socData.daysHadContact !== 1 ? "s" : ""}
+                  {socData.contactFrequency.length > 0 && (
+                    <span className="text-slate-500">
+                      {" "}— most frequent:{" "}
+                      {socData.contactFrequency.map(c => `${c.name} (${c.count})`).join(", ")}
+                    </span>
+                  )}
+                </p>
+                {socData.qualityBreakdown.total > 0 && (
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-navy">Quality breakdown:</span>{" "}
+                    Good {socData.qualityBreakdown.good} · Neutral {socData.qualityBreakdown.neutral} · Difficult {socData.qualityBreakdown.difficult}
+                  </p>
+                )}
+                {socData.totalInitiatedAnswered > 0 && (
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-navy">Initiated by {patient.name}:</span>{" "}
+                    {socData.daysInitiatedBySelf} of {socData.totalInitiatedAnswered} contact day{socData.totalInitiatedAnswered !== 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+            </Section>
+          )}
         </>
       )}
 
@@ -419,15 +520,20 @@ export default function PrintPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [contacts, setContacts] = useState<SocialContact[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [range, setRange] = useState<7 | 30>(7);
 
   const loadData = useCallback(async () => {
     try {
-      const patients = await api.getPatients() as Patient[];
+      const [patients, contactsData] = await Promise.all([
+        api.getPatients() as Promise<Patient[]>,
+        api.getSocialContacts() as Promise<SocialContact[]>,
+      ]);
       if (!patients.length) { router.push("/onboarding"); return; }
       const p = patients[0];
       setPatient(p);
+      setContacts(contactsData);
       const logsData = await api.getLogs(p.id) as DailyLog[];
       setLogs(logsData);
     } catch {
@@ -516,6 +622,7 @@ export default function PrintPage() {
               patient={patient}
               logs={filtered}
               userName={user?.name}
+              contacts={contacts}
             />
           )}
 

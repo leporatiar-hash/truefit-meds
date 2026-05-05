@@ -8,7 +8,7 @@ import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import { StepLoader } from "../components/StepLoader";
-import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle } from "../lib/types";
+import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle, SocialContact, Socialization } from "../lib/types";
 import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constants";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -38,35 +38,50 @@ const SIDE_EFFECT_OPTIONS = [
 
 function AccordionSection({
   id, title, summaryLine, bgColor, borderColor, headingColor,
-  isOpen, onToggle, children,
+  isOpen, onToggle, onSettings, children,
 }: {
   id: string; title: string; summaryLine: string;
   bgColor: string; borderColor: string; headingColor: string;
-  isOpen: boolean; onToggle: () => void; children: React.ReactNode;
+  isOpen: boolean; onToggle: () => void; onSettings?: () => void; children: React.ReactNode;
 }) {
   return (
     <div id={id} className="rounded-2xl overflow-hidden shadow-sm border" style={{ borderColor }}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-4 text-left"
-        style={{ background: bgColor }}
-      >
-        <div className="flex-1 min-w-0 pr-3">
-          <p className="text-lg font-bold" style={{ color: headingColor }}>{title}</p>
-          <p
-            className="text-sm mt-0.5 truncate transition-opacity duration-200"
-            style={{ color: headingColor + "99", opacity: isOpen ? 0 : 1 }}
-          >{summaryLine}</p>
-        </div>
-        <svg
-          className="w-5 h-5 flex-shrink-0 transition-transform duration-200"
-          style={{ color: headingColor, transform: isOpen ? "rotate(180deg)" : "none" }}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      <div className="flex items-stretch" style={{ background: bgColor }}>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 flex items-center justify-between px-5 py-4 text-left min-w-0"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <div className="flex-1 min-w-0 pr-3">
+            <p className="text-lg font-bold" style={{ color: headingColor }}>{title}</p>
+            <p
+              className="text-sm mt-0.5 truncate transition-opacity duration-200"
+              style={{ color: headingColor + "99", opacity: isOpen ? 0 : 1 }}
+            >{summaryLine}</p>
+          </div>
+          <svg
+            className="w-5 h-5 flex-shrink-0 transition-transform duration-200"
+            style={{ color: headingColor, transform: isOpen ? "rotate(180deg)" : "none" }}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {onSettings && (
+          <button
+            type="button"
+            onClick={onSettings}
+            className="px-4 flex items-center border-l"
+            style={{ color: headingColor + "80", borderColor: headingColor + "20" }}
+            aria-label="Manage contacts"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        )}
+      </div>
 
       <div
         style={{
@@ -155,6 +170,33 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
+// ── YesNoToggle ───────────────────────────────────────────────────────────────
+
+function YesNoToggle({ value, onChange }: { value: boolean | null; onChange: (v: boolean | null) => void }) {
+  return (
+    <div className="flex gap-2">
+      {([["Yes", true], ["No", false]] as [string, boolean][]).map(([label, v]) => {
+        const active = value === v;
+        return (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onChange(active ? null : v)}
+            className="flex-1 py-3 rounded-xl border-2 text-base font-semibold transition-all active:scale-95"
+            style={{
+              borderColor: active ? "#4a7c59" : "#CBD5E1",
+              background: active ? "#4a7c59" : "white",
+              color: active ? "white" : "#334155",
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 interface Episode {
   occurred: boolean;
   time: string;
@@ -192,6 +234,7 @@ interface LogDraft {
   episode: Episode;
   vitals: Vitals;
   photo: string | null; // base64 JPEG data URL (compressed ~50-100 KB)
+  socialization: Socialization;
 }
 
 // ── Photo compression ─────────────────────────────────────────────────────────
@@ -221,6 +264,10 @@ function emptyVitals(): Vitals {
   return { heart_rate: "", blood_pressure: "", cigarettes: "", alcohol: false, alcohol_drinks: "" };
 }
 
+function emptySocialization(): Socialization {
+  return { left_house: null, had_contact: null, contact_ids: [], quality: null, initiated_by: null };
+}
+
 function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
   return {
     date: localDateStr(),
@@ -236,6 +283,7 @@ function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
     episode: { occurred: false, time: "", description: "" },
     vitals: emptyVitals(),
     photo: null,
+    socialization: emptySocialization(),
   };
 }
 
@@ -282,6 +330,12 @@ export default function LogPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
 
+  // Social contacts
+  const [socialContacts, setSocialContacts] = useState<SocialContact[]>([]);
+  const [showContactsSheet, setShowContactsSheet] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+  const [addingContact, setAddingContact] = useState(false);
+
   // Auto-expand section from URL hash
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -290,10 +344,14 @@ export default function LogPage() {
 
   const loadPatient = useCallback(async () => {
     try {
-      const patients = await api.getPatients() as Patient[];
+      const [patients, contacts] = await Promise.all([
+        api.getPatients() as Promise<Patient[]>,
+        api.getSocialContacts() as Promise<SocialContact[]>,
+      ]);
       if (!patients.length) { router.push("/onboarding"); return; }
       const p = patients[0];
       setPatient(p);
+      setSocialContacts(contacts);
 
       const today = localDateStr();
 
@@ -302,6 +360,7 @@ export default function LogPage() {
         setLoadedFromServer(true);
         const ep = todayLog.episode as Episode | null;
         const vt = todayLog.vitals as Vitals | null;
+        const savedSoc = todayLog.socialization as Socialization | null;
         // Load saved doses — filter to only taken:true entries for history
         const savedDoses = (todayLog.medications_taken as MedicationTaken[] | null) ?? [];
         const takenDoses = savedDoses.filter(m => m.taken);
@@ -327,6 +386,13 @@ export default function LogPage() {
             alcohol_drinks: (vt as Vitals).alcohol_drinks ?? "",
           } : emptyVitals(),
           photo: (todayLog.photo as string | null) ?? null,
+          socialization: savedSoc ? {
+            left_house: savedSoc.left_house ?? null,
+            had_contact: savedSoc.had_contact ?? null,
+            contact_ids: savedSoc.contact_ids ?? [],
+            quality: savedSoc.quality ?? null,
+            initiated_by: savedSoc.initiated_by ?? null,
+          } : emptySocialization(),
         });
       } else {
         setDraft(defaultDraft(p.id, p.medications));
@@ -415,6 +481,47 @@ export default function LogPage() {
   function toggleActivity(type: string) {
     const acts = draft!.activities;
     update({ activities: acts.some(a => a.type === type) ? acts.filter(a => a.type !== type) : [...acts, { type }] });
+  }
+
+  // ── Socialization ────────────────────────────────────────────────────────────
+
+  function updateSocialization(patch: Partial<Socialization>) {
+    update({ socialization: { ...draft!.socialization, ...patch } });
+  }
+
+  function toggleContactId(id: number) {
+    const ids = draft!.socialization.contact_ids;
+    updateSocialization({ contact_ids: ids.includes(id) ? ids.filter(c => c !== id) : [...ids, id] });
+  }
+
+  async function handleAddContact() {
+    if (!newContactName.trim()) return;
+    setAddingContact(true);
+    try {
+      const added = await api.createSocialContact(newContactName.trim()) as SocialContact;
+      setSocialContacts(prev => [...prev, added].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewContactName("");
+      // Auto-select newly added contact when contact section is visible
+      if (draft?.socialization.had_contact) {
+        updateSocialization({ contact_ids: [...draft!.socialization.contact_ids, added.id] });
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to add contact");
+    } finally {
+      setAddingContact(false);
+    }
+  }
+
+  async function handleDeleteContact(contactId: number) {
+    try {
+      await api.deleteSocialContact(contactId);
+      setSocialContacts(prev => prev.filter(c => c.id !== contactId));
+      if (draft?.socialization.contact_ids.includes(contactId)) {
+        updateSocialization({ contact_ids: draft!.socialization.contact_ids.filter(id => id !== contactId) });
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove contact");
+    }
   }
 
   // ── Episode / Vitals ──────────────────────────────────────────────────────
@@ -524,6 +631,9 @@ export default function LogPage() {
           ? draft.vitals
           : null,
         photo: draft.photo || null,
+        socialization: (draft.socialization.left_house !== null || draft.socialization.had_contact !== null)
+          ? draft.socialization
+          : null,
       });
       setSaved(true);
       setTimeout(() => { router.push("/dashboard"); }, 800);
@@ -575,6 +685,16 @@ export default function LogPage() {
   const medsText = totalDoses > 0 ? `${totalDoses} dose${totalDoses !== 1 ? "s" : ""} logged` : "Nothing logged yet";
   const symptomsText = draft.symptoms.length > 0 ? `${draft.symptoms.length} symptom${draft.symptoms.length !== 1 ? "s" : ""} noted` : "None noted";
   const activitiesText = draft.activities.length ? `${draft.activities.length} selected` : "None selected";
+  const socializationText = (() => {
+    const s = draft.socialization;
+    if (s.left_house === null && s.had_contact === null) return "Tap to log";
+    const parts: string[] = [];
+    if (s.left_house === true) parts.push("Left house");
+    else if (s.left_house === false) parts.push("Stayed home");
+    if (s.had_contact === true) parts.push(`Contact: ${s.contact_ids.length} person${s.contact_ids.length !== 1 ? "s" : ""}`);
+    else if (s.had_contact === false) parts.push("No contact");
+    return parts.join(" · ") || "Tap to log";
+  })();
   const notesText = draft.notes ? draft.notes.slice(0, 40) + (draft.notes.length > 40 ? "…" : "") : "Tap to add";
   const photoText = draft.photo ? "Photo saved" : "No photo yet";
   const episodeText = draft.episode.occurred ? `Episode at ${draft.episode.time ? fmt12(draft.episode.time) : "unknown time"}` : "No episode today";
@@ -1089,6 +1209,120 @@ export default function LogPage() {
           )}
         </AccordionSection>
 
+        {/* ── Socialization ── */}
+        <AccordionSection id="socialization" title="Socialization" summaryLine={socializationText}
+          bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
+          isOpen={openSection === "socialization"} onToggle={() => toggle("socialization")}
+          onSettings={() => setShowContactsSheet(true)}>
+
+          <div className="space-y-5">
+            {/* Q1: Left the house? */}
+            <div className="space-y-2">
+              <p className="text-base font-semibold text-slate-700">Did {patient.name} leave the house today?</p>
+              <YesNoToggle
+                value={draft.socialization.left_house}
+                onChange={v => updateSocialization({ left_house: v })}
+              />
+            </div>
+
+            {/* Q2: Social contact? */}
+            <div className="space-y-2">
+              <p className="text-base font-semibold text-slate-700">Any social contact outside the household?</p>
+              <YesNoToggle
+                value={draft.socialization.had_contact}
+                onChange={v => updateSocialization({ had_contact: v, contact_ids: v ? draft.socialization.contact_ids : [], quality: v ? draft.socialization.quality : null, initiated_by: v ? draft.socialization.initiated_by : null })}
+              />
+            </div>
+
+            {draft.socialization.had_contact && (
+              <>
+                {/* Q3: Who? */}
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-slate-700">Who?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {socialContacts.map(contact => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => toggleContactId(contact.id)}
+                        className="px-4 py-2 rounded-full border-2 text-sm font-semibold transition-all active:scale-95"
+                        style={{
+                          borderColor: draft.socialization.contact_ids.includes(contact.id) ? "#4a7c59" : "#CBD5E1",
+                          background: draft.socialization.contact_ids.includes(contact.id) ? "#4a7c59" : "white",
+                          color: draft.socialization.contact_ids.includes(contact.id) ? "white" : "#334155",
+                        }}
+                      >
+                        {contact.name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setShowContactsSheet(true)}
+                      className="px-4 py-2 rounded-full border-2 border-dashed text-sm font-semibold transition-all active:scale-95"
+                      style={{ borderColor: "#CBD5E1", color: "#64748B", background: "white" }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                </div>
+
+                {/* Q4: Quality */}
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-slate-700">How did it go?</p>
+                  <div className="flex gap-2">
+                    {([["Good", "good"], ["Neutral", "neutral"], ["Difficult", "difficult"]] as [string, string][]).map(([label, val]) => {
+                      const active = draft.socialization.quality === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => updateSocialization({ quality: active ? null : val as Socialization["quality"] })}
+                          className="flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all active:scale-95"
+                          style={{
+                            borderColor: active ? "#4a7c59" : "#CBD5E1",
+                            background: active ? "#4a7c59" : "white",
+                            color: active ? "white" : "#334155",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Q5: Initiated by */}
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-slate-700">Who reached out first?</p>
+                  <div className="flex gap-2">
+                    {([
+                      [`${patient.name} did`, "self"],
+                      ["Someone else", "other"],
+                    ] as [string, string][]).map(([label, val]) => {
+                      const active = draft.socialization.initiated_by === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => updateSocialization({ initiated_by: active ? null : val as Socialization["initiated_by"] })}
+                          className="flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all active:scale-95"
+                          style={{
+                            borderColor: active ? "#4a7c59" : "#CBD5E1",
+                            background: active ? "#4a7c59" : "white",
+                            color: active ? "white" : "#334155",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </AccordionSection>
+
         {/* ── Notes ── */}
         <AccordionSection id="notes" title="Notes" summaryLine={notesText}
           bgColor="white" borderColor="#d4e0d7" headingColor="#1a2420"
@@ -1107,6 +1341,74 @@ export default function LogPage() {
           />
         </AccordionSection>
       </div>
+
+      {/* ── Manage Contacts Sheet ── */}
+      {showContactsSheet && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={e => { if (e.target === e.currentTarget) setShowContactsSheet(false); }}
+        >
+          <div className="bg-white rounded-t-3xl flex flex-col" style={{ maxHeight: "70vh" }}>
+            {/* Sheet header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
+              <h2 className="text-xl font-bold text-navy">Manage Contacts</h2>
+              <button
+                type="button"
+                onClick={() => setShowContactsSheet(false)}
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-white"
+                style={{ background: "#4a7c59" }}
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Contact list */}
+            <div className="flex-1 overflow-y-auto px-5 space-y-2 pb-2">
+              {socialContacts.map(contact => (
+                <div key={contact.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+                  <span className="text-sm font-medium text-navy">{contact.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteContact(contact.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors text-xl leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Count + add row */}
+            <div className="px-5 pb-8 pt-3 flex-shrink-0 border-t border-slate-100">
+              <p className="text-xs text-slate-400 mb-3">{socialContacts.length} of 20 contacts</p>
+              {socialContacts.length < 20 ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newContactName}
+                    onChange={e => setNewContactName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddContact(); } }}
+                    placeholder="Add a contact..."
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-navy text-sm focus:outline-none bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddContact}
+                    disabled={!newContactName.trim() || addingContact}
+                    className="px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
+                    style={{ background: newContactName.trim() ? "#4a7c59" : "#CBD5E1" }}
+                  >
+                    {addingContact ? "…" : "+ Add"}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-center" style={{ color: "#D97706" }}>Contact limit reached</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Sticky save bar ── */}
       <div className="fixed bottom-0 left-0 right-0 z-30">

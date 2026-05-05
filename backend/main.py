@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from database import engine, Base
 import models  # noqa: F401 — ensures models are registered before create_all
-from routers import auth, patients, medications, logs, summary, onboarding, saved_summaries
+from routers import auth, patients, medications, logs, summary, onboarding, saved_summaries, social_contacts
 
 load_dotenv()
 
@@ -26,11 +26,24 @@ _MIGRATIONS = [
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS medication_side_effects JSON",
     "ALTER TABLE patients ADD COLUMN IF NOT EXISTS dashboard_config JSON",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS user_config JSON",
+    "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS socialization JSONB",
 ]
+
+_SEED_DEFAULT_CONTACTS = """
+INSERT INTO social_contacts (user_id, name)
+SELECT u.id, c.name
+FROM users u
+CROSS JOIN (VALUES ('Family'), ('Friend'), ('Therapist / Provider')) AS c(name)
+WHERE NOT EXISTS (
+    SELECT 1 FROM social_contacts sc
+    WHERE sc.user_id = u.id AND sc.name = c.name
+)
+"""
 
 with engine.connect() as conn:
     for stmt in _MIGRATIONS:
         conn.execute(text(stmt))
+    conn.execute(text(_SEED_DEFAULT_CONTACTS))
     conn.commit()
 
 app = FastAPI(title="TrueFit Meds API", version="1.0.0")
@@ -110,6 +123,7 @@ app.include_router(logs.router, prefix="/logs", tags=["logs"])
 app.include_router(summary.router, prefix="/summary", tags=["summary"])
 app.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 app.include_router(saved_summaries.router, prefix="/summaries", tags=["summaries"])
+app.include_router(social_contacts.router, prefix="/api/social-contacts", tags=["social-contacts"])
 
 
 @app.get("/")
