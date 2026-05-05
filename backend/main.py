@@ -30,8 +30,8 @@ _MIGRATIONS = [
 ]
 
 _SEED_DEFAULT_CONTACTS = """
-INSERT INTO social_contacts (user_id, name)
-SELECT u.id, c.name
+INSERT INTO social_contacts (user_id, name, created_at)
+SELECT u.id, c.name, NOW()
 FROM users u
 CROSS JOIN (VALUES ('Family'), ('Friend'), ('Therapist / Provider')) AS c(name)
 WHERE NOT EXISTS (
@@ -40,10 +40,15 @@ WHERE NOT EXISTS (
 )
 """
 
+_BACKFILL_CONTACTS_CREATED_AT = """
+UPDATE social_contacts SET created_at = NOW() WHERE created_at IS NULL
+"""
+
 with engine.connect() as conn:
     for stmt in _MIGRATIONS:
         conn.execute(text(stmt))
     conn.execute(text(_SEED_DEFAULT_CONTACTS))
+    conn.execute(text(_BACKFILL_CONTACTS_CREATED_AT))
     conn.commit()
 
 app = FastAPI(title="TrueFit Meds API", version="1.0.0")

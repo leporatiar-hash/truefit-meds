@@ -223,7 +223,7 @@ class SocialContactResponse(BaseModel):
     id: int
     user_id: int
     name: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
