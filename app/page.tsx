@@ -232,7 +232,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 72px" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>How it works</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest, marginBottom: 16 }}>
-            A 60-second daily log<br />your doctor can actually use.
+            A daily log that fits your routine<br />and your doctor can actually use.
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
             It&apos;s not another app to manage. A fast daily check-in that builds into a complete health picture over time.
@@ -240,7 +240,7 @@ export default function LandingPage() {
         </div>
         <div className="lp-steps" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
           {[
-            { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple 60-second daily check-in built for non-technical caregivers." },
+            { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple daily check-in that fits into any caregiver's routine — no technical knowledge needed." },
             { num: "02", title: "Patterns emerge", body: "Trends surface across your entries over time. Changes in symptom frequency, medication adherence, and wellbeing become visible week by week." },
             { num: "03", title: "Ready for the appointment", body: "Before each appointment, generate a clinical summary organized by symptom and system. It's the kind of input that changes what a doctor can do in a 15-minute visit." },
           ].map((step) => (
@@ -312,10 +312,10 @@ export default function LandingPage() {
                 Daily log
               </div>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
-                It takes about 60 seconds to log a full day.
+                Logging a full day is easier than you'd expect.
               </h3>
               <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
-                No medical jargon, no long forms. Any caregiver can fill it out in under a minute, and each entry adds to a picture that tells the whole story over time.
+                No medical jargon, no long forms. Any caregiver can fill it out whenever it fits their day, and each entry adds to a picture that tells the whole story over time.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
@@ -414,7 +414,7 @@ export default function LandingPage() {
             </div>
           </div>
           {[
-            { title: "60-second daily check-in", body: "No long forms. No medical jargon. Just a fast, focused daily entry that a non-technical caregiver can complete in under a minute." },
+            { title: "Built for your routine", body: "No long forms. No medical jargon. Just a simple, focused daily entry that fits into caregiving life — whenever you have a moment." },
             { title: "Trend detection", body: "Changes in symptom patterns, medication adherence, and wellbeing surface automatically. Things that are hard to see day-to-day become clear across weeks." },
             { title: "Medication tracking", body: "Log each medication with dosage and timing. Every entry builds a history you can bring to any appointment." },
             { title: "Private by default", body: "Your loved one's health data stays yours. Privacy isn't a feature added on top. It's how the app was built from the start." },
