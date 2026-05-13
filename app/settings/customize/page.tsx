@@ -8,7 +8,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../components/AuthProvider";
 import { NavBar } from "../../components/NavBar";
 import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../../lib/constants";
-import type { User, Patient, Medication } from "../../lib/types";
+import type { User, Patient, Medication, SocialContact } from "../../lib/types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -167,6 +167,12 @@ export default function CustomizePage() {
   // Dose timing
   const [doseTimingMode, setDoseTimingMode] = useState<"simple" | "exact">("simple");
 
+  // Socialization
+  const [showSocialization, setShowSocialization] = useState(true);
+  const [contacts, setContacts] = useState<SocialContact[]>([]);
+  const [newContactName, setNewContactName] = useState("");
+  const [addingContact, setAddingContact] = useState(false);
+
   const loadFromUser = useCallback((u: User) => {
     const cfg = u.user_config;
 
@@ -183,6 +189,7 @@ export default function CustomizePage() {
     setShowAlcohol(sf.includes("alcohol"));
     setCustomSubstances(sf.filter((s: string) => s !== "cigarettes" && s !== "alcohol"));
     setDoseTimingMode(cfg.dose_timing_mode ?? "simple");
+    setShowSocialization(cfg.show_socialization !== false);
   }, []);
 
   useEffect(() => {
@@ -193,6 +200,7 @@ export default function CustomizePage() {
         const list = pts as Patient[];
         if (list.length > 0) setPatient(list[0]);
       }).catch(() => {});
+      api.getSocialContacts().then(c => setContacts(c as SocialContact[])).catch(() => {});
     }
   }, [user, isLoading, loadFromUser, router]);
 
@@ -293,6 +301,34 @@ export default function CustomizePage() {
   }
   function removeCustomSubstance(name: string) { setCustomSubstances(prev => prev.filter(s => s !== name)); }
 
+  // ── Social Contacts ────────────────────────────────────────────────────────
+
+  async function handleAddContact() {
+    const name = newContactName.trim();
+    if (!name) return;
+    setAddingContact(true);
+    try {
+      const added = await api.createSocialContact(name) as SocialContact;
+      setContacts(prev => [...prev, added]);
+      setNewContactName("");
+      toast.success(`${added.name} added`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to add contact");
+    } finally {
+      setAddingContact(false);
+    }
+  }
+
+  async function handleRemoveContact(id: number, name: string) {
+    try {
+      await api.deleteSocialContact(id);
+      setContacts(prev => prev.filter(c => c.id !== id));
+      toast.success(`${name} removed`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove contact");
+    }
+  }
+
   // ── Save ──────────────────────────────────────────────────────────────────
 
   async function handleSave() {
@@ -310,6 +346,7 @@ export default function CustomizePage() {
           ...customSubstances,
         ],
         dose_timing_mode: doseTimingMode,
+        show_socialization: showSocialization,
       };
       const updated = await api.updateUserConfig(updates) as User;
       updateUser(updated);
@@ -496,6 +533,60 @@ export default function CustomizePage() {
             borderColor="#d4e0d7"
             buttonColor="#9A3412"
           />
+        </Section>
+
+        {/* ── Socialization ── */}
+        <Section title="Socialization" subtitle="Track how your patient is engaging socially each day">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-base font-semibold text-slate-700">Show Socialization</p>
+              <p className="text-sm text-slate-400">Display this section on the daily log</p>
+            </div>
+            <Toggle value={showSocialization} onChange={setShowSocialization} />
+          </div>
+
+          <div className="pt-1 space-y-3">
+            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Social Contacts</p>
+            <p className="text-sm text-slate-400">People who appear as contact options in the log</p>
+            {contacts.length > 0 && (
+              <div className="-mt-1">
+                {contacts.map(c => (
+                  <div key={c.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                    <p className="text-base font-semibold text-navy">{c.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveContact(c.id, c.name)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors text-lg leading-none"
+                      aria-label={`Remove ${c.name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {contacts.length === 0 && <p className="text-sm text-slate-400">No contacts added yet.</p>}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newContactName}
+                onChange={e => setNewContactName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleAddContact()}
+                placeholder="e.g. Mom, Dr. Smith, Neighbor…"
+                className="flex-1 px-4 py-2.5 rounded-xl border text-base text-navy focus:outline-none bg-white"
+                style={{ borderColor: "#d4e0d7" }}
+              />
+              <button
+                type="button"
+                onClick={handleAddContact}
+                disabled={!newContactName.trim() || addingContact}
+                className="px-4 py-2.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-40"
+                style={{ background: "#4a7c59" }}
+              >
+                {addingContact ? "Adding…" : "Add"}
+              </button>
+            </div>
+          </div>
         </Section>
 
         {/* ── Dose Timing ── */}

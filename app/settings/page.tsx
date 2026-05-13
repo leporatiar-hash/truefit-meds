@@ -6,6 +6,49 @@ import Link from "next/link";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 pb-1 pt-2">
+      {label}
+    </p>
+  );
+}
+
+function SettingsRow({
+  href,
+  icon,
+  iconBg,
+  title,
+  subtitle,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-4 w-full bg-white rounded-2xl border border-slate-100 px-4 py-4 transition-all active:scale-[0.98] hover:border-slate-200"
+    >
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: iconBg }}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-semibold text-navy leading-tight">{title}</p>
+        <p className="text-sm text-slate-400 mt-0.5 truncate">{subtitle}</p>
+      </div>
+      <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </Link>
+  );
+}
+
 export default function SettingsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -22,50 +65,63 @@ export default function SettingsPage() {
     );
   }
 
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div className="min-h-screen pb-28" style={{ background: "#faf9f6" }}>
       <NavBar />
 
-      <div className="max-w-lg mx-auto px-4 pt-6 space-y-5">
-        <div>
+      <div className="max-w-lg mx-auto px-4 pt-6 space-y-1">
+        <div className="pb-4">
           <h1 className="text-3xl font-bold text-navy">Settings</h1>
-          <p className="text-base text-slate-500 mt-1">Manage your account and preferences</p>
+          <p className="text-base text-slate-500 mt-1">Account and preferences</p>
         </div>
 
-        {/* Account card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-5 space-y-1">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Account</p>
-          <p className="text-lg font-bold text-navy">{user.name}</p>
-          <p className="text-sm text-slate-500">{user.email}</p>
+        {/* ── Account ── */}
+        <SectionLabel label="Account" />
+        <div className="bg-white rounded-2xl border border-slate-100 px-4 py-4 flex items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-base"
+            style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
+          >
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-base font-bold text-navy leading-tight">{user.name}</p>
+            <p className="text-sm text-slate-400 truncate">{user.email}</p>
+          </div>
         </div>
 
-        {/* Change password */}
-        <Link
+        <SettingsRow
           href="/forgot-password"
-          className="flex items-center justify-between w-full bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-5 transition-all active:scale-[0.98]"
-        >
-          <div>
-            <p className="text-lg font-bold text-navy">Change Password</p>
-            <p className="text-sm text-slate-500 mt-0.5">Send a reset link to {user.email}</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+          iconBg="#EEF2FF"
+          title="Change Password"
+          subtitle={`Send a reset link to ${user.email}`}
+          icon={
+            <svg className="w-5 h-5" style={{ color: "#4F46E5" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          }
+        />
 
-        {/* Customize button */}
-        <Link
+        {/* ── Preferences ── */}
+        <SectionLabel label="Preferences" />
+        <SettingsRow
           href="/settings/customize"
-          className="flex items-center justify-between w-full bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-5 transition-all active:scale-[0.98]"
-        >
-          <div>
-            <p className="text-lg font-bold text-navy">Customize Your Dashboard</p>
-            <p className="text-sm text-slate-500 mt-0.5">Medications, symptoms, tracking, activities &amp; more</p>
-          </div>
-          <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+          iconBg="#f2f7f3"
+          title="Customize Your Dashboard"
+          subtitle="Medications, symptoms, tracking, activities & more"
+          icon={
+            <svg className="w-5 h-5" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          }
+        />
       </div>
     </div>
   );

@@ -680,6 +680,7 @@ export default function LogPage() {
   const customSubstanceNames = configSubstanceFields.filter(s => s !== "cigarettes" && s !== "alcohol");
 
   const doseTimingMode: "simple" | "exact" = user?.user_config?.dose_timing_mode ?? "simple";
+  const showSocialization: boolean = user?.user_config?.show_socialization !== false;
 
   const totalDoses = draft.medicationsTaken.filter(m => m.taken).length;
   const medsText = totalDoses > 0 ? `${totalDoses} dose${totalDoses !== 1 ? "s" : ""} logged` : "Nothing logged yet";
@@ -1210,7 +1211,7 @@ export default function LogPage() {
         </AccordionSection>
 
         {/* ── Socialization ── */}
-        <AccordionSection id="socialization" title="Socialization" summaryLine={socializationText}
+        {showSocialization && <AccordionSection id="socialization" title="Socialization" summaryLine={socializationText}
           bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "socialization"} onToggle={() => toggle("socialization")}
           onSettings={() => setShowContactsSheet(true)}>
@@ -1321,7 +1322,7 @@ export default function LogPage() {
               </>
             )}
           </div>
-        </AccordionSection>
+        </AccordionSection>}
 
         {/* ── Notes ── */}
         <AccordionSection id="notes" title="Notes" summaryLine={notesText}

@@ -37,6 +37,7 @@ export interface DashboardConfig {
   dose_timing_mode?: "simple" | "exact";
   tracking_modules?: string[]; // "sleep" | "hydration" | "vitals" | custom names
   custom_vitals?: string[];    // e.g. ["Weight", "Blood Sugar"]
+  show_socialization?: boolean;
 }
 
 export interface Patient {
