@@ -78,6 +78,31 @@ def get_patient(
     return patient
 
 
+@router.patch("/{patient_id}", response_model=schemas.PatientResponse)
+def update_patient(
+    patient_id: int,
+    data: schemas.PatientUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    patient = (
+        db.query(models.Patient)
+        .filter(
+            models.Patient.id == patient_id,
+            models.Patient.caregiver_id == current_user.id,
+        )
+        .first()
+    )
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(patient, field, value)
+    db.commit()
+    db.refresh(patient)
+    return patient
+
+
 @router.post("/{patient_id}/medications", response_model=schemas.MedicationResponse)
 def add_medication(
     patient_id: int,

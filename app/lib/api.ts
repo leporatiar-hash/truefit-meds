@@ -102,6 +102,8 @@ export const api = {
     request("/patients/", { method: "POST", body: JSON.stringify(data) }),
   getPatients: () => request("/patients/"),
   getPatient: (id: number) => request(`/patients/${id}`),
+  updatePatient: (id: number, data: object) =>
+    request(`/patients/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   generateConfig: (patientId: number, data: object) =>
     request(`/patients/${patientId}/generate-config`, { method: "POST", body: JSON.stringify(data) }),
   completeOnboardingSurvey: (data: object) =>

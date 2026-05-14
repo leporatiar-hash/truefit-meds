@@ -98,6 +98,13 @@ class PatientCreate(BaseModel):
     medications: Optional[List[MedicationCreate]] = []
 
 
+class PatientUpdate(BaseModel):
+    name: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    diagnosis: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class PatientResponse(BaseModel):
     id: int
     name: str

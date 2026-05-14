@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
+import { api } from "../lib/api";
+import type { Patient } from "../lib/types";
 
 function SectionLabel({ label }: { label: string }) {
   return (
@@ -50,11 +52,18 @@ function SettingsRow({
 }
 
 export default function SettingsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const [patient, setPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !user) router.push("/login");
+    if (!isLoading && !user) { router.push("/login"); return; }
+    if (!isLoading && user) {
+      api.getPatients().then(pts => {
+        const list = pts as Patient[];
+        if (list.length > 0) setPatient(list[0]);
+      }).catch(() => {});
+    }
   }, [user, isLoading, router]);
 
   if (isLoading || !user) {
@@ -109,6 +118,20 @@ export default function SettingsPage() {
           }
         />
 
+        {/* ── Patient ── */}
+        <SectionLabel label="Patient" />
+        <SettingsRow
+          href="/settings/patient"
+          iconBg="#FFF7ED"
+          title={patient?.name ?? "Patient Profile"}
+          subtitle={patient?.diagnosis ? `Diagnosis: ${patient.diagnosis}` : "Name, date of birth, condition"}
+          icon={
+            <svg className="w-5 h-5" style={{ color: "#C2410C" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          }
+        />
+
         {/* ── Preferences ── */}
         <SectionLabel label="Preferences" />
         <SettingsRow
@@ -122,6 +145,22 @@ export default function SettingsPage() {
             </svg>
           }
         />
+
+        {/* ── Sign Out ── */}
+        <div className="pt-3">
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="flex items-center gap-4 w-full bg-white rounded-2xl border border-slate-100 px-4 py-4 transition-all active:scale-[0.98] hover:border-red-100"
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#FEF2F2" }}>
+              <svg className="w-5 h-5" style={{ color: "#DC2626" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </div>
+            <p className="text-base font-semibold" style={{ color: "#DC2626" }}>Sign Out</p>
+          </button>
+        </div>
       </div>
     </div>
   );
