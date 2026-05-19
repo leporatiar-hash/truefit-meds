@@ -801,13 +801,13 @@ export default function LogPage() {
         {/* ── Treatment Plan Reference ── */}
         {treatmentPlan && (() => {
           const tp = treatmentPlan;
-          const hasTherapy = tp.therapy_type || tp.therapy_frequency;
+          const hasTherapy = (tp.therapies ?? []).length > 0;
+          const hasClinician = (tp.clinicians ?? []).length > 0;
           const hasSleep = tp.bedtime || tp.wake_time;
           const hasGoals = tp.care_goals;
           const hasAvoid = tp.substances_to_avoid;
-          const hasClinician = tp.therapist_name || tp.primary_doctor_name;
           const hasAppt = tp.next_appointment_date;
-          const hasAny = hasTherapy || hasSleep || hasGoals || hasAvoid || hasClinician || hasAppt;
+          const hasAny = hasTherapy || hasClinician || hasSleep || hasGoals || hasAvoid || hasAppt;
           if (!hasAny) return null;
           return (
             <div className="rounded-2xl overflow-hidden border" style={{ borderColor: "#BFDBFE", background: "#EFF6FF" }}>
@@ -834,21 +834,17 @@ export default function LogPage() {
               {planOpen && (
                 <div className="px-4 pb-4 space-y-2 border-t" style={{ borderColor: "#BFDBFE" }}>
                   <div className="pt-3 space-y-1.5">
-                    {hasTherapy && (
-                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
-                        <span className="font-semibold">Therapy:</span>{" "}
-                        {[tp.therapy_type, tp.therapy_frequency, tp.therapy_days].filter(Boolean).join(" — ")}
+                    {(tp.therapies ?? []).length > 0 && (tp.therapies ?? []).map((t, i) => (
+                      <p key={i} className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold capitalize">{t.modality} therapy:</span> {t.name}
                       </p>
-                    )}
-                    {hasClinician && (
-                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
-                        <span className="font-semibold">Clinician:</span>{" "}
-                        {tp.therapist_name || tp.primary_doctor_name}
-                        {(tp.therapist_specialty || tp.primary_doctor_specialty)
-                          ? ` (${tp.therapist_specialty || tp.primary_doctor_specialty})`
-                          : ""}
+                    ))}
+                    {(tp.clinicians ?? []).length > 0 && (tp.clinicians ?? []).map((c, i) => (
+                      <p key={i} className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">{c.role}:</span> {c.name}
+                        {c.specialty ? ` (${c.specialty})` : ""}
                       </p>
-                    )}
+                    ))}
                     {hasSleep && (
                       <p className="text-sm" style={{ color: "#1D4ED8" }}>
                         <span className="font-semibold">Sleep plan:</span>{" "}

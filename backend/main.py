@@ -27,6 +27,8 @@ _MIGRATIONS = [
     "ALTER TABLE patients ADD COLUMN IF NOT EXISTS dashboard_config JSON",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS user_config JSON",
     "ALTER TABLE daily_logs ADD COLUMN IF NOT EXISTS socialization JSONB",
+    "ALTER TABLE treatment_plans ADD COLUMN IF NOT EXISTS therapies JSONB",
+    "ALTER TABLE treatment_plans ADD COLUMN IF NOT EXISTS clinicians JSONB",
 ]
 
 _SEED_DEFAULT_CONTACTS = """

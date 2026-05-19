@@ -109,20 +109,11 @@ class TreatmentPlan(Base):
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), unique=True)
 
-    # Therapy
-    therapy_type = Column(String, nullable=True)       # "IOP", "Individual Therapy", etc.
-    therapy_frequency = Column(String, nullable=True)  # "3x/week"
-    therapy_days = Column(String, nullable=True)       # "Monday, Wednesday, Friday"
-    therapy_location = Column(String, nullable=True)
+    # Therapies — [{modality: "individual"|"group", name: str}]
+    therapies = Column(JSON, nullable=True)
 
-    # Clinicians
-    therapist_name = Column(String, nullable=True)
-    therapist_specialty = Column(String, nullable=True)
-    therapist_contact = Column(String, nullable=True)
-
-    primary_doctor_name = Column(String, nullable=True)
-    primary_doctor_specialty = Column(String, nullable=True)
-    primary_doctor_contact = Column(String, nullable=True)
+    # Clinicians — [{role: str, name: str, specialty: str, contact: str}]
+    clinicians = Column(JSON, nullable=True)
 
     # Sleep
     bedtime = Column(String, nullable=True)    # "10:00 PM"

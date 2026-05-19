@@ -7,22 +7,24 @@ import toast from "react-hot-toast";
 import { api } from "../../lib/api";
 import { useAuth } from "../../components/AuthProvider";
 import { NavBar } from "../../components/NavBar";
-import type { Patient, TreatmentPlan } from "../../lib/types";
+import type { Patient, TreatmentPlan, TherapyEntry, ClinicianEntry } from "../../lib/types";
 
-type PlanDraft = Omit<TreatmentPlan, "id" | "patient_id" | "created_at" | "updated_at">;
+type PlanDraft = {
+  therapies: TherapyEntry[];
+  clinicians: ClinicianEntry[];
+  bedtime: string;
+  wake_time: string;
+  sleep_notes: string;
+  substances_to_avoid: string;
+  care_goals: string;
+  next_appointment_date: string;
+  next_appointment_with: string;
+};
 
 function emptyDraft(): PlanDraft {
   return {
-    therapy_type: "",
-    therapy_frequency: "",
-    therapy_days: "",
-    therapy_location: "",
-    therapist_name: "",
-    therapist_specialty: "",
-    therapist_contact: "",
-    primary_doctor_name: "",
-    primary_doctor_specialty: "",
-    primary_doctor_contact: "",
+    therapies: [],
+    clinicians: [],
     bedtime: "",
     wake_time: "",
     sleep_notes: "",
@@ -33,22 +35,19 @@ function emptyDraft(): PlanDraft {
   };
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-5 pt-4 pb-2">
         <p className="text-base font-bold text-navy">{title}</p>
+        {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
       </div>
-      <div className="px-5 pb-5 space-y-4">{children}</div>
+      <div className="px-5 pb-5 space-y-3">{children}</div>
     </div>
   );
 }
 
-function Field({
-  label, hint, children,
-}: {
-  label: string; hint?: string; children: React.ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-semibold text-slate-600">{label}</label>
@@ -57,6 +56,159 @@ function Field({
     </div>
   );
 }
+
+const inputClass = "w-full px-4 py-3 rounded-xl border border-slate-200 text-base text-navy focus:outline-none bg-white";
+const textareaClass = `${inputClass} resize-none`;
+
+// ── Therapy entry card ────────────────────────────────────────────────────────
+
+function TherapyCard({
+  entry, index, onChange, onRemove,
+}: {
+  entry: TherapyEntry;
+  index: number;
+  onChange: (updated: TherapyEntry) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+      {/* Modality toggle */}
+      <div className="flex items-center gap-2">
+        {(["individual", "group"] as const).map(m => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => onChange({ ...entry, modality: m })}
+            className="flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-all capitalize"
+            style={{
+              borderColor: entry.modality === m ? "#4a7c59" : "#E2E8F0",
+              background: entry.modality === m ? "#4a7c59" : "white",
+              color: entry.modality === m ? "white" : "#64748B",
+            }}
+          >
+            {m === "individual" ? "Individual" : "Group"}
+          </button>
+        ))}
+      </div>
+
+      {/* Name */}
+      <input
+        type="text"
+        value={entry.name}
+        onChange={e => onChange({ ...entry, name: e.target.value })}
+        placeholder={entry.modality === "individual" ? "e.g. CBT with Dr. Smith" : "e.g. IOP at Memorial Clinic"}
+        className={inputClass}
+      />
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-sm font-medium text-red-400 hover:text-red-600 transition-colors"
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+// ── Clinician entry card ──────────────────────────────────────────────────────
+
+const COMMON_ROLES = ["Therapist", "Psychiatrist", "Primary Doctor", "Case Manager", "Social Worker", "Nurse Practitioner"];
+
+function ClinicianCard({
+  entry, onChange, onRemove,
+}: {
+  entry: ClinicianEntry;
+  onChange: (updated: ClinicianEntry) => void;
+  onRemove: () => void;
+}) {
+  const [customRole, setCustomRole] = useState(!COMMON_ROLES.includes(entry.role) && entry.role !== "");
+
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+      {/* Role */}
+      <div className="space-y-2">
+        <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Role</label>
+        <div className="flex flex-wrap gap-2">
+          {COMMON_ROLES.map(r => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => { onChange({ ...entry, role: r }); setCustomRole(false); }}
+              className="px-3 py-1.5 rounded-lg border text-sm font-medium transition-all"
+              style={{
+                borderColor: entry.role === r && !customRole ? "#4a7c59" : "#E2E8F0",
+                background: entry.role === r && !customRole ? "#4a7c59" : "white",
+                color: entry.role === r && !customRole ? "white" : "#64748B",
+              }}
+            >
+              {r}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCustomRole(true)}
+            className="px-3 py-1.5 rounded-lg border text-sm font-medium transition-all"
+            style={{
+              borderColor: customRole ? "#4a7c59" : "#E2E8F0",
+              background: customRole ? "#4a7c59" : "white",
+              color: customRole ? "white" : "#64748B",
+            }}
+          >
+            Other
+          </button>
+        </div>
+        {customRole && (
+          <input
+            type="text"
+            value={COMMON_ROLES.includes(entry.role) ? "" : entry.role}
+            onChange={e => onChange({ ...entry, role: e.target.value })}
+            placeholder="Role title"
+            className={inputClass}
+            autoFocus
+          />
+        )}
+      </div>
+
+      {/* Name */}
+      <input
+        type="text"
+        value={entry.name}
+        onChange={e => onChange({ ...entry, name: e.target.value })}
+        placeholder="Full name"
+        className={inputClass}
+      />
+
+      {/* Specialty + Contact */}
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          type="text"
+          value={entry.specialty ?? ""}
+          onChange={e => onChange({ ...entry, specialty: e.target.value || null })}
+          placeholder="Specialty"
+          className={inputClass}
+        />
+        <input
+          type="text"
+          value={entry.contact ?? ""}
+          onChange={e => onChange({ ...entry, contact: e.target.value || null })}
+          placeholder="Phone / email"
+          className={inputClass}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-sm font-medium text-red-400 hover:text-red-600 transition-colors"
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function TreatmentPlanPage() {
   const { user, isLoading } = useAuth();
@@ -78,16 +230,8 @@ export default function TreatmentPlanPage() {
         try {
           const plan = await api.getTreatmentPlan(p.id) as TreatmentPlan;
           setDraft({
-            therapy_type: plan.therapy_type ?? "",
-            therapy_frequency: plan.therapy_frequency ?? "",
-            therapy_days: plan.therapy_days ?? "",
-            therapy_location: plan.therapy_location ?? "",
-            therapist_name: plan.therapist_name ?? "",
-            therapist_specialty: plan.therapist_specialty ?? "",
-            therapist_contact: plan.therapist_contact ?? "",
-            primary_doctor_name: plan.primary_doctor_name ?? "",
-            primary_doctor_specialty: plan.primary_doctor_specialty ?? "",
-            primary_doctor_contact: plan.primary_doctor_contact ?? "",
+            therapies: plan.therapies ?? [],
+            clinicians: plan.clinicians ?? [],
             bedtime: plan.bedtime ?? "",
             wake_time: plan.wake_time ?? "",
             sleep_notes: plan.sleep_notes ?? "",
@@ -97,25 +241,60 @@ export default function TreatmentPlanPage() {
             next_appointment_with: plan.next_appointment_with ?? "",
           });
         } catch {
-          // 404 = no plan yet, start with empty form
+          // 404 = no plan yet, start fresh
         }
       }).catch(() => toast.error("Failed to load patient"))
         .finally(() => setLoading(false));
     }
   }, [user, isLoading, router]);
 
-  function set(field: keyof PlanDraft, value: string) {
+  function set<K extends keyof PlanDraft>(field: K, value: PlanDraft[K]) {
     setDraft(d => ({ ...d, [field]: value }));
+  }
+
+  function addTherapy() {
+    set("therapies", [...draft.therapies, { modality: "individual", name: "" }]);
+  }
+
+  function updateTherapy(i: number, updated: TherapyEntry) {
+    const next = [...draft.therapies];
+    next[i] = updated;
+    set("therapies", next);
+  }
+
+  function removeTherapy(i: number) {
+    set("therapies", draft.therapies.filter((_, idx) => idx !== i));
+  }
+
+  function addClinician() {
+    set("clinicians", [...draft.clinicians, { role: "Therapist", name: "", specialty: null, contact: null }]);
+  }
+
+  function updateClinician(i: number, updated: ClinicianEntry) {
+    const next = [...draft.clinicians];
+    next[i] = updated;
+    set("clinicians", next);
+  }
+
+  function removeClinician(i: number) {
+    set("clinicians", draft.clinicians.filter((_, idx) => idx !== i));
   }
 
   async function handleSave() {
     if (!patient) return;
     setSaving(true);
     try {
-      const payload: Record<string, string | null> = {};
-      for (const [k, v] of Object.entries(draft)) {
-        payload[k] = (v as string).trim() || null;
-      }
+      const payload = {
+        therapies: draft.therapies.filter(t => t.name.trim()),
+        clinicians: draft.clinicians.filter(c => c.name.trim()),
+        bedtime: draft.bedtime.trim() || null,
+        wake_time: draft.wake_time.trim() || null,
+        sleep_notes: draft.sleep_notes.trim() || null,
+        substances_to_avoid: draft.substances_to_avoid.trim() || null,
+        care_goals: draft.care_goals.trim() || null,
+        next_appointment_date: draft.next_appointment_date || null,
+        next_appointment_with: draft.next_appointment_with.trim() || null,
+      };
       await api.saveTreatmentPlan(patient.id, payload);
       toast.success("Treatment plan saved");
     } catch (err: unknown) {
@@ -124,9 +303,6 @@ export default function TreatmentPlanPage() {
       setSaving(false);
     }
   }
-
-  const inputClass = "w-full px-4 py-3 rounded-xl border border-slate-200 text-base text-navy focus:outline-none bg-white";
-  const textareaClass = `${inputClass} resize-none`;
 
   if (isLoading || loading) {
     return (
@@ -158,89 +334,71 @@ export default function TreatmentPlanPage() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-500 -mt-1">
-          All fields optional. This context appears in AI summaries so clinicians see what was planned vs. what happened.
+        <p className="text-sm text-slate-500">
+          All fields optional. This context appears in AI summaries so clinicians see what was planned vs. what actually happened.
         </p>
 
         {/* ── Therapy ── */}
-        <SectionCard title="Therapy & Treatment">
-          <Field label="Therapy type" hint='e.g. "IOP", "Individual Therapy", "Group Therapy"'>
-            <input type="text" value={draft.therapy_type ?? ""} onChange={e => set("therapy_type", e.target.value)}
-              placeholder="Individual Therapy" className={inputClass} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Frequency">
-              <input type="text" value={draft.therapy_frequency ?? ""} onChange={e => set("therapy_frequency", e.target.value)}
-                placeholder="3x/week" className={inputClass} />
-            </Field>
-            <Field label="Days">
-              <input type="text" value={draft.therapy_days ?? ""} onChange={e => set("therapy_days", e.target.value)}
-                placeholder="Mon, Wed, Fri" className={inputClass} />
-            </Field>
-          </div>
-          <Field label="Location (optional)">
-            <input type="text" value={draft.therapy_location ?? ""} onChange={e => set("therapy_location", e.target.value)}
-              placeholder="Clinic name or address" className={inputClass} />
-          </Field>
+        <SectionCard title="Therapy" subtitle="Add as many as apply — individual and group sessions separately">
+          {draft.therapies.map((entry, i) => (
+            <TherapyCard
+              key={i}
+              entry={entry}
+              index={i}
+              onChange={updated => updateTherapy(i, updated)}
+              onRemove={() => removeTherapy(i)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={addTherapy}
+            className="w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold transition-all"
+            style={{ borderColor: "#CBD5E1", color: "#64748B" }}
+          >
+            + Add Therapy
+          </button>
         </SectionCard>
 
         {/* ── Clinicians ── */}
-        <SectionCard title="Clinicians">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Therapist</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Name">
-              <input type="text" value={draft.therapist_name ?? ""} onChange={e => set("therapist_name", e.target.value)}
-                placeholder="Dr. Smith" className={inputClass} />
-            </Field>
-            <Field label="Specialty">
-              <input type="text" value={draft.therapist_specialty ?? ""} onChange={e => set("therapist_specialty", e.target.value)}
-                placeholder="Psychiatry" className={inputClass} />
-            </Field>
-          </div>
-          <Field label="Contact">
-            <input type="text" value={draft.therapist_contact ?? ""} onChange={e => set("therapist_contact", e.target.value)}
-              placeholder="Phone or email" className={inputClass} />
-          </Field>
-
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 pt-1">Primary Doctor</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Name">
-              <input type="text" value={draft.primary_doctor_name ?? ""} onChange={e => set("primary_doctor_name", e.target.value)}
-                placeholder="Dr. Jones" className={inputClass} />
-            </Field>
-            <Field label="Specialty">
-              <input type="text" value={draft.primary_doctor_specialty ?? ""} onChange={e => set("primary_doctor_specialty", e.target.value)}
-                placeholder="Internal Medicine" className={inputClass} />
-            </Field>
-          </div>
-          <Field label="Contact">
-            <input type="text" value={draft.primary_doctor_contact ?? ""} onChange={e => set("primary_doctor_contact", e.target.value)}
-              placeholder="Phone or email" className={inputClass} />
-          </Field>
+        <SectionCard title="Clinicians" subtitle="Therapists, doctors, case managers — add everyone on the care team">
+          {draft.clinicians.map((entry, i) => (
+            <ClinicianCard
+              key={i}
+              entry={entry}
+              onChange={updated => updateClinician(i, updated)}
+              onRemove={() => removeClinician(i)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={addClinician}
+            className="w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold transition-all"
+            style={{ borderColor: "#CBD5E1", color: "#64748B" }}
+          >
+            + Add Clinician
+          </button>
         </SectionCard>
 
         {/* ── Sleep ── */}
         <SectionCard title="Sleep Plan">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Bedtime">
-              <input type="time" value={draft.bedtime ?? ""} onChange={e => set("bedtime", e.target.value)}
-                className={inputClass} />
+              <input type="time" value={draft.bedtime} onChange={e => set("bedtime", e.target.value)} className={inputClass} />
             </Field>
             <Field label="Wake time">
-              <input type="time" value={draft.wake_time ?? ""} onChange={e => set("wake_time", e.target.value)}
-                className={inputClass} />
+              <input type="time" value={draft.wake_time} onChange={e => set("wake_time", e.target.value)} className={inputClass} />
             </Field>
           </div>
           <Field label="Sleep notes" hint='e.g. "No screens after 9pm", "Take melatonin at 9pm"'>
-            <textarea rows={2} value={draft.sleep_notes ?? ""} onChange={e => set("sleep_notes", e.target.value)}
+            <textarea rows={2} value={draft.sleep_notes} onChange={e => set("sleep_notes", e.target.value)}
               placeholder="Any sleep hygiene instructions…" className={textareaClass} />
           </Field>
         </SectionCard>
 
         {/* ── Substance Avoidance ── */}
         <SectionCard title="Substance Avoidance">
-          <Field label="What should they avoid?" hint="Appears in summaries to flag any logged substance use">
-            <textarea rows={2} value={draft.substances_to_avoid ?? ""} onChange={e => set("substances_to_avoid", e.target.value)}
+          <Field label="What should they avoid?" hint="Flagged in summaries if substances are logged on any day">
+            <textarea rows={2} value={draft.substances_to_avoid} onChange={e => set("substances_to_avoid", e.target.value)}
               placeholder="e.g. alcohol, cannabis, stimulants" className={textareaClass} />
           </Field>
         </SectionCard>
@@ -248,7 +406,7 @@ export default function TreatmentPlanPage() {
         {/* ── Care Goals ── */}
         <SectionCard title="Care Goals">
           <Field label="Main treatment goals" hint="The AI will reference these when evaluating 30-day progress">
-            <textarea rows={4} value={draft.care_goals ?? ""} onChange={e => set("care_goals", e.target.value)}
+            <textarea rows={4} value={draft.care_goals} onChange={e => set("care_goals", e.target.value)}
               placeholder={"Increase social engagement\nReduce isolation\nStabilize mood\nMaintain medication adherence"}
               className={textareaClass} />
           </Field>
@@ -258,11 +416,10 @@ export default function TreatmentPlanPage() {
         <SectionCard title="Next Appointment">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Date">
-              <input type="date" value={draft.next_appointment_date ?? ""} onChange={e => set("next_appointment_date", e.target.value)}
-                className={inputClass} />
+              <input type="date" value={draft.next_appointment_date} onChange={e => set("next_appointment_date", e.target.value)} className={inputClass} />
             </Field>
             <Field label="With">
-              <input type="text" value={draft.next_appointment_with ?? ""} onChange={e => set("next_appointment_with", e.target.value)}
+              <input type="text" value={draft.next_appointment_with} onChange={e => set("next_appointment_with", e.target.value)}
                 placeholder="Clinician name" className={inputClass} />
             </Field>
           </div>

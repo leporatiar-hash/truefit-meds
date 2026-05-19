@@ -223,19 +223,21 @@ class DailyLogResponse(BaseModel):
 
 # ── Treatment Plan ────────────────────────────────────────────────────────────
 
+class TherapyEntry(BaseModel):
+    modality: str  # "individual" | "group"
+    name: str      # e.g. "CBT with Dr. Smith", "IOP at Memorial Clinic"
+
+
+class ClinicianEntry(BaseModel):
+    role: str              # e.g. "Therapist", "Psychiatrist", "Primary Doctor"
+    name: str
+    specialty: Optional[str] = None
+    contact: Optional[str] = None
+
+
 class TreatmentPlanCreate(BaseModel):
-    therapy_type: Optional[str] = None
-    therapy_frequency: Optional[str] = None
-    therapy_days: Optional[str] = None
-    therapy_location: Optional[str] = None
-
-    therapist_name: Optional[str] = None
-    therapist_specialty: Optional[str] = None
-    therapist_contact: Optional[str] = None
-
-    primary_doctor_name: Optional[str] = None
-    primary_doctor_specialty: Optional[str] = None
-    primary_doctor_contact: Optional[str] = None
+    therapies: Optional[List[TherapyEntry]] = None
+    clinicians: Optional[List[ClinicianEntry]] = None
 
     bedtime: Optional[str] = None
     wake_time: Optional[str] = None

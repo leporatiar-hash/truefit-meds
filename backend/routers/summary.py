@@ -239,17 +239,16 @@ def generate_summary(
     tp = treatment_plan
     if tp:
         tp_lines = []
-        if tp.therapy_type or tp.therapy_frequency or tp.therapy_days:
-            freq = " ".join(filter(None, [tp.therapy_frequency, tp.therapy_days]))
-            tp_lines.append(f"  Therapy: {tp.therapy_type or 'unspecified'} — {freq or 'frequency unspecified'}")
-        if tp.therapy_location:
-            tp_lines.append(f"  Location: {tp.therapy_location}")
-        if tp.therapist_name:
-            spec = f" ({tp.therapist_specialty})" if tp.therapist_specialty else ""
-            tp_lines.append(f"  Therapist: {tp.therapist_name}{spec}")
-        if tp.primary_doctor_name:
-            spec = f" ({tp.primary_doctor_specialty})" if tp.primary_doctor_specialty else ""
-            tp_lines.append(f"  Primary Doctor: {tp.primary_doctor_name}{spec}")
+        for t in (tp.therapies or []):
+            modality = str(t.get("modality", "")).capitalize() if isinstance(t, dict) else str(getattr(t, "modality", "")).capitalize()
+            name = t.get("name", "") if isinstance(t, dict) else getattr(t, "name", "")
+            tp_lines.append(f"  Therapy ({modality}): {name}")
+        for c in (tp.clinicians or []):
+            role = c.get("role", "Clinician") if isinstance(c, dict) else getattr(c, "role", "Clinician")
+            name = c.get("name", "") if isinstance(c, dict) else getattr(c, "name", "")
+            spec = c.get("specialty") if isinstance(c, dict) else getattr(c, "specialty", None)
+            spec_str = f" ({spec})" if spec else ""
+            tp_lines.append(f"  {role}: {name}{spec_str}")
         if tp.bedtime or tp.wake_time:
             tp_lines.append(f"  Sleep Plan: Bedtime {tp.bedtime or 'unset'} → Wake {tp.wake_time or 'unset'}")
         if tp.sleep_notes:

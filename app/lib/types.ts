@@ -40,19 +40,23 @@ export interface DashboardConfig {
   show_socialization?: boolean;
 }
 
+export interface TherapyEntry {
+  modality: "individual" | "group";
+  name: string;
+}
+
+export interface ClinicianEntry {
+  role: string;
+  name: string;
+  specialty: string | null;
+  contact: string | null;
+}
+
 export interface TreatmentPlan {
   id: number;
   patient_id: number;
-  therapy_type: string | null;
-  therapy_frequency: string | null;
-  therapy_days: string | null;
-  therapy_location: string | null;
-  therapist_name: string | null;
-  therapist_specialty: string | null;
-  therapist_contact: string | null;
-  primary_doctor_name: string | null;
-  primary_doctor_specialty: string | null;
-  primary_doctor_contact: string | null;
+  therapies: TherapyEntry[] | null;
+  clinicians: ClinicianEntry[] | null;
   bedtime: string | null;
   wake_time: string | null;
   sleep_notes: string | null;
