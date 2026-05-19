@@ -134,6 +134,54 @@ def add_medication(
     return med
 
 
+def _get_owned_patient(patient_id: int, current_user: models.User, db: Session) -> models.Patient:
+    patient = (
+        db.query(models.Patient)
+        .filter(
+            models.Patient.id == patient_id,
+            models.Patient.caregiver_id == current_user.id,
+        )
+        .first()
+    )
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
+@router.get("/{patient_id}/treatment-plan", response_model=schemas.TreatmentPlanResponse)
+def get_treatment_plan(
+    patient_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _get_owned_patient(patient_id, current_user, db)
+    plan = db.query(models.TreatmentPlan).filter(models.TreatmentPlan.patient_id == patient_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="No treatment plan found")
+    return plan
+
+
+@router.post("/{patient_id}/treatment-plan", response_model=schemas.TreatmentPlanResponse)
+@router.put("/{patient_id}/treatment-plan", response_model=schemas.TreatmentPlanResponse)
+def upsert_treatment_plan(
+    patient_id: int,
+    data: schemas.TreatmentPlanCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _get_owned_patient(patient_id, current_user, db)
+    plan = db.query(models.TreatmentPlan).filter(models.TreatmentPlan.patient_id == patient_id).first()
+    if plan:
+        for field, value in data.model_dump(exclude_unset=True).items():
+            setattr(plan, field, value)
+    else:
+        plan = models.TreatmentPlan(patient_id=patient_id, **data.model_dump(exclude_unset=True))
+        db.add(plan)
+    db.commit()
+    db.refresh(plan)
+    return plan
+
+
 _DEFAULT_CONFIG = {
     "symptoms": ["Anxiety", "Aggression", "Confusion", "Fatigue", "Pain", "Nausea", "Crying", "Mood Changes"],
     "activities": ["walking", "music", "drawing", "reading", "socializing", "other"],

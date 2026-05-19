@@ -39,6 +39,7 @@ class Patient(Base):
     caregiver = relationship("User", back_populates="patients")
     medications = relationship("Medication", back_populates="patient")
     daily_logs = relationship("DailyLog", back_populates="patient")
+    treatment_plan = relationship("TreatmentPlan", back_populates="patient", uselist=False)
 
 
 class Medication(Base):
@@ -100,6 +101,48 @@ class DailyLog(Base):
 
     patient = relationship("Patient", back_populates="daily_logs")
     logger = relationship("User", foreign_keys=[logged_by])
+
+
+class TreatmentPlan(Base):
+    __tablename__ = "treatment_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), unique=True)
+
+    # Therapy
+    therapy_type = Column(String, nullable=True)       # "IOP", "Individual Therapy", etc.
+    therapy_frequency = Column(String, nullable=True)  # "3x/week"
+    therapy_days = Column(String, nullable=True)       # "Monday, Wednesday, Friday"
+    therapy_location = Column(String, nullable=True)
+
+    # Clinicians
+    therapist_name = Column(String, nullable=True)
+    therapist_specialty = Column(String, nullable=True)
+    therapist_contact = Column(String, nullable=True)
+
+    primary_doctor_name = Column(String, nullable=True)
+    primary_doctor_specialty = Column(String, nullable=True)
+    primary_doctor_contact = Column(String, nullable=True)
+
+    # Sleep
+    bedtime = Column(String, nullable=True)    # "10:00 PM"
+    wake_time = Column(String, nullable=True)  # "8:00 AM"
+    sleep_notes = Column(Text, nullable=True)
+
+    # Substance avoidance
+    substances_to_avoid = Column(Text, nullable=True)
+
+    # Care goals
+    care_goals = Column(Text, nullable=True)
+
+    # Next appointment
+    next_appointment_date = Column(Date, nullable=True)
+    next_appointment_with = Column(String, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    patient = relationship("Patient", back_populates="treatment_plan")
 
 
 class SocialContact(Base):

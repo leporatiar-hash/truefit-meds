@@ -40,6 +40,30 @@ export interface DashboardConfig {
   show_socialization?: boolean;
 }
 
+export interface TreatmentPlan {
+  id: number;
+  patient_id: number;
+  therapy_type: string | null;
+  therapy_frequency: string | null;
+  therapy_days: string | null;
+  therapy_location: string | null;
+  therapist_name: string | null;
+  therapist_specialty: string | null;
+  therapist_contact: string | null;
+  primary_doctor_name: string | null;
+  primary_doctor_specialty: string | null;
+  primary_doctor_contact: string | null;
+  bedtime: string | null;
+  wake_time: string | null;
+  sleep_notes: string | null;
+  substances_to_avoid: string | null;
+  care_goals: string | null;
+  next_appointment_date: string | null;
+  next_appointment_with: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Patient {
   id: number;
   name: string;
@@ -49,6 +73,7 @@ export interface Patient {
   caregiver_id: number;
   medications: Medication[];
   dashboard_config: DashboardConfig | null;
+  treatment_plan: TreatmentPlan | null;
 }
 
 export interface MedicationTaken {
@@ -137,6 +162,12 @@ export interface Socialization {
   initiated_by: "self" | "other" | null;
 }
 
+export interface KnownSideEffect {
+  name: string;
+  frequency: "common" | "uncommon" | "rare";
+  category: string;
+}
+
 export interface AdherenceItem {
   medication: string;
   percentage: number;
@@ -150,9 +181,16 @@ export interface PatternItem {
   significance: string;
 }
 
+export interface MedicationSideEffectSummary {
+  known: string[];
+  observed: string[];
+  clinical_note: string;
+}
+
 export interface SummaryResponse {
   executive_summary: string;
   adherence: AdherenceItem[];
+  medication_side_effects?: Record<string, MedicationSideEffectSummary>;
   patterns: PatternItem[];
   lifestyle_notes: string[];
   discussion_items: string[];

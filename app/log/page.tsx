@@ -8,7 +8,7 @@ import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import { StepLoader } from "../components/StepLoader";
-import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle, SocialContact, Socialization } from "../lib/types";
+import type { Patient, Medication, MedicationTaken, Symptom, MedicationSideEffect, Activity, Lifestyle, SocialContact, Socialization, KnownSideEffect, TreatmentPlan } from "../lib/types";
 import { DEFAULT_SYMPTOM_NAMES, DEFAULT_ACTIVITY_OPTIONS } from "../lib/constants";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -28,11 +28,52 @@ const SIMPLE_TIME_LABELS: Record<string, string> = {
   "21:00": "Night",
 };
 
-const SIDE_EFFECT_OPTIONS = [
-  "Nausea", "Vomiting", "Constipation", "Diarrhea",
-  "Dizziness", "Drowsiness", "Headache", "Rash",
-  "Dry mouth", "Loss of appetite",
+const FALLBACK_SIDE_EFFECT_OPTIONS: KnownSideEffect[] = [
+  { name: "Nausea", frequency: "common", category: "GI" },
+  { name: "Vomiting", frequency: "common", category: "GI" },
+  { name: "Constipation", frequency: "common", category: "GI" },
+  { name: "Diarrhea", frequency: "common", category: "GI" },
+  { name: "Dizziness", frequency: "common", category: "neurological" },
+  { name: "Drowsiness", frequency: "common", category: "neurological" },
+  { name: "Headache", frequency: "common", category: "neurological" },
+  { name: "Rash", frequency: "uncommon", category: "dermatological" },
+  { name: "Dry mouth", frequency: "common", category: "GI" },
+  { name: "Loss of appetite", frequency: "common", category: "metabolic" },
 ];
+
+// ── Other Side Effect Input ───────────────────────────────────────────────────
+
+function OtherSideEffectInput({ onAdd }: { onAdd: (name: string) => void }) {
+  const [value, setValue] = useState("");
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter" && value.trim()) {
+            e.preventDefault();
+            onAdd(value.trim());
+            setValue("");
+          }
+        }}
+        placeholder="Other side effect…"
+        maxLength={50}
+        className="flex-1 px-3 py-2 rounded-lg border text-sm focus:outline-none bg-white"
+        style={{ borderColor: "#E2E8F0", color: "#374151" }}
+      />
+      <button
+        type="button"
+        onClick={() => { if (value.trim()) { onAdd(value.trim()); setValue(""); } }}
+        className="px-3 py-2 rounded-lg text-sm font-semibold text-white"
+        style={{ background: value.trim() ? "#EF4444" : "#CBD5E1" }}
+      >
+        Add
+      </button>
+    </div>
+  );
+}
 
 // ── Accordion section ─────────────────────────────────────────────────────────
 
@@ -314,6 +355,9 @@ export default function LogPage() {
   const [saved, setSaved] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>("medications");
   const [expandedSE, setExpandedSE] = useState<number | null>(null);
+  const [knownSideEffects, setKnownSideEffects] = useState<Record<number, KnownSideEffect[]>>({});
+  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlan | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
 
   // Medication management
   const [showMedManage, setShowMedManage] = useState(false);
@@ -352,6 +396,23 @@ export default function LogPage() {
       const p = patients[0];
       setPatient(p);
       setSocialContacts(contacts);
+
+      // Load known side effects and treatment plan in parallel
+      const activeMedIds = p.medications.filter(m => m.active).map(m => m.id);
+      const [knownEffectsEntries] = await Promise.all([
+        Promise.all(
+          activeMedIds.map(async (medId) => {
+            try {
+              const effects = await api.getKnownSideEffects(medId) as KnownSideEffect[];
+              return [medId, effects] as [number, KnownSideEffect[]];
+            } catch {
+              return [medId, []] as [number, KnownSideEffect[]];
+            }
+          })
+        ),
+        api.getTreatmentPlan(p.id).then(plan => setTreatmentPlan(plan as TreatmentPlan)).catch(() => {}),
+      ]);
+      setKnownSideEffects(Object.fromEntries(knownEffectsEntries));
 
       const today = localDateStr();
 
@@ -737,6 +798,91 @@ export default function LogPage() {
           </div>
         )}
 
+        {/* ── Treatment Plan Reference ── */}
+        {treatmentPlan && (() => {
+          const tp = treatmentPlan;
+          const hasTherapy = tp.therapy_type || tp.therapy_frequency;
+          const hasSleep = tp.bedtime || tp.wake_time;
+          const hasGoals = tp.care_goals;
+          const hasAvoid = tp.substances_to_avoid;
+          const hasClinician = tp.therapist_name || tp.primary_doctor_name;
+          const hasAppt = tp.next_appointment_date;
+          const hasAny = hasTherapy || hasSleep || hasGoals || hasAvoid || hasClinician || hasAppt;
+          if (!hasAny) return null;
+          return (
+            <div className="rounded-2xl overflow-hidden border" style={{ borderColor: "#BFDBFE", background: "#EFF6FF" }}>
+              <button
+                type="button"
+                onClick={() => setPlanOpen(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#2563EB" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <span className="text-sm font-semibold" style={{ color: "#1D4ED8" }}>Today&apos;s Treatment Plan Reference</span>
+                </div>
+                <svg
+                  className="w-4 h-4 flex-shrink-0 transition-transform duration-200"
+                  style={{ color: "#2563EB", transform: planOpen ? "rotate(180deg)" : "none" }}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {planOpen && (
+                <div className="px-4 pb-4 space-y-2 border-t" style={{ borderColor: "#BFDBFE" }}>
+                  <div className="pt-3 space-y-1.5">
+                    {hasTherapy && (
+                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">Therapy:</span>{" "}
+                        {[tp.therapy_type, tp.therapy_frequency, tp.therapy_days].filter(Boolean).join(" — ")}
+                      </p>
+                    )}
+                    {hasClinician && (
+                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">Clinician:</span>{" "}
+                        {tp.therapist_name || tp.primary_doctor_name}
+                        {(tp.therapist_specialty || tp.primary_doctor_specialty)
+                          ? ` (${tp.therapist_specialty || tp.primary_doctor_specialty})`
+                          : ""}
+                      </p>
+                    )}
+                    {hasSleep && (
+                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">Sleep plan:</span>{" "}
+                        {tp.bedtime && `Bedtime ${tp.bedtime}`}
+                        {tp.bedtime && tp.wake_time && " → "}
+                        {tp.wake_time && `Wake ${tp.wake_time}`}
+                        {tp.sleep_notes && ` · ${tp.sleep_notes}`}
+                      </p>
+                    )}
+                    {hasAvoid && (
+                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">Avoid:</span> {tp.substances_to_avoid}
+                      </p>
+                    )}
+                    {hasGoals && (
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#1D4ED8" }}>Goals:</p>
+                        <p className="text-sm whitespace-pre-line" style={{ color: "#1D4ED8" }}>{tp.care_goals}</p>
+                      </div>
+                    )}
+                    {hasAppt && (
+                      <p className="text-sm" style={{ color: "#1D4ED8" }}>
+                        <span className="font-semibold">Next appointment:</span>{" "}
+                        {tp.next_appointment_date}
+                        {tp.next_appointment_with && ` with ${tp.next_appointment_with}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── Medications ── */}
         <AccordionSection id="medications" title="Medications" summaryLine={medsText}
           bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
@@ -843,34 +989,86 @@ export default function LogPage() {
                   <span style={{ display: "inline-block", transition: "transform 0.2s", transform: seOpen ? "rotate(180deg)" : "none" }}>▾</span>
                 </button>
 
-                {seOpen && (
-                  <div className="space-y-3 border-l-2 border-amber-200 pl-3">
-                    <p className="text-sm text-slate-500">Select any side effects observed today:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {SIDE_EFFECT_OPTIONS.map(se => {
-                        const active = mse?.side_effects.some(s => s.name === se) ?? false;
-                        return (
-                          <button key={se} type="button" onClick={() => toggleSideEffect(med.id, se)}
-                            className="text-left px-3 py-2 rounded-lg border text-sm font-medium transition-all"
-                            style={{ borderColor: active ? "#EF4444" : "#E2E8F0", background: active ? "#FEF2F2" : "white", color: active ? "#EF4444" : "#64748B" }}>
-                            {se}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {(mse?.side_effects ?? []).map(se => (
-                      <div key={se.name} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600">{se.name}</span>
-                          <span className="font-bold" style={{ color: "#EF4444" }}>{se.severity}/10</span>
-                        </div>
-                        <input type="range" min={1} max={10} value={se.severity}
-                          onChange={e => setSideEffectSeverity(med.id, se.name, parseInt(e.target.value))}
-                          className="w-full" />
+                {seOpen && (() => {
+                  const medKnown = (knownSideEffects[med.id] ?? []).length > 0
+                    ? knownSideEffects[med.id]
+                    : FALLBACK_SIDE_EFFECT_OPTIONS;
+                  const freqColor = (freq: string) =>
+                    freq === "common" ? "#D97706" : freq === "uncommon" ? "#6366F1" : "#94A3B8";
+                  const freqBg = (freq: string) =>
+                    freq === "common" ? "#FEF3C7" : freq === "uncommon" ? "#EEF2FF" : "#F1F5F9";
+
+                  return (
+                    <div className="space-y-4 border-l-2 border-amber-200 pl-3">
+                      {(knownSideEffects[med.id] ?? []).length > 0 && (
+                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#94A3B8" }}>
+                          Known side effects to watch for
+                        </p>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {medKnown.map(effect => {
+                          const active = mse?.side_effects.some(s => s.name === effect.name) ?? false;
+                          return (
+                            <button key={effect.name} type="button" onClick={() => toggleSideEffect(med.id, effect.name)}
+                              className="text-left px-3 py-2 rounded-lg border text-sm font-medium transition-all space-y-0.5"
+                              style={{ borderColor: active ? "#EF4444" : "#E2E8F0", background: active ? "#FEF2F2" : "white" }}>
+                              <span className="block" style={{ color: active ? "#EF4444" : "#374151" }}>{effect.name}</span>
+                              <span className="inline-block text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                                style={{ background: active ? "#FECACA" : freqBg(effect.frequency), color: active ? "#EF4444" : freqColor(effect.frequency) }}>
+                                {effect.frequency}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
-                )}
+
+                      {(mse?.side_effects ?? []).some(se => !medKnown.find(k => k.name === se.name)) && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#94A3B8" }}>Other observed</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(mse?.side_effects ?? [])
+                              .filter(se => !medKnown.find(k => k.name === se.name))
+                              .map(se => (
+                                <button key={se.name} type="button" onClick={() => toggleSideEffect(med.id, se.name)}
+                                  className="px-3 py-1.5 rounded-lg border text-sm font-medium"
+                                  style={{ borderColor: "#EF4444", background: "#FEF2F2", color: "#EF4444" }}>
+                                  {se.name} ×
+                                </button>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+
+                      {(mse?.side_effects ?? []).length > 0 && (
+                        <div className="space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#94A3B8" }}>Severity</p>
+                          {(mse?.side_effects ?? []).map(se => (
+                            <div key={se.name} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-600">{se.name}</span>
+                                <span className="font-bold" style={{ color: "#EF4444" }}>{se.severity}/10</span>
+                              </div>
+                              <input type="range" min={1} max={10} value={se.severity}
+                                onChange={e => setSideEffectSeverity(med.id, se.name, parseInt(e.target.value))}
+                                className="w-full" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="pt-1">
+                        <OtherSideEffectInput
+                          onAdd={(name) => {
+                            if (!mse?.side_effects.some(s => s.name === name)) {
+                              toggleSideEffect(med.id, name);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

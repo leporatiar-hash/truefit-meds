@@ -114,6 +114,7 @@ class PatientResponse(BaseModel):
     caregiver_id: int
     medications: List[MedicationResponse] = []
     dashboard_config: Optional[Any] = None
+    treatment_plan: Optional["TreatmentPlanResponse"] = None
 
     model_config = {"from_attributes": True}
 
@@ -218,6 +219,53 @@ class DailyLogResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Treatment Plan ────────────────────────────────────────────────────────────
+
+class TreatmentPlanCreate(BaseModel):
+    therapy_type: Optional[str] = None
+    therapy_frequency: Optional[str] = None
+    therapy_days: Optional[str] = None
+    therapy_location: Optional[str] = None
+
+    therapist_name: Optional[str] = None
+    therapist_specialty: Optional[str] = None
+    therapist_contact: Optional[str] = None
+
+    primary_doctor_name: Optional[str] = None
+    primary_doctor_specialty: Optional[str] = None
+    primary_doctor_contact: Optional[str] = None
+
+    bedtime: Optional[str] = None
+    wake_time: Optional[str] = None
+    sleep_notes: Optional[str] = None
+
+    substances_to_avoid: Optional[str] = None
+    care_goals: Optional[str] = None
+
+    next_appointment_date: Optional[date] = None
+    next_appointment_with: Optional[str] = None
+
+
+class TreatmentPlanResponse(TreatmentPlanCreate):
+    id: int
+    patient_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+PatientResponse.model_rebuild()
+
+
+# ── Known Side Effects ────────────────────────────────────────────────────────
+
+class KnownSideEffectResponse(BaseModel):
+    name: str
+    frequency: str  # 'common', 'uncommon', 'rare'
+    category: str
 
 
 # ── Social Contacts ───────────────────────────────────────────────────────────

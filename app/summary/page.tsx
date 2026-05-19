@@ -7,7 +7,7 @@ import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
 import { NavBar } from "../components/NavBar";
 import { StepLoader } from "../components/StepLoader";
-import type { Patient, SummaryResponse, AdherenceItem, SavedSummary } from "../lib/types";
+import type { Patient, SummaryResponse, AdherenceItem, SavedSummary, MedicationSideEffectSummary } from "../lib/types";
 
 const PRINT_STYLE = `
 @media print {
@@ -147,6 +147,63 @@ function InsightCard({
         {children}
       </div>
     </div>
+  );
+}
+
+// ── Medication Safety card ────────────────────────────────────────────────────
+
+function MedSafetyCard({ data }: { data: Record<string, MedicationSideEffectSummary> }) {
+  const entries = Object.entries(data);
+  if (!entries.length) return null;
+  return (
+    <InsightCard title="Medication Safety & Side Effects" accentColor="#7C3AED" bgColor="#FAF5FF" borderColor="#DDD6FE">
+      <div className="space-y-5">
+        {entries.map(([medName, info]) => {
+          const hasObserved = info.observed.length > 0;
+          return (
+            <div key={medName} className="space-y-2">
+              <p className="text-base font-bold text-navy">{medName}</p>
+
+              {info.known.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#7C3AED" }}>Known side effects</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {info.known.map((k, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: "#EDE9FE", color: "#5B21B6" }}>
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: hasObserved ? "#DC2626" : "#4a7c59" }}>
+                  Observed
+                </p>
+                {hasObserved ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {info.observed.map((o, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: "#FEE2E2", color: "#DC2626" }}>
+                        {o}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-slate-400">None reported</span>
+                )}
+              </div>
+
+              {info.clinical_note && (
+                <p className="text-sm leading-relaxed italic" style={{ color: "#475569" }}>{info.clinical_note}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </InsightCard>
   );
 }
 
@@ -357,6 +414,11 @@ export default function SummaryPage() {
               </InsightCard>
             )}
 
+            {/* Medication Safety */}
+            {summary.medication_side_effects && Object.keys(summary.medication_side_effects).length > 0 && (
+              <MedSafetyCard data={summary.medication_side_effects} />
+            )}
+
             {/* Patterns */}
             {summary.patterns?.length > 0 && (
               <InsightCard title="Patterns" accentColor="#3d4f47" bgColor="#f2f7f3" borderColor="#d4e0d7">
@@ -509,6 +571,9 @@ export default function SummaryPage() {
                             {parsed.adherence.map((item, i) => <AdherenceBar key={i} item={item} />)}
                           </div>
                         </InsightCard>
+                      )}
+                      {parsed.medication_side_effects && Object.keys(parsed.medication_side_effects).length > 0 && (
+                        <MedSafetyCard data={parsed.medication_side_effects} />
                       )}
                       {parsed.patterns?.length > 0 && (
                         <InsightCard title="Patterns" accentColor="#3d4f47" bgColor="#f2f7f3" borderColor="#d4e0d7">

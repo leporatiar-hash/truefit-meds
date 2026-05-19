@@ -116,6 +116,14 @@ export const api = {
     request(`/medications/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteMedication: (id: number) =>
     request(`/medications/${id}`, { method: "DELETE" }),
+  getKnownSideEffects: (medId: number) =>
+    request(`/medications/${medId}/known-side-effects`),
+
+  // Treatment Plan
+  getTreatmentPlan: (patientId: number) =>
+    request(`/patients/${patientId}/treatment-plan`),
+  saveTreatmentPlan: (patientId: number, data: object) =>
+    request(`/patients/${patientId}/treatment-plan`, { method: "POST", body: JSON.stringify(data) }),
 
   // Logs
   createLog: (data: object) =>
