@@ -380,6 +380,12 @@ export default function LogPage() {
   const [newContactName, setNewContactName] = useState("");
   const [addingContact, setAddingContact] = useState(false);
 
+  // Auto-save
+  const isDirtyRef = useRef(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
+  const draftRef = useRef<LogDraft | null>(null);
+  const patientRef = useRef<Patient | null>(null);
+
   // Auto-expand section from URL hash
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -466,8 +472,42 @@ export default function LogPage() {
     if (!isLoading && user) loadPatient();
   }, [user, isLoading, loadPatient, router]);
 
+  // Keep refs current so the auto-save interval always reads the latest values
+  useEffect(() => { draftRef.current = draft; }, [draft]);
+  useEffect(() => { patientRef.current = patient; }, [patient]);
+
+  // Auto-save every 30s when there are unsaved changes
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const d = draftRef.current;
+      const p = patientRef.current;
+      if (!isDirtyRef.current || !d || !p) return;
+      try {
+        await performSave(d, p);
+        isDirtyRef.current = false;
+        setLastAutoSaved(new Date());
+      } catch { /* silent — user can still save manually */ }
+    }, 30_000);
+    return () => clearInterval(timer);
+  // performSave is stable (defined outside render cycle via refs)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Warn before closing the tab with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
   function update(patch: Partial<LogDraft>) {
     setDraft(d => d ? { ...d, ...patch } : d);
+    isDirtyRef.current = true;
   }
 
   function startFresh() {
@@ -662,40 +702,43 @@ export default function LogPage() {
     if (delta !== 0) window.scrollBy({ top: delta, behavior: "instant" });
   }
 
+  async function performSave(d: LogDraft, p: Patient): Promise<void> {
+    const activeMeds = p.medications.filter(m => m.active);
+    const medsWithDoses = new Set(d.medicationsTaken.map(e => e.medication_id));
+    // Include untaken entries for meds with no doses (for adherence tracking)
+    const notTakenEntries: MedicationTaken[] = activeMeds
+      .filter(m => !medsWithDoses.has(m.id))
+      .map(m => ({ medication_id: m.id, taken: false, time_taken: null }));
+    const hydrationOz = d.hydration === "Good" ? 80 : d.hydration === "Fair" ? 48 : d.hydration === "Poor" ? 24 : null;
+    await api.createLog({
+      patient_id: p.id,
+      date: d.date,
+      medications_taken: [...d.medicationsTaken, ...notTakenEntries],
+      symptoms: d.symptoms,
+      medication_side_effects: d.medicationSideEffects.filter(mse => mse.side_effects.length > 0),
+      sleep_hours: d.sleepHours,
+      mood_score: null,
+      water_intake_oz: hydrationOz,
+      activities: d.activities,
+      lifestyle: null,
+      notes: d.notes || null,
+      episode: d.episode,
+      vitals: (d.vitals.heart_rate || d.vitals.blood_pressure || d.vitals.cigarettes || d.vitals.alcohol || d.vitals.alcohol_drinks || Object.values(d.vitals.custom_substances ?? {}).some(Boolean))
+        ? d.vitals
+        : null,
+      photo: d.photo || null,
+      socialization: (d.socialization.left_house !== null || d.socialization.had_contact !== null)
+        ? d.socialization
+        : null,
+    });
+  }
+
   async function handleSubmit() {
     if (!draft || !patient) return;
     setSaving(true);
     try {
-      const activeMeds = patient.medications.filter(m => m.active);
-      const medsWithDoses = new Set(draft.medicationsTaken.map(d => d.medication_id));
-      // Include untaken entries for meds with no doses (for adherence tracking)
-      const notTakenEntries: MedicationTaken[] = activeMeds
-        .filter(m => !medsWithDoses.has(m.id))
-        .map(m => ({ medication_id: m.id, taken: false, time_taken: null }));
-
-      const hydrationOz = draft.hydration === "Good" ? 80 : draft.hydration === "Fair" ? 48 : draft.hydration === "Poor" ? 24 : null;
-
-      await api.createLog({
-        patient_id: patient.id,
-        date: draft.date,
-        medications_taken: [...draft.medicationsTaken, ...notTakenEntries],
-        symptoms: draft.symptoms,
-        medication_side_effects: draft.medicationSideEffects.filter(mse => mse.side_effects.length > 0),
-        sleep_hours: draft.sleepHours,
-        mood_score: null,
-        water_intake_oz: hydrationOz,
-        activities: draft.activities,
-        lifestyle: null,
-        notes: draft.notes || null,
-        episode: draft.episode,
-        vitals: (draft.vitals.heart_rate || draft.vitals.blood_pressure || draft.vitals.cigarettes || draft.vitals.alcohol || draft.vitals.alcohol_drinks || Object.values(draft.vitals.custom_substances ?? {}).some(Boolean))
-          ? draft.vitals
-          : null,
-        photo: draft.photo || null,
-        socialization: (draft.socialization.left_house !== null || draft.socialization.had_contact !== null)
-          ? draft.socialization
-          : null,
-      });
+      await performSave(draft, patient);
+      isDirtyRef.current = false;
       setSaved(true);
       setTimeout(() => { router.push("/dashboard"); }, 800);
     } catch (err: unknown) {
@@ -1621,13 +1664,20 @@ export default function LogPage() {
               <p style={{ color: "#94a3b8", fontSize: "0.95rem", fontWeight: 400 }}>Done.</p>
             </div>
           ) : (
-            <button
-              onClick={handleSubmit}
-              className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
-            >
-              Save Log
-            </button>
+            <>
+              {lastAutoSaved && (
+                <p className="text-center text-xs mb-2" style={{ color: "#94a3b8" }}>
+                  Auto-saved at {lastAutoSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              )}
+              <button
+                onClick={handleSubmit}
+                className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
+              >
+                Save Log
+              </button>
+            </>
           )}
         </div>
       </div>
