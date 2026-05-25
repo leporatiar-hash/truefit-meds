@@ -145,6 +145,7 @@ export default function LandingPage() {
           .lp-nav-sticky-cta { font-size: 0.8rem; padding: 7px 14px; }
         }
         .phone-image-wrapper { border-radius: 52px; overflow: hidden; position: relative; display: flex; justify-content: center; }
+        h1, h2, h3 { text-wrap: balance; }
       `}</style>
 
       {/* ── NAV ── */}
@@ -171,17 +172,12 @@ export default function LandingPage() {
       <section id="hero" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "120px 24px 80px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 60% at 50% 30%, rgba(74,124,89,0.08) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 70%, rgba(106,159,120,0.06) 0%, transparent 60%)", pointerEvents: "none" }} />
 
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.78rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, background: C.sagePale, padding: "6px 16px", borderRadius: "100px", marginBottom: 32, animation: "fadeUp 0.8s 0.2s both" }}>
-          <span style={{ width: 6, height: 6, background: C.sage, borderRadius: "50%", display: "inline-block" }} />
-          Free for caregivers
-        </div>
-
         <h1 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(2.8rem, 6vw, 5rem)", fontWeight: 500, lineHeight: 1.12, color: C.forest, maxWidth: 780, marginBottom: 12, animation: "fadeUp 0.8s 0.35s both" }}>
           The doctor sees a chart.<br />
-          <em style={{ fontStyle: "italic", color: C.sage }}>You see the whole person.</em>
+          <span style={{ color: C.sage }}>You see the whole person.</span>
         </h1>
 
-        <p style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.1rem, 2vw, 1.35rem)", fontStyle: "italic", color: C.inkSoft, marginBottom: 40, animation: "fadeUp 0.8s 0.5s both" }}>
+        <p style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.1rem, 2vw, 1.35rem)", color: C.inkSoft, marginBottom: 40, animation: "fadeUp 0.8s 0.5s both" }}>
           You notice everything. Now there&apos;s a place to put it.
         </p>
 
@@ -209,18 +205,18 @@ export default function LandingPage() {
             The things you notice disappear between visits
           </h2>
           <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 16 }}>
-            Caregivers spend hours observing their loved ones, tracking symptoms, medications, mood shifts, and patterns. When the appointment finally arrives, that knowledge lives in scattered notes, old texts, and memory.
+            When someone you love is living with a serious mental health condition, you become the expert. You track the medication changes, notice the early warning signs, and spot the patterns that don't show up in a clinical setting. That knowledge rarely makes it into the chart.
           </p>
           <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75 }}>
-            Doctors make decisions in 15-minute windows. Without structured input, the most important observations never make it into the chart.
+            Psychiatrists see patients for 15 minutes at a time. Without structured input from the people closest to them, critical observations — a shift in sleep, a new side effect, a pattern tied to a specific trigger — get lost between appointments.
           </p>
         </div>
         <div className="lp-reveal" style={{ padding: 40, background: C.sageMist, borderRadius: 16, borderLeft: `3px solid ${C.sage}` }}>
-          <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.35rem", fontStyle: "italic", lineHeight: 1.5, color: C.forest }}>
-            "She told me he seemed off for weeks. But she couldn't remember exactly when it started, or how often it happened. That's information I needed."
+          <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "1.35rem", lineHeight: 1.5, color: C.forest }}>
+            "Looking back through my logs, I realized his symptoms were consistently worse on days he smoked more. His psychiatrist told me cigarettes can actually reduce how well antipsychotics work. I never would have made that connection without writing it down."
           </blockquote>
           <cite style={{ display: "block", marginTop: 16, fontSize: "0.85rem", fontStyle: "normal", color: C.inkSoft }}>
-            — Geriatric physician, patient feedback session
+            — Caregiver, supporting a loved one with schizophrenia
           </cite>
         </div>
       </section>
@@ -489,9 +485,9 @@ export default function LandingPage() {
       <section id="story" style={{ background: C.forest, padding: "100px 24px", textAlign: "center" }}>
         <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sageLight, marginBottom: 32 }}>Why we built this</div>
         <div className="lp-reveal" style={{ maxWidth: 640, margin: "0 auto 48px" }}>
-          <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontStyle: "italic", color: C.white, lineHeight: 1.45 }}>
+          <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", color: C.white, lineHeight: 1.45 }}>
             &ldquo;The doctor sees a chart.<br />
-            <em style={{ color: C.sageLight }}>The mother sees a son.</em>&rdquo;
+            <span style={{ color: C.sageLight }}>The mother sees a son.</span>&rdquo;
           </blockquote>
         </div>
         <div className="lp-reveal" style={{ maxWidth: 540, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
