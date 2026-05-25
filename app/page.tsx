@@ -483,18 +483,15 @@ export default function LandingPage() {
 
       {/* ── STORY ── */}
       <section id="story" style={{ background: C.forest, padding: "100px 24px", textAlign: "center" }}>
-        <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sageLight, marginBottom: 32 }}>Why we built this</div>
-        <div className="lp-reveal" style={{ maxWidth: 640, margin: "0 auto 48px" }}>
-          <blockquote style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", color: C.white, lineHeight: 1.45 }}>
-            &ldquo;The doctor sees a chart.<br />
-            <span style={{ color: C.sageLight }}>The mother sees a son.</span>&rdquo;
-          </blockquote>
-        </div>
-        <div className="lp-reveal" style={{ maxWidth: 540, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
-          <p>My mother has been caring for my brother since he was eighteen. He was diagnosed with schizophrenia, and from that day forward, she became his primary advocate, mostly on her own, for years.</p>
-          <p style={{ marginTop: 16 }}>I watched her carry everything in her head. Every symptom shift. Every medication adjustment. Every pattern she noticed but couldn&apos;t quite articulate when the appointment finally came. The doctor had fifteen minutes. She had years of observations and nowhere to put them.</p>
-          <p style={{ marginTop: 16 }}>So I built Advocate for her. A simple way to log what she saw every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next. She started finding the patterns herself. She started walking into appointments with confidence. She stopped feeling like a bystander in her own son&apos;s care.</p>
-          <p style={{ marginTop: 16 }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
+        <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sageLight, marginBottom: 48 }}>Why we built this</div>
+        <div className="lp-reveal" style={{ maxWidth: 600, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.85, textAlign: "left" }}>
+          <p>My brother Jack has been fighting mental illness for almost ten years. Schizophrenia. Bipolar disorder. Excited catatonia. Psychosis. The diagnoses stacked up over years of hospitals, psychiatric wards, and more therapists than I can count.</p>
+          <p style={{ marginTop: 20 }}>When he&apos;s properly diagnosed and medicated, he&apos;s the same brother I grew up with — just with a few battle scars. When he&apos;s not, he can be unrecognizable.</p>
+          <p style={{ marginTop: 20 }}>My mother became his primary advocate almost overnight. She learned to read him better than any doctor could. She could see the episodes coming before they arrived — every symptom shift, every pattern, every small change that meant something was wrong. But when the appointment finally came and the doctor had fifteen minutes, she didn&apos;t know how to say any of it. She had years of observations and nowhere to put them.</p>
+          <p style={{ marginTop: 20 }}>When I left for college, she was doing it alone. That bothered me more than I let on.</p>
+          <p style={{ marginTop: 20 }}>So I built Advocate for her. A simple way to log what she sees every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She could prevent more episodes before they escalated.</p>
+          <p style={{ marginTop: 20 }}>She stopped feeling like a bystander in her own son&apos;s care.</p>
+          <p style={{ marginTop: 20, color: "rgba(255,255,255,0.9)", fontFamily: "var(--font-lora), serif", fontSize: "1.1rem" }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
         </div>
       </section>
 
