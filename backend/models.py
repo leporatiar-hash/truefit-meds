@@ -97,6 +97,9 @@ class DailyLog(Base):
     # {left_house: bool|null, had_contact: bool|null, contact_ids: [int], quality: str|null, initiated_by: str|null}
     socialization = Column(JSON, nullable=True)
 
+    # "detailed" | "same_as_yesterday" | "nothing_notable"
+    log_type = Column(String, nullable=True, default="detailed")
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="daily_logs")

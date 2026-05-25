@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { flushSync } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { api, localDateStr } from "../lib/api";
 import { useAuth } from "../components/AuthProvider";
@@ -309,9 +309,9 @@ function emptySocialization(): Socialization {
   return { left_house: null, had_contact: null, contact_ids: [], quality: null, initiated_by: null };
 }
 
-function defaultDraft(patientId: number | null, meds: Medication[]): LogDraft {
+function defaultDraft(patientId: number | null, meds: Medication[], date?: string): LogDraft {
   return {
-    date: localDateStr(),
+    date: date ?? localDateStr(),
     patientId,
     medicationsTaken: [],
     symptoms: [],
@@ -343,9 +343,13 @@ function displayDoseTime(time: string | null): string {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function LogPage() {
+function LogPageInner() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+  const isHistorical = !!dateParam && dateParam !== localDateStr();
+  const targetDate = isHistorical ? dateParam! : localDateStr();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [draft, setDraft] = useState<LogDraft | null>(null);
@@ -358,6 +362,19 @@ export default function LogPage() {
   const [knownSideEffects, setKnownSideEffects] = useState<Record<number, KnownSideEffect[]>>({});
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlan | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
+
+  // Catch-up mode
+  const [catchupMode, setCatchupMode] = useState(false);
+  const [catchupDays, setCatchupDays] = useState<string[]>([]);
+  const [dayStatuses, setDayStatuses] = useState<Record<string, "same" | "nothing_notable" | "queued">>({});
+  const [daysSaving, setDaysSaving] = useState<Record<string, boolean>>({});
+
+  // Quick actions (today's log)
+  const [hasYesterdayLog, setHasYesterdayLog] = useState(false);
+  const [quickActioning, setQuickActioning] = useState(false);
+
+  // Queued detail prompt (after today's log is saved)
+  const [queuedDetailPrompt, setQueuedDetailPrompt] = useState<string[]>([]);
 
   // Medication management
   const [showMedManage, setShowMedManage] = useState(false);
@@ -392,6 +409,44 @@ export default function LogPage() {
     if (hash) setOpenSection(hash);
   }, []);
 
+  const restoreDraftFromLog = useCallback((logData: Record<string, unknown>, p: Patient, date: string): LogDraft => {
+    const ep = logData.episode as Episode | null;
+    const vt = logData.vitals as Vitals | null;
+    const savedSoc = logData.socialization as Socialization | null;
+    const savedDoses = (logData.medications_taken as MedicationTaken[] | null) ?? [];
+    const takenDoses = savedDoses.filter(m => m.taken);
+    const waterOz = logData.water_intake_oz as number | null;
+    const hydrPreset = waterOz === 80 ? "Good" : waterOz === 48 ? "Fair" : waterOz === 24 ? "Poor" : null;
+    return {
+      date,
+      patientId: p.id,
+      medicationsTaken: takenDoses,
+      symptoms: (logData.symptoms as Symptom[]) ?? [],
+      medicationSideEffects: (logData.medication_side_effects as MedicationSideEffect[]) ?? p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
+      sleepHours: logData.sleep_hours as number | null,
+      hydration: hydrPreset,
+      lifestyle: (logData.lifestyle as Lifestyle | null) ?? { smoked: false, alcohol: false, stressed: false, ate_well: false },
+      activities: (logData.activities as Activity[]) ?? [],
+      notes: (logData.notes as string) ?? "",
+      episode: ep ?? { occurred: false, time: "", description: "" },
+      vitals: vt ? {
+        heart_rate: vt.heart_rate ?? "",
+        blood_pressure: vt.blood_pressure ?? "",
+        cigarettes: (vt as Vitals).cigarettes ?? "",
+        alcohol: (vt as Vitals).alcohol ?? false,
+        alcohol_drinks: (vt as Vitals).alcohol_drinks ?? "",
+      } : emptyVitals(),
+      photo: (logData.photo as string | null) ?? null,
+      socialization: savedSoc ? {
+        left_house: savedSoc.left_house ?? null,
+        had_contact: savedSoc.had_contact ?? null,
+        contact_ids: savedSoc.contact_ids ?? [],
+        quality: savedSoc.quality ?? null,
+        initiated_by: savedSoc.initiated_by ?? null,
+      } : emptySocialization(),
+    };
+  }, []);
+
   const loadPatient = useCallback(async () => {
     try {
       const [patients, contacts] = await Promise.all([
@@ -403,7 +458,6 @@ export default function LogPage() {
       setPatient(p);
       setSocialContacts(contacts);
 
-      // Load known side effects and treatment plan in parallel
       const activeMedIds = p.medications.filter(m => m.active).map(m => m.id);
       const [knownEffectsEntries] = await Promise.all([
         Promise.all(
@@ -420,57 +474,57 @@ export default function LogPage() {
       ]);
       setKnownSideEffects(Object.fromEntries(knownEffectsEntries));
 
-      const today = localDateStr();
+      // Fetch existing log for the target date
+      const existingLog = isHistorical
+        ? await api.getLogByDate(p.id, targetDate) as Record<string, unknown> | null
+        : await api.getTodayLog(p.id) as Record<string, unknown> | null;
 
-      const todayLog = await api.getTodayLog(p.id) as Record<string, unknown> | null;
-      if (todayLog) {
+      if (existingLog) {
         setLoadedFromServer(true);
-        const ep = todayLog.episode as Episode | null;
-        const vt = todayLog.vitals as Vitals | null;
-        const savedSoc = todayLog.socialization as Socialization | null;
-        // Load saved doses — filter to only taken:true entries for history
-        const savedDoses = (todayLog.medications_taken as MedicationTaken[] | null) ?? [];
-        const takenDoses = savedDoses.filter(m => m.taken);
-        const waterOz = todayLog.water_intake_oz as number | null;
-        const hydrPreset = waterOz === 80 ? "Good" : waterOz === 48 ? "Fair" : waterOz === 24 ? "Poor" : null;
-        setDraft({
-          date: today,
-          patientId: p.id,
-          medicationsTaken: takenDoses,
-          symptoms: (todayLog.symptoms as Symptom[]) ?? [],
-          medicationSideEffects: (todayLog.medication_side_effects as MedicationSideEffect[]) ?? p.medications.filter(m => m.active).map(m => ({ medication_id: m.id, medication_name: m.name, side_effects: [] })),
-          sleepHours: todayLog.sleep_hours as number | null,
-          hydration: hydrPreset,
-          lifestyle: (todayLog.lifestyle as Lifestyle | null) ?? { smoked: false, alcohol: false, stressed: false, ate_well: false },
-          activities: (todayLog.activities as Activity[]) ?? [],
-          notes: (todayLog.notes as string) ?? "",
-          episode: ep ?? { occurred: false, time: "", description: "" },
-          vitals: vt ? {
-            heart_rate: vt.heart_rate ?? "",
-            blood_pressure: vt.blood_pressure ?? "",
-            cigarettes: (vt as Vitals).cigarettes ?? "",
-            alcohol: (vt as Vitals).alcohol ?? false,
-            alcohol_drinks: (vt as Vitals).alcohol_drinks ?? "",
-          } : emptyVitals(),
-          photo: (todayLog.photo as string | null) ?? null,
-          socialization: savedSoc ? {
-            left_house: savedSoc.left_house ?? null,
-            had_contact: savedSoc.had_contact ?? null,
-            contact_ids: savedSoc.contact_ids ?? [],
-            quality: savedSoc.quality ?? null,
-            initiated_by: savedSoc.initiated_by ?? null,
-          } : emptySocialization(),
-        });
+        setDraft(restoreDraftFromLog(existingLog, p, targetDate));
       } else {
-        setDraft(defaultDraft(p.id, p.medications));
+        setDraft(defaultDraft(p.id, p.medications, targetDate));
+
+        if (!isHistorical) {
+          // Check for catch-up mode (≥2 consecutive missed days ending at yesterday)
+          const missedResp = await api.getMissedDays(p.id) as { missed_days: string[] };
+          const missedSet = new Set(missedResp.missed_days);
+
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = localDateStr(yesterday);
+
+          let streak = 0;
+          const cur = new Date(yesterday);
+          while (missedSet.has(localDateStr(cur))) {
+            streak++;
+            cur.setDate(cur.getDate() - 1);
+          }
+
+          if (streak >= 2) {
+            // Collect the streak dates oldest-first
+            const streakDates: string[] = [];
+            const d = new Date(yesterday);
+            for (let i = 0; i < streak; i++) {
+              streakDates.unshift(localDateStr(new Date(d)));
+              d.setDate(d.getDate() - 1);
+            }
+            setCatchupDays(streakDates);
+            setCatchupMode(true);
+          }
+
+          // "Same as yesterday" is only available when yesterday has a log
+          setHasYesterdayLog(!missedSet.has(yesterdayStr));
+        }
       }
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [router]);
+  }, [router, isHistorical, targetDate, restoreDraftFromLog]);
 
   useEffect(() => {
     if (!isLoading && !user) { router.push("/login"); return; }
     if (!isLoading && user) loadPatient();
-  }, [user, isLoading, loadPatient, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isLoading]);
 
   // Keep refs current so the auto-save interval always reads the latest values
   useEffect(() => { draftRef.current = draft; }, [draft]);
@@ -512,8 +566,57 @@ export default function LogPage() {
 
   function startFresh() {
     if (!patient) return;
-    setDraft(defaultDraft(patient.id, patient.medications));
+    setDraft(defaultDraft(patient.id, patient.medications, targetDate));
     setLoadedFromServer(false);
+  }
+
+  // ── Quick actions (today's log) ───────────────────────────────────────────
+
+  async function handleQuickAction(type: "same_as_yesterday" | "nothing_notable") {
+    if (!patient) return;
+    setQuickActioning(true);
+    try {
+      await api.quickLog(patient.id, localDateStr(), type);
+      const label = type === "same_as_yesterday" ? "Copied from yesterday" : "Marked as nothing notable";
+      toast.success(label);
+      setTimeout(() => router.push("/dashboard"), 600);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
+      setQuickActioning(false);
+    }
+  }
+
+  // ── Catch-up mode ─────────────────────────────────────────────────────────
+
+  async function handleDayAction(dateStr: string, type: "same_as_yesterday" | "nothing_notable") {
+    if (!patient) return;
+    setDaysSaving(s => ({ ...s, [dateStr]: true }));
+    try {
+      await api.quickLog(patient.id, dateStr, type);
+      setDayStatuses(s => ({ ...s, [dateStr]: type === "same_as_yesterday" ? "same" : "nothing_notable" }));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setDaysSaving(s => ({ ...s, [dateStr]: false }));
+    }
+  }
+
+  function handleDayQueue(dateStr: string) {
+    setDayStatuses(s => ({ ...s, [dateStr]: s[dateStr] === "queued" ? undefined as unknown as "queued" : "queued" }));
+  }
+
+  async function handleMarkAllNothing() {
+    if (!patient) return;
+    const unaddressed = catchupDays.filter(d => !dayStatuses[d]);
+    await Promise.all(unaddressed.map(d => handleDayAction(d, "nothing_notable")));
+  }
+
+  function handleContinueCatchup() {
+    const queued = catchupDays.filter(d => dayStatuses[d] === "queued");
+    if (queued.length > 0) {
+      sessionStorage.setItem("truefit_queued_days", JSON.stringify(queued));
+    }
+    setCatchupMode(false);
   }
 
   // ── Medication multi-dose ─────────────────────────────────────────────────
@@ -740,7 +843,30 @@ export default function LogPage() {
       await performSave(draft, patient);
       isDirtyRef.current = false;
       setSaved(true);
-      setTimeout(() => { router.push("/dashboard"); }, 800);
+
+      if (isHistorical) {
+        // This is a queued detail day — pop it from the queue and move to next
+        const queuedStr = sessionStorage.getItem("truefit_queued_days");
+        const queued = queuedStr ? (JSON.parse(queuedStr) as string[]) : [];
+        const remaining = queued.filter(d => d !== targetDate);
+        if (remaining.length > 0) {
+          sessionStorage.setItem("truefit_queued_days", JSON.stringify(remaining));
+          setTimeout(() => { router.push(`/log?date=${remaining[0]}`); }, 800);
+        } else {
+          sessionStorage.removeItem("truefit_queued_days");
+          setTimeout(() => { router.push("/dashboard"); }, 800);
+        }
+      } else {
+        // Today's log — check for queued detail days
+        const queuedStr = sessionStorage.getItem("truefit_queued_days");
+        const queued = queuedStr ? (JSON.parse(queuedStr) as string[]) : [];
+        if (queued.length > 0) {
+          setQueuedDetailPrompt(queued);
+          // Don't navigate — let user respond to the prompt
+        } else {
+          setTimeout(() => { router.push("/dashboard"); }, 800);
+        }
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to save log");
     } finally {
@@ -757,6 +883,132 @@ export default function LogPage() {
   }
 
   if (!draft || !patient) return null;
+
+  // ── Catch-up screen ───────────────────────────────────────────────────────
+
+  if (catchupMode) {
+    const allAddressed = catchupDays.every(d => !!dayStatuses[d]);
+
+    return (
+      <div className="min-h-screen pb-24" style={{ background: "#faf9f6" }}>
+        <NavBar />
+        <div className="max-w-lg mx-auto px-4 pt-6 space-y-4">
+          <div>
+            <h1 className="text-3xl font-bold text-navy">
+              {catchupDays.length} {catchupDays.length === 1 ? "day" : "days"} missed
+            </h1>
+            <p className="text-base text-slate-500 mt-1">Log what you remember for each day</p>
+          </div>
+
+          <div className="space-y-3">
+            {catchupDays.map(dateStr => {
+              const status = dayStatuses[dateStr];
+              const saving = daysSaving[dateStr];
+              const [yr, mo, dy] = dateStr.split("-").map(Number);
+              const d = new Date(yr, mo - 1, dy);
+              const dayLabel = d.toLocaleDateString("en-US", { weekday: "long" });
+              const dateLabel = d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
+              return (
+                <div
+                  key={dateStr}
+                  className="rounded-2xl border p-4"
+                  style={{
+                    borderColor: status === "queued" ? "#D97706" : status ? "#4a7c59" : "#E2E8F0",
+                    background: status === "queued" ? "#FFFBEB" : status ? "#F0FDF4" : "white",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Row tap area → queue/unqueue */}
+                    <button
+                      type="button"
+                      onClick={() => handleDayQueue(dateStr)}
+                      className="flex-1 text-left min-w-0"
+                    >
+                      <p className="text-base font-bold text-navy">{dayLabel}</p>
+                      <p className="text-sm text-slate-500">{dateLabel}</p>
+                      {status === "queued" && (
+                        <p className="text-xs font-semibold mt-1" style={{ color: "#B45309" }}>
+                          Queued for detail — tap to unqueue
+                        </p>
+                      )}
+                      {status === "same" && (
+                        <p className="text-xs font-semibold mt-1" style={{ color: "#4a7c59" }}>
+                          Copied from previous day
+                        </p>
+                      )}
+                      {status === "nothing_notable" && (
+                        <p className="text-xs font-semibold mt-1" style={{ color: "#64748B" }}>
+                          Nothing notable
+                        </p>
+                      )}
+                    </button>
+
+                    {/* Action buttons */}
+                    {status !== "queued" && (
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleDayAction(dateStr, "same_as_yesterday")}
+                          className="px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
+                          style={{
+                            borderColor: "#4a7c59",
+                            background: status === "same" ? "#4a7c59" : "white",
+                            color: status === "same" ? "white" : "#4a7c59",
+                          }}
+                        >
+                          Same
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleDayAction(dateStr, "nothing_notable")}
+                          className="px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
+                          style={{
+                            borderColor: "#CBD5E1",
+                            background: status === "nothing_notable" ? "#64748B" : "white",
+                            color: status === "nothing_notable" ? "white" : "#64748B",
+                          }}
+                        >
+                          Nothing
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bulk action */}
+          <button
+            type="button"
+            onClick={handleMarkAllNothing}
+            className="w-full py-3 rounded-xl border-2 text-base font-semibold transition-all active:scale-95"
+            style={{ borderColor: "#CBD5E1", color: "#64748B", background: "white" }}
+          >
+            Mark all as nothing notable
+          </button>
+
+          {/* Continue */}
+          <button
+            type="button"
+            disabled={!allAddressed}
+            onClick={handleContinueCatchup}
+            className="w-full py-4 rounded-2xl font-bold text-white text-lg transition-all active:scale-[0.98]"
+            style={{
+              background: allAddressed
+                ? "linear-gradient(135deg, #4a7c59, #2d4f38)"
+                : "#CBD5E1",
+            }}
+          >
+            Continue →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const activeMeds = patient.medications.filter(m => m.active);
 
@@ -815,17 +1067,73 @@ export default function LogPage() {
     return parts.length ? parts.join(" · ") : "None today";
   })();
 
+  // Parse target date for display
+  const [tyr, tmo, tdy] = targetDate.split("-").map(Number);
+  const targetDateObj = new Date(tyr, tmo - 1, tdy);
+
   return (
     <div className="min-h-screen pb-36" style={{ background: "#faf9f6" }}>
       <NavBar />
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-4">
-        <div>
-          <h1 className="text-3xl font-bold text-navy">Daily Log</h1>
-          <p className="text-base text-slate-500 mt-1">
-            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-          </p>
-        </div>
+        {isHistorical ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex items-center gap-1.5 text-sm font-semibold mb-3"
+              style={{ color: "#4a7c59" }}
+            >
+              ← Back
+            </button>
+            <h1 className="text-3xl font-bold text-navy">
+              {targetDateObj.toLocaleDateString("en-US", { weekday: "long" })}
+            </h1>
+            <p className="text-base text-slate-500 mt-1">
+              {targetDateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-3xl font-bold text-navy">Daily Log</h1>
+            <p className="text-base text-slate-500 mt-1">
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+          </div>
+        )}
+
+        {/* ── Quick actions (today only, no existing log) ── */}
+        {!loadedFromServer && !isHistorical && (
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              {hasYesterdayLog && (
+                <button
+                  type="button"
+                  disabled={quickActioning}
+                  onClick={() => handleQuickAction("same_as_yesterday")}
+                  className="flex-1 py-4 rounded-2xl border-2 text-base font-bold transition-all active:scale-[0.98]"
+                  style={{ borderColor: "#4a7c59", color: "#4a7c59", background: "white" }}
+                >
+                  {quickActioning ? "Saving…" : "Same as yesterday"}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={quickActioning}
+                onClick={() => handleQuickAction("nothing_notable")}
+                className="flex-1 py-4 rounded-2xl border-2 text-base font-bold transition-all active:scale-[0.98]"
+                style={{ borderColor: "#94A3B8", color: "#64748B", background: "white" }}
+              >
+                {quickActioning ? "Saving…" : "Nothing notable"}
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px" style={{ background: "#E2E8F0" }} />
+              <span className="text-sm font-medium" style={{ color: "#94A3B8" }}>or log in detail</span>
+              <div className="flex-1 h-px" style={{ background: "#E2E8F0" }} />
+            </div>
+          </div>
+        )}
 
         {loadedFromServer && (
           <div className="flex items-center justify-between rounded-xl px-4 py-3 text-sm" style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
@@ -1648,6 +1956,56 @@ export default function LogPage() {
         </div>
       )}
 
+      {/* ── Queued detail prompt ── */}
+      {queuedDetailPrompt.length > 0 && saved && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
+          <div className="bg-white rounded-t-3xl px-5 pt-6 pb-10 space-y-4 max-w-lg mx-auto w-full">
+            <p className="text-xl font-bold text-navy">Fill in a queued day?</p>
+            <p className="text-base text-slate-600">
+              You queued {queuedDetailPrompt.length} {queuedDetailPrompt.length === 1 ? "day" : "days"} for detailed entry.
+              {" "}Start with{" "}
+              {(() => {
+                const [yr, mo, dy] = queuedDetailPrompt[0].split("-").map(Number);
+                return new Date(yr, mo - 1, dy).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+              })()}?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const [first, ...rest] = queuedDetailPrompt;
+                  if (rest.length > 0) {
+                    sessionStorage.setItem("truefit_queued_days", JSON.stringify(rest));
+                  } else {
+                    sessionStorage.removeItem("truefit_queued_days");
+                  }
+                  router.push(`/log?date=${first}`);
+                }}
+                className="flex-1 py-4 rounded-2xl font-bold text-white text-base"
+                style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
+              >
+                Yes, fill in now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.removeItem("truefit_queued_days");
+                  setQueuedDetailPrompt([]);
+                  router.push("/dashboard");
+                }}
+                className="flex-1 py-4 rounded-2xl font-bold border-2 text-base"
+                style={{ borderColor: "#CBD5E1", color: "#64748B" }}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Sticky save bar ── */}
       <div className="fixed bottom-0 left-0 right-0 z-30">
         <div className="max-w-lg mx-auto px-4 pb-[72px] pt-3"
@@ -1675,12 +2033,24 @@ export default function LogPage() {
                 className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
                 style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
               >
-                Save Log
+                {isHistorical ? "Save Entry" : "Save Log"}
               </button>
             </>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LogPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
+        <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#4a7c59", borderTopColor: "transparent" }} />
+      </div>
+    }>
+      <LogPageInner />
+    </Suspense>
   );
 }

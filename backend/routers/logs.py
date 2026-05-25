@@ -20,13 +20,26 @@ def _serialize_log_field(value):
     return value
 
 
+def _verify_patient(patient_id: int, current_user: models.User, db: Session) -> models.Patient:
+    patient = (
+        db.query(models.Patient)
+        .filter(
+            models.Patient.id == patient_id,
+            models.Patient.caregiver_id == current_user.id,
+        )
+        .first()
+    )
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
 @router.post("/", response_model=schemas.DailyLogResponse)
 def create_or_update_log(
     log_data: schemas.DailyLogCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    # Verify patient belongs to this caregiver
     patient = (
         db.query(models.Patient)
         .filter(
@@ -52,9 +65,9 @@ def create_or_update_log(
         "vitals": log_data.vitals,
         "photo": log_data.photo,
         "socialization": _serialize_log_field(log_data.socialization),
+        "log_type": log_data.log_type or "detailed",
     }
 
-    # Upsert: update if a log for this patient+date already exists
     existing = (
         db.query(models.DailyLog)
         .filter(
@@ -90,18 +103,8 @@ def get_today_log(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    patient = (
-        db.query(models.Patient)
-        .filter(
-            models.Patient.id == patient_id,
-            models.Patient.caregiver_id == current_user.id,
-        )
-        .first()
-    )
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+    _verify_patient(patient_id, current_user, db)
 
-    # Prefer client-supplied local date to avoid UTC offset shifting the day
     if date:
         try:
             today = datetime.strptime(date, "%Y-%m-%d").date()
@@ -119,22 +122,164 @@ def get_today_log(
     )
 
 
+@router.get("/{patient_id}/missed-days")
+def get_missed_days(
+    patient_id: int,
+    days: int = Query(default=30),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _verify_patient(patient_id, current_user, db)
+
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+
+    first_log = (
+        db.query(models.DailyLog)
+        .filter(models.DailyLog.patient_id == patient_id)
+        .order_by(models.DailyLog.date.asc())
+        .first()
+    )
+    if not first_log:
+        return {"missed_days": []}
+
+    # Only look for missed days after the first log, up to 'days' days back
+    start = max(first_log.date + timedelta(days=1), today - timedelta(days=days))
+
+    logged_dates = {
+        row.date
+        for row in db.query(models.DailyLog.date).filter(
+            models.DailyLog.patient_id == patient_id,
+            models.DailyLog.date >= start,
+            models.DailyLog.date <= yesterday,
+        ).all()
+    }
+
+    missed = []
+    current = start
+    while current <= yesterday:
+        if current not in logged_dates:
+            missed.append(str(current))
+        current += timedelta(days=1)
+
+    return {"missed_days": missed}
+
+
+@router.get("/{patient_id}/date/{date_str}", response_model=Optional[schemas.DailyLogResponse])
+def get_log_by_date(
+    patient_id: int,
+    date_str: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _verify_patient(patient_id, current_user, db)
+
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    return (
+        db.query(models.DailyLog)
+        .filter(
+            models.DailyLog.patient_id == patient_id,
+            models.DailyLog.date == target_date,
+        )
+        .first()
+    )
+
+
+@router.post("/{patient_id}/quick", response_model=schemas.DailyLogResponse)
+def quick_log(
+    patient_id: int,
+    body: schemas.QuickLogRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _verify_patient(patient_id, current_user, db)
+
+    if body.type == "nothing_notable":
+        fields: dict = {"log_type": "nothing_notable"}
+
+    elif body.type == "same_as_yesterday":
+        # Prefer the immediately preceding calendar day; fall back to most recent log before the target date
+        prev_date = body.date - timedelta(days=1)
+        previous = (
+            db.query(models.DailyLog)
+            .filter(
+                models.DailyLog.patient_id == patient_id,
+                models.DailyLog.date == prev_date,
+            )
+            .first()
+        )
+        if not previous:
+            previous = (
+                db.query(models.DailyLog)
+                .filter(
+                    models.DailyLog.patient_id == patient_id,
+                    models.DailyLog.date < body.date,
+                )
+                .order_by(models.DailyLog.date.desc())
+                .first()
+            )
+
+        if previous:
+            fields = {
+                "medications_taken": previous.medications_taken,
+                "symptoms": previous.symptoms,
+                "medication_side_effects": previous.medication_side_effects,
+                "sleep_hours": previous.sleep_hours,
+                "mood_score": previous.mood_score,
+                "water_intake_oz": previous.water_intake_oz,
+                "activities": previous.activities,
+                "lifestyle": previous.lifestyle,
+                "notes": previous.notes,
+                "episode": previous.episode,
+                "vitals": previous.vitals,
+                "photo": None,  # photos are not carried forward
+                "socialization": previous.socialization,
+                "log_type": "same_as_yesterday",
+            }
+        else:
+            fields = {"log_type": "nothing_notable"}
+    else:
+        raise HTTPException(status_code=400, detail="type must be 'same_as_yesterday' or 'nothing_notable'")
+
+    existing = (
+        db.query(models.DailyLog)
+        .filter(
+            models.DailyLog.patient_id == patient_id,
+            models.DailyLog.date == body.date,
+        )
+        .first()
+    )
+
+    if existing:
+        for key, val in fields.items():
+            setattr(existing, key, val)
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    log = models.DailyLog(
+        patient_id=patient_id,
+        logged_by=current_user.id,
+        date=body.date,
+        **fields,
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
 @router.get("/{patient_id}", response_model=List[schemas.DailyLogResponse])
 def get_logs(
     patient_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    patient = (
-        db.query(models.Patient)
-        .filter(
-            models.Patient.id == patient_id,
-            models.Patient.caregiver_id == current_user.id,
-        )
-        .first()
-    )
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+    _verify_patient(patient_id, current_user, db)
 
     ninety_days_ago = datetime.now().date() - timedelta(days=90)
     return (

@@ -130,6 +130,10 @@ export const api = {
     request("/logs/", { method: "POST", body: JSON.stringify(data) }),
   getLogs: (patientId: number) => request(`/logs/${patientId}`),
   getTodayLog: (patientId: number) => request(`/logs/${patientId}/today?date=${localDateStr()}`),
+  getLogByDate: (patientId: number, date: string) => request(`/logs/${patientId}/date/${date}`),
+  getMissedDays: (patientId: number) => request(`/logs/${patientId}/missed-days`),
+  quickLog: (patientId: number, date: string, type: string) =>
+    request(`/logs/${patientId}/quick`, { method: "POST", body: JSON.stringify({ date, type }) }),
 
   // User config
   updateUserConfig: (updates: object) =>

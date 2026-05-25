@@ -137,6 +137,17 @@ class OnboardingSurveyRequest(BaseModel):
 
 # ── Daily Logs ────────────────────────────────────────────────────────────────
 
+class LogType(str, Enum):
+    detailed = "detailed"
+    same_as_yesterday = "same_as_yesterday"
+    nothing_notable = "nothing_notable"
+
+
+class QuickLogRequest(BaseModel):
+    date: date
+    type: str  # "same_as_yesterday" | "nothing_notable"
+
+
 class MedicationTaken(BaseModel):
     medication_id: int
     taken: bool
@@ -196,6 +207,7 @@ class DailyLogCreate(BaseModel):
     vitals: Optional[Any] = None
     photo: Optional[str] = None
     socialization: Optional[Socialization] = None
+    log_type: str = "detailed"
 
 
 class DailyLogResponse(BaseModel):
@@ -216,6 +228,7 @@ class DailyLogResponse(BaseModel):
     vitals: Optional[Any] = None
     photo: Optional[str] = None
     socialization: Optional[Any] = None
+    log_type: Optional[str] = "detailed"
     created_at: datetime
 
     model_config = {"from_attributes": True}
