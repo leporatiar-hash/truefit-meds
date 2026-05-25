@@ -148,7 +148,7 @@ export interface DailyLog {
   vitals: Vitals | null;
   photo: string | null;
   socialization: Socialization | null;
-  log_type: "detailed" | "same_as_yesterday" | "nothing_notable" | null;
+  log_type: "detailed" | "same_as_yesterday" | "nothing_notable" | "catch_up_note" | null;
   created_at: string;
 }
 

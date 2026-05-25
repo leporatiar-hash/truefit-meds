@@ -132,8 +132,8 @@ export const api = {
   getTodayLog: (patientId: number) => request(`/logs/${patientId}/today?date=${localDateStr()}`),
   getLogByDate: (patientId: number, date: string) => request(`/logs/${patientId}/date/${date}`),
   getMissedDays: (patientId: number) => request(`/logs/${patientId}/missed-days`),
-  quickLog: (patientId: number, date: string, type: string) =>
-    request(`/logs/${patientId}/quick`, { method: "POST", body: JSON.stringify({ date, type }) }),
+  quickLog: (patientId: number, date: string, type: string, note?: string) =>
+    request(`/logs/${patientId}/quick`, { method: "POST", body: JSON.stringify({ date, type, note }) }),
 
   // User config
   updateUserConfig: (updates: object) =>

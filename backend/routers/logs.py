@@ -201,6 +201,9 @@ def quick_log(
     if body.type == "nothing_notable":
         fields: dict = {"log_type": "nothing_notable"}
 
+    elif body.type == "catch_up_note":
+        fields = {"log_type": "catch_up_note", "notes": (body.note or "").strip() or None}
+
     elif body.type == "same_as_yesterday":
         # Prefer the immediately preceding calendar day; fall back to most recent log before the target date
         prev_date = body.date - timedelta(days=1)
@@ -243,7 +246,7 @@ def quick_log(
         else:
             fields = {"log_type": "nothing_notable"}
     else:
-        raise HTTPException(status_code=400, detail="type must be 'same_as_yesterday' or 'nothing_notable'")
+        raise HTTPException(status_code=400, detail="type must be 'same_as_yesterday', 'nothing_notable', or 'catch_up_note'")
 
     existing = (
         db.query(models.DailyLog)

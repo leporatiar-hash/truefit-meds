@@ -145,7 +145,8 @@ class LogType(str, Enum):
 
 class QuickLogRequest(BaseModel):
     date: date
-    type: str  # "same_as_yesterday" | "nothing_notable"
+    type: str  # "same_as_yesterday" | "nothing_notable" | "catch_up_note"
+    note: Optional[str] = None  # used when type == "catch_up_note"
 
 
 class MedicationTaken(BaseModel):

@@ -366,8 +366,11 @@ function LogPageInner() {
   // Catch-up mode
   const [catchupMode, setCatchupMode] = useState(false);
   const [catchupDays, setCatchupDays] = useState<string[]>([]);
-  const [dayStatuses, setDayStatuses] = useState<Record<string, "same" | "nothing_notable" | "queued">>({});
+  const [dayStatuses, setDayStatuses] = useState<Record<string, "same" | "nothing_notable" | "log_it" | "queued">>({});
   const [daysSaving, setDaysSaving] = useState<Record<string, boolean>>({});
+  const [logItOpenFor, setLogItOpenFor] = useState<string | null>(null);
+  const [noteTexts, setNoteTexts] = useState<Record<string, string>>({});
+  const [notesSaving, setNotesSaving] = useState<Record<string, boolean>>({});
 
   // Quick actions (today's log)
   const [hasYesterdayLog, setHasYesterdayLog] = useState(false);
@@ -591,6 +594,8 @@ function LogPageInner() {
   async function handleDayAction(dateStr: string, type: "same_as_yesterday" | "nothing_notable") {
     if (!patient) return;
     setDaysSaving(s => ({ ...s, [dateStr]: true }));
+    // Close any open Log it field for this day
+    setLogItOpenFor(prev => prev === dateStr ? null : prev);
     try {
       await api.quickLog(patient.id, dateStr, type);
       setDayStatuses(s => ({ ...s, [dateStr]: type === "same_as_yesterday" ? "same" : "nothing_notable" }));
@@ -601,13 +606,25 @@ function LogPageInner() {
     }
   }
 
-  function handleDayQueue(dateStr: string) {
-    setDayStatuses(s => ({ ...s, [dateStr]: s[dateStr] === "queued" ? undefined as unknown as "queued" : "queued" }));
+  async function handleSaveCatchupNote(dateStr: string) {
+    if (!patient) return;
+    const noteText = (noteTexts[dateStr] ?? "").trim();
+    setNotesSaving(s => ({ ...s, [dateStr]: true }));
+    try {
+      await api.quickLog(patient.id, dateStr, "catch_up_note", noteText || undefined);
+      setDayStatuses(s => ({ ...s, [dateStr]: "log_it" }));
+      setLogItOpenFor(null);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save note");
+    } finally {
+      setNotesSaving(s => ({ ...s, [dateStr]: false }));
+    }
   }
 
   async function handleMarkAllNothing() {
     if (!patient) return;
     const unaddressed = catchupDays.filter(d => !dayStatuses[d]);
+    setLogItOpenFor(null);
     await Promise.all(unaddressed.map(d => handleDayAction(d, "nothing_notable")));
   }
 
@@ -904,78 +921,135 @@ function LogPageInner() {
             {catchupDays.map(dateStr => {
               const status = dayStatuses[dateStr];
               const saving = daysSaving[dateStr];
+              const logItOpen = logItOpenFor === dateStr;
               const [yr, mo, dy] = dateStr.split("-").map(Number);
               const d = new Date(yr, mo - 1, dy);
               const dayLabel = d.toLocaleDateString("en-US", { weekday: "long" });
               const dateLabel = d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
+              const rowBorderColor =
+                status === "log_it" ? "#6366F1"
+                : status === "queued" ? "#D97706"
+                : status === "same" ? "#4a7c59"
+                : status === "nothing_notable" ? "#94A3B8"
+                : logItOpen ? "#C7D2FE"
+                : "#E2E8F0";
+              const rowBg =
+                status === "log_it" ? "#EEF2FF"
+                : status === "queued" ? "#FFFBEB"
+                : status === "same" ? "#F0FDF4"
+                : status === "nothing_notable" ? "#F8FAFC"
+                : "white";
+
               return (
                 <div
                   key={dateStr}
-                  className="rounded-2xl border p-4"
-                  style={{
-                    borderColor: status === "queued" ? "#D97706" : status ? "#4a7c59" : "#E2E8F0",
-                    background: status === "queued" ? "#FFFBEB" : status ? "#F0FDF4" : "white",
-                  }}
+                  className="rounded-2xl border overflow-hidden"
+                  style={{ borderColor: rowBorderColor, background: rowBg }}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Row tap area → queue/unqueue */}
-                    <button
-                      type="button"
-                      onClick={() => handleDayQueue(dateStr)}
-                      className="flex-1 text-left min-w-0"
-                    >
+                  {/* Header row */}
+                  <div className="flex items-center gap-2 px-4 pt-4 pb-3">
+                    <div className="flex-1 min-w-0">
                       <p className="text-base font-bold text-navy">{dayLabel}</p>
                       <p className="text-sm text-slate-500">{dateLabel}</p>
-                      {status === "queued" && (
-                        <p className="text-xs font-semibold mt-1" style={{ color: "#B45309" }}>
-                          Queued for detail — tap to unqueue
-                        </p>
-                      )}
                       {status === "same" && (
-                        <p className="text-xs font-semibold mt-1" style={{ color: "#4a7c59" }}>
-                          Copied from previous day
-                        </p>
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: "#4a7c59" }}>Copied from previous day</p>
                       )}
                       {status === "nothing_notable" && (
-                        <p className="text-xs font-semibold mt-1" style={{ color: "#64748B" }}>
-                          Nothing notable
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: "#64748B" }}>Nothing notable</p>
+                      )}
+                      {status === "log_it" && (
+                        <p className="text-xs font-semibold mt-0.5 truncate" style={{ color: "#4F46E5" }}>
+                          Note saved{noteTexts[dateStr] ? ` · ${noteTexts[dateStr].slice(0, 45)}${noteTexts[dateStr].length > 45 ? "…" : ""}` : ""}
                         </p>
                       )}
-                    </button>
+                      {status === "queued" && (
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: "#B45309" }}>Queued for full log</p>
+                      )}
+                    </div>
 
-                    {/* Action buttons */}
-                    {status !== "queued" && (
-                      <div className="flex gap-2 flex-shrink-0">
+                    {/* Three action buttons */}
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => handleDayAction(dateStr, "same_as_yesterday")}
+                        className="px-2.5 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
+                        style={{
+                          borderColor: "#4a7c59",
+                          background: status === "same" ? "#4a7c59" : "white",
+                          color: status === "same" ? "white" : "#4a7c59",
+                        }}
+                      >
+                        Same
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => handleDayAction(dateStr, "nothing_notable")}
+                        className="px-2.5 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
+                        style={{
+                          borderColor: "#CBD5E1",
+                          background: status === "nothing_notable" ? "#64748B" : "white",
+                          color: status === "nothing_notable" ? "white" : "#64748B",
+                        }}
+                      >
+                        Nothing
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLogItOpenFor(logItOpen ? null : dateStr)}
+                        className="px-2.5 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
+                        style={{
+                          borderColor: "#6366F1",
+                          background: (status === "log_it" || logItOpen) ? "#6366F1" : "white",
+                          color: (status === "log_it" || logItOpen) ? "white" : "#6366F1",
+                        }}
+                      >
+                        Log it
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline note field — visible when Log it is open */}
+                  {logItOpen && (
+                    <div className="px-4 pb-4 pt-1 space-y-2.5 border-t" style={{ borderColor: "#E0E7FF" }}>
+                      <label className="block text-sm font-semibold text-slate-600">
+                        What do you remember about this day?
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={noteTexts[dateStr] ?? ""}
+                        onChange={e => setNoteTexts(prev => ({ ...prev, [dateStr]: e.target.value }))}
+                        placeholder="e.g. He seemed low energy, stayed in his room most of the day…"
+                        autoFocus
+                        className="w-full px-3 py-2.5 rounded-xl border text-navy text-sm focus:outline-none resize-none bg-white"
+                        style={{ borderColor: "#C7D2FE" }}
+                      />
+                      <div className="flex items-center justify-between">
                         <button
                           type="button"
-                          disabled={saving}
-                          onClick={() => handleDayAction(dateStr, "same_as_yesterday")}
-                          className="px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
-                          style={{
-                            borderColor: "#4a7c59",
-                            background: status === "same" ? "#4a7c59" : "white",
-                            color: status === "same" ? "white" : "#4a7c59",
-                          }}
+                          disabled={!noteTexts[dateStr]?.trim() || notesSaving[dateStr]}
+                          onClick={() => handleSaveCatchupNote(dateStr)}
+                          className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
+                          style={{ background: noteTexts[dateStr]?.trim() ? "#4a7c59" : "#CBD5E1" }}
                         >
-                          Same
+                          {notesSaving[dateStr] ? "Saving…" : "Save note"}
                         </button>
                         <button
                           type="button"
-                          disabled={saving}
-                          onClick={() => handleDayAction(dateStr, "nothing_notable")}
-                          className="px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95"
-                          style={{
-                            borderColor: "#CBD5E1",
-                            background: status === "nothing_notable" ? "#64748B" : "white",
-                            color: status === "nothing_notable" ? "white" : "#64748B",
+                          onClick={() => {
+                            setLogItOpenFor(null);
+                            setDayStatuses(s => ({ ...s, [dateStr]: "queued" }));
                           }}
+                          className="text-sm font-semibold transition-colors"
+                          style={{ color: "#6366F1" }}
                         >
-                          Nothing
+                          Full log instead →
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
