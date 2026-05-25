@@ -145,7 +145,7 @@ export default function LandingPage() {
           .lp-nav-sticky-cta { font-size: 0.8rem; padding: 7px 14px; }
         }
         .phone-image-wrapper { border-radius: 52px; overflow: hidden; position: relative; display: flex; justify-content: center; }
-        h1, h2, h3 { text-wrap: balance; }
+        h2, h3 { text-wrap: balance; }
       `}</style>
 
       {/* ── NAV ── */}
@@ -172,7 +172,7 @@ export default function LandingPage() {
       <section id="hero" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "120px 24px 80px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 60% at 50% 30%, rgba(74,124,89,0.08) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 70%, rgba(106,159,120,0.06) 0%, transparent 60%)", pointerEvents: "none" }} />
 
-        <h1 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(2.8rem, 6vw, 5rem)", fontWeight: 500, lineHeight: 1.12, color: C.forest, maxWidth: 780, marginBottom: 12, animation: "fadeUp 0.8s 0.35s both" }}>
+        <h1 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(2rem, 4vw, 3.5rem)", fontWeight: 500, lineHeight: 1.25, color: C.forest, maxWidth: 780, marginBottom: 12, animation: "fadeUp 0.8s 0.35s both" }}>
           The doctor sees a chart.<br />
           <span style={{ color: C.sage }}>You see the whole person.</span>
         </h1>
