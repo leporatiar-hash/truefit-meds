@@ -378,7 +378,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>Features</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest }}>
-            What caregivers need.<br />What doctors can actually use.
+            What caregivers observe.<br />What doctors need to know.
           </h2>
         </div>
         <div className="lp-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24, marginTop: 64 }}>
@@ -428,7 +428,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 72px" }}>
             <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest }}>
-              Your data is a sacred trust.
+              Built for privacy.
             </h2>
           </div>
           <div className="lp-trust-grid">
@@ -502,7 +502,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 56px" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>Who it&apos;s for</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest }}>
-            For anyone who carries<br />someone else&apos;s health.
+            Built for caregivers.
           </h2>
         </div>
         <div className="lp-who-cards" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
