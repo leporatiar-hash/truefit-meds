@@ -339,7 +339,7 @@ export default function TreatmentPlanPage() {
         </p>
 
         {/* ── Therapy ── */}
-        <SectionCard title="Therapy" subtitle="Add as many as apply — individual and group sessions separately">
+        <SectionCard title="Therapy" subtitle="Add as many as apply. List individual and group sessions separately.">
           {draft.therapies.map((entry, i) => (
             <TherapyCard
               key={i}
@@ -360,7 +360,7 @@ export default function TreatmentPlanPage() {
         </SectionCard>
 
         {/* ── Clinicians ── */}
-        <SectionCard title="Clinicians" subtitle="Therapists, doctors, case managers — add everyone on the care team">
+        <SectionCard title="Clinicians" subtitle="Add therapists, doctors, case managers, and everyone else on the care team.">
           {draft.clinicians.map((entry, i) => (
             <ClinicianCard
               key={i}

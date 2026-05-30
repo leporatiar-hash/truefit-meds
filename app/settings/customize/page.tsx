@@ -456,7 +456,7 @@ export default function CustomizePage() {
         </Section>
 
         {/* ── Tracking ── */}
-        <Section title="Tracking" subtitle="Choose what to log each day — toggle presets or add your own">
+        <Section title="Tracking" subtitle="Choose what to log each day. Toggle presets or add your own.">
           {/* Preset modules */}
           <div className="space-y-3">
             {PRESET_TRACKING.map(t => (
@@ -503,7 +503,7 @@ export default function CustomizePage() {
         </Section>
 
         {/* ── Substances ── */}
-        <Section title="Substances" subtitle="Track what's relevant — turn off what isn't">
+        <Section title="Substances" subtitle="Track what's relevant and turn off what isn't.">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>

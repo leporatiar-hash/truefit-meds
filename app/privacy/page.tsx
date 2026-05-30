@@ -67,7 +67,7 @@ export default function PrivacyPage() {
             <p>Your data is stored on servers hosted by Railway (infrastructure provider). We use:</p>
             <ul>
               <li>HTTPS encryption for all data in transit</li>
-              <li>Hashed passwords (bcrypt) — we never store plain-text passwords</li>
+              <li>Hashed passwords using bcrypt (plain-text passwords are never stored)</li>
               <li>JWT-based authentication with short-lived access tokens</li>
             </ul>
             <p style={{ marginTop: 12 }}>No security system is perfect. We recommend using a strong, unique password and not sharing your account credentials.</p>
@@ -76,10 +76,10 @@ export default function PrivacyPage() {
           <Section title="6. Third-Party Services">
             <p>Advocate integrates with the following third-party services:</p>
             <ul>
-              <li><strong>Anthropic Claude API</strong> — AI summary generation</li>
-              <li><strong>Resend</strong> — transactional email (password resets)</li>
-              <li><strong>Railway</strong> — backend infrastructure and PostgreSQL database hosting</li>
-              <li><strong>Vercel</strong> — frontend hosting</li>
+              <li><strong>Anthropic Claude API</strong> for AI summary generation</li>
+              <li><strong>Resend</strong> for transactional email (password resets)</li>
+              <li><strong>Railway</strong> for backend infrastructure and PostgreSQL database hosting</li>
+              <li><strong>Vercel</strong> for frontend hosting</li>
             </ul>
             <p style={{ marginTop: 12 }}>Each provider has their own privacy policies. We share only the minimum data necessary to provide the feature in question.</p>
           </Section>

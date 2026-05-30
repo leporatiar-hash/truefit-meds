@@ -445,7 +445,7 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
           </div>
           {chartPoints.length > 0 && chartPoints.length === allPoints.length && timeframe !== "3M" && (
             <p className="text-xs text-slate-400 text-center mt-2">
-              Showing all {allPoints.length} logged {allPoints.length === 1 ? "day" : "days"} — no earlier data available
+              Showing all {allPoints.length} logged {allPoints.length === 1 ? "day" : "days"}. No earlier data available.
             </p>
           )}
         </div>
@@ -454,7 +454,7 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
         {observations.length > 0 && (
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-3">
             <h2 className="text-base font-bold text-navy">Observations</h2>
-            <p className="text-xs text-slate-400">Based on {logs.length} days of data. Descriptive only — does not imply causation.</p>
+            <p className="text-xs text-slate-400">Based on {logs.length} days of data. Descriptive only and does not imply causation.</p>
             {observations.map((obs, i) => (
               <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ background: "#faf9f6" }}>
                 <div className="w-1 h-full rounded-full flex-shrink-0 self-stretch" style={{ background: "#4a7c59", minHeight: 16 }} />

@@ -33,14 +33,14 @@ function computeStatusSummary(logs: DailyLog[]): { text: string; warn: boolean }
   const concernRe = /suicid|command hallucin/i;
   for (const log of logs) {
     if (log.symptoms?.some(s => concernRe.test(s.name))) {
-      return { text: "⚠ Concerning — see episode notes", warn: true };
+      return { text: "⚠ Concerning. See episode notes.", warn: true };
     }
     if (log.episode?.occurred && concernRe.test(log.episode.description || "")) {
-      return { text: "⚠ Concerning — see episode notes", warn: true };
+      return { text: "⚠ Concerning. See episode notes.", warn: true };
     }
   }
   const symptomDays = logs.filter(l => (l.symptoms?.length ?? 0) > 0).length;
-  if (symptomDays >= 4) return { text: "Symptomatic — review below", warn: false };
+  if (symptomDays >= 4) return { text: "Symptomatic. Review notes below.", warn: false };
   return { text: "Relatively stable over this period", warn: false };
 }
 
@@ -309,7 +309,7 @@ function ClinicalReport({
             <span className="text-slate-400">({totalDays} day{totalDays !== 1 ? "s" : ""} logged)</span>
           </p>
           <p><span className="font-semibold">Generated:</span> {today}</p>
-          <p><span className="font-semibold">Prepared by:</span> Advocate — Caregiver Health Tracking</p>
+          <p><span className="font-semibold">Prepared by:</span> Advocate (Caregiver Health Tracking)</p>
         </div>
 
         {/* Status summary */}
@@ -480,8 +480,7 @@ function ClinicalReport({
                   {socData.daysHadContact} day{socData.daysHadContact !== 1 ? "s" : ""}
                   {socData.contactFrequency.length > 0 && (
                     <span className="text-slate-500">
-                      {" "}— most frequent:{" "}
-                      {socData.contactFrequency.map(c => `${c.name} (${c.count})`).join(", ")}
+                      {" "}(most frequent: {socData.contactFrequency.map(c => `${c.name} (${c.count})`).join(", ")})
                     </span>
                   )}
                 </p>

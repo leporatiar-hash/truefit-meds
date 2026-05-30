@@ -119,7 +119,7 @@ export default function OnboardingPage() {
         other_notes: goodDay || null,
       });
     } catch {
-      toast.error("Couldn't personalize dashboard — using defaults.");
+      toast.error("Couldn't personalize your dashboard. Using defaults.");
     }
     setStep(4);
   }

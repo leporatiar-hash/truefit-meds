@@ -270,7 +270,7 @@ export default function DashboardPage() {
         localStorage.setItem(key, "1");
 
         if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Advocate — Evening reminder", {
+          new Notification("Advocate: Evening reminder", {
             body: "Don't forget to complete today's log.",
             icon: "/favicon.ico",
           });
@@ -372,7 +372,7 @@ export default function DashboardPage() {
             {calcStreak === 0 && (
               <div className="rounded-2xl px-5 py-4 border" style={{ background: "#FFF8EC", borderColor: "#d4e0d7" }}>
                 <p className="text-base font-medium" style={{ color: "#92400E" }}>
-                  Start logging today — every entry helps {patient.name}&apos;s doctor understand them better.
+                  Start logging today. Every entry helps {patient.name}&apos;s doctor understand them better.
                 </p>
               </div>
             )}
@@ -448,7 +448,7 @@ export default function DashboardPage() {
             >
               <div>
                 <p className="text-base font-semibold text-navy">Print Report</p>
-                <p className="text-sm text-slate-500 mt-0.5">Last 7 or 30 days — formatted for doctor</p>
+                <p className="text-sm text-slate-500 mt-0.5">Last 7 or 30 days, formatted for the doctor</p>
               </div>
               <svg className="w-5 h-5" style={{ color: "#4a7c59" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />

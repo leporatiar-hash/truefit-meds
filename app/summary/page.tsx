@@ -274,7 +274,7 @@ export default function SummaryPage() {
     try {
       await api.saveSummary({
         patient_id: patient.id,
-        title: `Summary — ${startStr} to ${endStr}`,
+        title: `Summary: ${startStr} to ${endStr}`,
         content: JSON.stringify(summary),
         date_range_start: startStr,
         date_range_end: endStr,
@@ -330,13 +330,13 @@ export default function SummaryPage() {
         {summary && (
           <div className="print-report-header hidden" style={{ display: "none" }}>
             <p style={{ fontSize: "9pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", marginBottom: "4pt" }}>
-              Caregiver Observation Report — AI-Generated Insights
+              Caregiver Observation Report with AI-Generated Insights
             </p>
             <p className="print-report-title">{patient?.name}</p>
             <div className="print-report-meta" style={{ marginTop: "6pt", lineHeight: "1.6" }}>
               {patient?.diagnosis && <span><strong>Diagnosis:</strong> {patient.diagnosis} &nbsp;·&nbsp; </span>}
               <span><strong>Generated:</strong> {today} &nbsp;·&nbsp; </span>
-              <span><strong>Prepared by:</strong> Advocate — Caregiver Health Tracking</span>
+              <span><strong>Prepared by:</strong> Advocate (Caregiver Health Tracking)</span>
             </div>
           </div>
         )}

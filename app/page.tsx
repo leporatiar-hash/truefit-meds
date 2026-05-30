@@ -76,7 +76,7 @@ export default function LandingPage() {
   function handleShare() {
     if (navigator.share) {
       navigator.share({
-        title: "Advocate — Care, Documented",
+        title: "Advocate: Care, Documented",
         text: "A free tool that turns daily caregiver notes into doctor-ready summaries.",
         url: SITE_URL,
       });
@@ -208,7 +208,7 @@ export default function LandingPage() {
             When someone you love is living with a serious mental health condition, you become the expert. You track the medication changes, notice the early warning signs, and spot the patterns that don't show up in a clinical setting. That knowledge rarely makes it into the chart.
           </p>
           <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75 }}>
-            Psychiatrists see patients for 15 minutes at a time. Without structured input from the people closest to them, critical observations — a shift in sleep, a new side effect, a pattern tied to a specific trigger — get lost between appointments.
+            Psychiatrists see patients for 15 minutes at a time. Without structured input from the people closest to them, critical observations like a shift in sleep, a new side effect, or a pattern tied to a specific trigger get lost between appointments.
           </p>
         </div>
         <div className="lp-reveal" style={{ padding: 40, background: C.sageMist, borderRadius: 16, borderLeft: `3px solid ${C.sage}` }}>
@@ -236,7 +236,7 @@ export default function LandingPage() {
         </div>
         <div className="lp-steps" style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
           {[
-            { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple daily check-in that fits into any caregiver's routine — no technical knowledge needed." },
+            { num: "01", title: "Log daily", body: "Track symptoms, medications, mood, vitals, and lifestyle in a simple daily check-in that fits into any caregiver's routine. No technical knowledge needed." },
             { num: "02", title: "Patterns emerge", body: "Trends surface across your entries over time. Changes in symptom frequency, medication adherence, and wellbeing become visible week by week." },
             { num: "03", title: "Ready for the appointment", body: "Before each appointment, generate a clinical summary organized by symptom and system. It's the kind of input that changes what a doctor can do in a 15-minute visit." },
           ].map((step) => (
@@ -398,7 +398,7 @@ export default function LandingPage() {
               <div style={{ fontSize: "0.7rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.sageLight, marginBottom: 8 }}>Visit Summary · March 2026</div>
               {[
                 "Fatigue frequency increased 3× over 14 days",
-                "Metformin — 100% adherence, no missed doses",
+                "Metformin: 100% adherence, no missed doses",
                 "Sleep avg. 5.2 hrs/night (down from 6.8)",
                 "Appetite: mild decline noted since Feb 22",
                 "Recommend discussing energy management",
@@ -410,7 +410,7 @@ export default function LandingPage() {
             </div>
           </div>
           {[
-            { title: "Built for your routine", body: "No long forms. No medical jargon. Just a simple, focused daily entry that fits into caregiving life — whenever you have a moment." },
+            { title: "Built for your routine", body: "No long forms. No medical jargon. Just a simple, focused daily entry you can fill out whenever you have a moment." },
             { title: "Trend detection", body: "Changes in symptom patterns, medication adherence, and wellbeing surface automatically. Things that are hard to see day-to-day become clear across weeks." },
             { title: "Medication tracking", body: "Log each medication with dosage and timing. Every entry builds a history you can bring to any appointment." },
             { title: "Private by default", body: "Your loved one's health data stays yours. Privacy isn't a feature added on top. It's how the app was built from the start." },
@@ -486,10 +486,10 @@ export default function LandingPage() {
         <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sageLight, marginBottom: 48 }}>Why we built this</div>
         <div className="lp-reveal" style={{ maxWidth: 600, margin: "0 auto", fontSize: "1rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.85, textAlign: "left" }}>
           <p>My brother Jack has been fighting mental illness for almost ten years. Schizophrenia. Bipolar disorder. Excited catatonia. Psychosis. The diagnoses stacked up over years of hospitals, psychiatric wards, and more therapists than I can count.</p>
-          <p style={{ marginTop: 20 }}>When he&apos;s properly diagnosed and medicated, he&apos;s the same brother I grew up with — just with a few battle scars. When he&apos;s not, he can be unrecognizable.</p>
-          <p style={{ marginTop: 20 }}>My mother became his primary advocate almost overnight. She learned to read him better than any doctor could. She could see the episodes coming before they arrived — every symptom shift, every pattern, every small change that meant something was wrong. But when the appointment finally came and the doctor had fifteen minutes, she didn&apos;t know how to say any of it. She had years of observations and nowhere to put them.</p>
+          <p style={{ marginTop: 20 }}>When he&apos;s properly diagnosed and medicated, he&apos;s the same brother I grew up with, just with a few battle scars. When he&apos;s not, he can be unrecognizable.</p>
+          <p style={{ marginTop: 20 }}>My mother became his primary advocate almost overnight. She learned to read him better than any doctor could. She could see the episodes coming before they arrived: every symptom shift, every pattern, every small change that meant something was wrong. But when the appointment finally came and the doctor had fifteen minutes, she didn&apos;t know how to say any of it. She had years of observations and nowhere to put them.</p>
           <p style={{ marginTop: 20 }}>When I left for college, she was doing it alone. That bothered me more than I let on.</p>
-          <p style={{ marginTop: 20 }}>So I built Advocate for her. A simple way to log what she sees every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next — she started finding the patterns herself. She started walking into appointments with confidence. She could prevent more episodes before they escalated.</p>
+          <p style={{ marginTop: 20 }}>So I built Advocate for her. A simple way to log what she sees every day and surface it in a format a doctor could actually use. What I didn&apos;t expect was what happened next: she started finding the patterns herself. She started walking into appointments with confidence. She could prevent more episodes before they escalated.</p>
           <p style={{ marginTop: 20 }}>She stopped feeling like a bystander in her own son&apos;s care.</p>
           <p style={{ marginTop: 20, color: "rgba(255,255,255,0.9)", fontFamily: "var(--font-lora), serif", fontSize: "1.1rem" }}>That&apos;s when I knew this wasn&apos;t just a tool. It was a shift in who gets to understand the patient.</p>
         </div>

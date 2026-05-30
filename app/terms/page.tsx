@@ -40,7 +40,7 @@ export default function TermsPage() {
               <li>Track medication adherence and health patterns over time</li>
               <li>Generate AI-assisted summaries intended to support conversations with healthcare providers</li>
             </ul>
-            <p style={{ marginTop: 12 }}><strong>Advocate is not a medical device and does not provide medical advice, diagnosis, or treatment.</strong> The Service is designed to help caregivers organize and communicate observations — not to replace professional medical judgment.</p>
+            <p style={{ marginTop: 12 }}><strong>Advocate is not a medical device and does not provide medical advice, diagnosis, or treatment.</strong> The Service is designed to help caregivers organize and communicate observations, not to replace professional medical judgment.</p>
           </Section>
 
           <Section title="3. Eligibility">

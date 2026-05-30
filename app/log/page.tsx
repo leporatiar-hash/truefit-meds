@@ -1329,7 +1329,7 @@ function LogPageInner() {
                     <p className="text-base font-semibold text-navy">{med.name}</p>
                     {doses.length > 0 ? (
                       <p className="text-sm" style={{ color: "#4a7c59" }}>
-                        taken {doses.length}× today — {doses.map(d => displayDoseTime(d.time_taken)).join(", ")}
+                        taken {doses.length}× today at {doses.map(d => displayDoseTime(d.time_taken)).join(", ")}
                       </p>
                     ) : (
                       <p className="text-sm text-slate-400">{med.time_of_day} · not logged yet</p>
