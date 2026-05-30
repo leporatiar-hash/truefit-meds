@@ -228,7 +228,7 @@ export default function LandingPage() {
         <div className="lp-reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 72px" }}>
           <div style={{ fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: C.sage, marginBottom: 16 }}>How it works</div>
           <h2 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 500, lineHeight: 1.2, color: C.forest, marginBottom: 16 }}>
-            A daily log that fits your routine<br />and your doctor can actually use.
+            <span style={{ display: "block" }}>A daily log that fits your routine</span><span style={{ display: "block", marginTop: "0.35em" }}>and your doctor can actually use.</span>
           </h2>
           <p style={{ fontSize: "1.05rem", color: C.inkSoft, lineHeight: 1.7 }}>
             It&apos;s not another app to manage. A fast daily check-in that builds into a complete health picture over time.
@@ -277,7 +277,7 @@ export default function LandingPage() {
                 Dashboard
               </div>
               <h3 style={{ fontFamily: "var(--font-lora), serif", fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 500, lineHeight: 1.25, color: "#1B3A2D", marginBottom: 16 }}>
-                Your daily command center
+                Your patient overview
               </h3>
               <p style={{ fontSize: "1rem", color: C.inkMid, lineHeight: 1.75, marginBottom: 24 }}>
                 At a glance, see what&apos;s been logged today, track adherence over time, and find everything you need before the next appointment. All of it organized around one person.
