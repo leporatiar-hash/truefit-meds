@@ -2104,7 +2104,7 @@ function LogPageInner() {
               )}
               <button
                 onClick={handleSubmit}
-                className="w-full py-5 rounded-2xl font-bold text-white text-xl shadow-xl transition-all active:scale-[0.98]"
+                className="w-full py-3 rounded-xl font-semibold text-white text-base shadow-md transition-all active:scale-[0.98]"
                 style={{ background: "linear-gradient(135deg, #4a7c59, #2d4f38)" }}
               >
                 {isHistorical ? "Save Entry" : "Save Log"}
