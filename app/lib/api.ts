@@ -4,6 +4,7 @@ function normalizeApiBase(rawValue: string | undefined): string {
 
   let value = rawValue.trim().replace(/^["'`]|["'`]$/g, "").replace(/\/+$/, "");
   if (!value) return fallback;
+  if (value.startsWith("/")) return value;
 
   // Common env typo in dashboards: "ttps://..." (missing leading "h")
   if (value.startsWith("ttps://")) value = `h${value}`;
@@ -140,8 +141,13 @@ export const api = {
     request("/auth/config", { method: "PATCH", body: JSON.stringify({ updates }) }),
 
   // Summary
-  generateSummary: (patientId: number) =>
-    request(`/summary/${patientId}`, { method: "POST" }),
+  generateSummary: (patientId: number, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.set("start_date", startDate);
+    if (endDate) params.set("end_date", endDate);
+    const qs = params.toString();
+    return request(`/summary/${patientId}${qs ? `?${qs}` : ""}`, { method: "POST" });
+  },
   saveSummary: (data: object) =>
     request("/summaries/save", { method: "POST", body: JSON.stringify(data) }),
   getSavedSummaries: () =>

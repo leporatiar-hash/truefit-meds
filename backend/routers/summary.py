@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_type
+from typing import Optional
 from collections import defaultdict
 import json
 import os
@@ -45,6 +46,8 @@ def _calculate_adherence(logs, medications):
 @router.post("/{patient_id}")
 def generate_summary(
     patient_id: int,
+    start_date: Optional[date_type] = Query(None),
+    end_date: Optional[date_type] = Query(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -59,20 +62,28 @@ def generate_summary(
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    today = datetime.now().date()
+    if start_date is None:
+        start_date = today - timedelta(days=30)
+    if end_date is None:
+        end_date = today
+
     logs = (
         db.query(models.DailyLog)
         .filter(
             models.DailyLog.patient_id == patient_id,
-            models.DailyLog.date >= thirty_days_ago,
+            models.DailyLog.date >= start_date,
+            models.DailyLog.date <= end_date,
         )
         .order_by(models.DailyLog.date.asc())
         .all()
     )
 
+    date_range_days = (end_date - start_date).days + 1
+
     if not logs:
         return {
-            "executive_summary": "No health data has been logged in the past 30 days.",
+            "executive_summary": f"No health data has been logged in the selected date range ({start_date} to {end_date}).",
             "adherence": [],
             "patterns": [],
             "lifestyle_notes": [],
@@ -264,7 +275,7 @@ def generate_summary(
     else:
         treatment_plan_text = "  No treatment plan on file."
 
-    user_prompt = f"""Here is 30 days of health data for {patient.name}, diagnosed with {patient.diagnosis}.
+    user_prompt = f"""Here is {date_range_days} days of health data for {patient.name} ({start_date} to {end_date}), diagnosed with {patient.diagnosis}.
 
 PATIENT CONTEXT: {condition_context}
 

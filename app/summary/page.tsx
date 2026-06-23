@@ -213,6 +213,8 @@ export default function SummaryPage() {
   const { isLoading } = useAuth();
   const router = useRouter();
 
+  type RangeType = "7days" | "30days" | "custom";
+
   const [patient, setPatient] = useState<Patient | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -221,6 +223,14 @@ export default function SummaryPage() {
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [rangeType, setRangeType] = useState<RangeType>("30days");
+  const [customFrom, setCustomFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return localDateStr(d);
+  });
+  const [customTo, setCustomTo] = useState(() => localDateStr(new Date()));
+  const [summaryDateRange, setSummaryDateRange] = useState<{ startDate: string; endDate: string } | null>(null);
 
   const { user } = useAuth();
 
@@ -245,13 +255,31 @@ export default function SummaryPage() {
     if (!isLoading && user) { loadPatient(); loadSavedSummaries(); }
   }, [user, isLoading, loadPatient, loadSavedSummaries, router]);
 
+  function getDateRange(): { startDate: string; endDate: string } {
+    const today = new Date();
+    const endDate = localDateStr(today);
+    if (rangeType === "7days") {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 7);
+      return { startDate: localDateStr(start), endDate };
+    } else if (rangeType === "30days") {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 30);
+      return { startDate: localDateStr(start), endDate };
+    } else {
+      return { startDate: customFrom, endDate: customTo };
+    }
+  }
+
   async function handleGenerate() {
     if (!patient) return;
     setIsSaved(false);
     setGenerating(true);
     setSummary(null);
+    const dateRange = getDateRange();
+    setSummaryDateRange(dateRange);
     try {
-      const result = await api.generateSummary(patient.id) as SummaryResponse;
+      const result = await api.generateSummary(patient.id, dateRange.startDate, dateRange.endDate) as SummaryResponse;
       setSummary(result);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to generate insights");
@@ -266,11 +294,7 @@ export default function SummaryPage() {
 
   async function handleSave() {
     if (!summary || !patient) return;
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(start.getDate() - 30);
-    const startStr = localDateStr(start);
-    const endStr = localDateStr(today);
+    const { startDate: startStr, endDate: endStr } = summaryDateRange ?? getDateRange();
     try {
       await api.saveSummary({
         patient_id: patient.id,
@@ -355,6 +379,44 @@ export default function SummaryPage() {
                 Analyzes the last 30 days of logs and produces a doctor-ready summary.
               </p>
             </div>
+
+            {/* Date range toggle */}
+            <div className="flex rounded-xl border border-slate-200 overflow-hidden">
+              {(["7days", "30days", "custom"] as const).map((opt, i) => (
+                <button
+                  key={opt}
+                  onClick={() => setRangeType(opt)}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition-colors${i < 2 ? " border-r border-slate-200" : ""}`}
+                  style={{
+                    background: rangeType === opt ? "#2d4f38" : "transparent",
+                    color: rangeType === opt ? "white" : "#94a3b8",
+                  }}
+                >
+                  {opt === "7days" ? "7 Days" : opt === "30days" ? "30 Days" : "Custom"}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom date inputs */}
+            {rangeType === "custom" && (
+              <div className="flex gap-3">
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="flex-1 border border-slate-200 rounded-xl px-3 py-3 text-base text-navy"
+                  style={{ background: "#f8fafc" }}
+                />
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="flex-1 border border-slate-200 rounded-xl px-3 py-3 text-base text-navy"
+                  style={{ background: "#f8fafc" }}
+                />
+              </div>
+            )}
+
             <button
               onClick={handleGenerate}
               className="w-full py-4 rounded-2xl font-bold text-white text-base"
