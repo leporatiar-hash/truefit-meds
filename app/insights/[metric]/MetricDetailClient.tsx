@@ -182,7 +182,7 @@ function LineChart({
             cx={ev.x}
             cy={CY + CH + 8}
             r={4}
-            fill={EVENT_COLORS[ev.type]}
+            fill={ev.type === "symptom_spike" ? color : EVENT_COLORS[ev.type]}
             opacity={0.85}
             style={{ cursor: "pointer" }}
             onClick={() => setActiveEvent(activeEvent?.date === ev.date && activeEvent.type === ev.type ? null : ev)}
@@ -311,6 +311,12 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
     return allEvents.filter((e) => e.date >= localDateStr(cutoff));
   }, [allEvents, timeframe]);
 
+  const chartColor = useMemo(() => {
+    if (config?.unit !== "/10" || !chartPoints.length) return config?.color ?? "#EF4444";
+    const avg = chartPoints.reduce((s, p) => s + p.value, 0) / chartPoints.length;
+    return avg >= 8 ? "#EA580C" : avg >= 4 ? "#D97706" : "#16A34A";
+  }, [config, chartPoints]);
+
   const observations = useMemo(() => computeObservations(logs), [logs]);
 
   const latestValue = allPoints.length ? allPoints[allPoints.length - 1].value : null;
@@ -438,7 +444,7 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
           <LineChart
             points={chartPoints}
             events={chartEvents}
-            color={config.color}
+            color={chartColor}
             unit={config.unit}
           />
           <div className="mt-4">
