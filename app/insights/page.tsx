@@ -61,7 +61,15 @@ function Sparkline({ points, color }: { points: MetricPoint[]; color: string }) 
 
 // ── Time toggle ───────────────────────────────────────────────────────────────
 
-function TimeframeToggle({ current, onChange }: { current: Timeframe; onChange: (tf: Timeframe) => void }) {
+function TimeframeToggle({
+  current,
+  onChange,
+  activeColor = "#4a7c59",
+}: {
+  current: Timeframe;
+  onChange: (tf: Timeframe) => void;
+  activeColor?: string;
+}) {
   const options: Timeframe[] = ["1W", "1M", "3M", "1Y"];
   return (
     <div className="flex gap-1 rounded-xl p-1" style={{ background: "#F1F5F9" }}>
@@ -70,10 +78,11 @@ function TimeframeToggle({ current, onChange }: { current: Timeframe; onChange: 
           key={tf}
           onClick={() => onChange(tf)}
           className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-          style={{
-            background: current === tf ? "#1a2420" : "transparent",
-            color: current === tf ? "white" : "#64748B",
-          }}
+          style={
+            current === tf
+              ? { background: "white", color: activeColor, border: `1.5px solid ${activeColor}` }
+              : { background: "transparent", color: "#64748B" }
+          }
         >
           {tf}
         </button>
@@ -175,7 +184,7 @@ function SymptomCard({
   const dotColor = latestInWindow !== null ? severityColor(latestInWindow) : "#E2E8F0";
   const isWorsening = change !== null && change > 0.3;
   const isImproving = change !== null && change < -0.3;
-  const sparkColor = isWorsening ? "#EA580C" : isImproving ? "#16A34A" : "#B4B2A9";
+  const sparkColor = latestInWindow !== null ? severityColor(latestInWindow) : "#B4B2A9";
 
   const deltaText =
     change === null || Math.abs(change) < 0.3
@@ -294,6 +303,13 @@ export default function InsightsPage() {
     [symptomRows, metricRows, timeframe]
   );
 
+  const dominantSeverityColor = useMemo(() => {
+    const pts = symptomRows.flatMap((r) => filterByTimeframe(r.allPoints, timeframe));
+    if (!pts.length) return "#4a7c59";
+    const avg = pts.reduce((s, p) => s + p.value, 0) / pts.length;
+    return avg >= 8 ? "#EA580C" : avg >= 4 ? "#D97706" : "#16A34A";
+  }, [symptomRows, timeframe]);
+
   if (isLoading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#faf9f6" }}>
@@ -325,7 +341,7 @@ export default function InsightsPage() {
         </div>
 
         {/* Time toggle */}
-        <TimeframeToggle current={timeframe} onChange={setTimeframe} />
+        <TimeframeToggle current={timeframe} onChange={setTimeframe} activeColor={dominantSeverityColor} />
 
         {metricRows.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 text-center">
