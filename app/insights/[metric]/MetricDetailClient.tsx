@@ -67,10 +67,8 @@ function LineChart({
     );
   }
 
-  const vals = points.map((p) => p.value);
-  const rawMax = Math.max(...vals);
   const minV = 0;
-  const maxV = Math.ceil(rawMax + 1);
+  const maxV = 10;
 
   const xs = points.map((_, i) => ptX(i, points.length));
   const ys = points.map((p) => ptY(p.value, minV, maxV));
@@ -79,8 +77,8 @@ function LineChart({
   const linePath = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
   const fillPath = linePath + ` L${xs[xs.length - 1].toFixed(1)} ${(CY + CH).toFixed(1)} L${CX.toFixed(1)} ${(CY + CH).toFixed(1)} Z`;
 
-  // Y axis ticks (3 ticks)
-  const yTicks = [minV + (maxV - minV) * 0.1, minV + (maxV - minV) * 0.5, minV + (maxV - minV) * 0.9];
+  // Y axis ticks: 0, 2, 4, 6, 8, 10
+  const yTicks = [0, 2, 4, 6, 8, 10];
 
   // X axis ticks (4 ticks)
   const xTickCount = Math.min(4, points.length);
