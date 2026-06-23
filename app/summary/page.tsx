@@ -207,6 +207,25 @@ function MedSafetyCard({ data }: { data: Record<string, MedicationSideEffectSumm
   );
 }
 
+// ── Summary title helpers ──────────────────────────────────────────────────────
+
+function formatSummaryTitle(startStr: string, endStr: string): string {
+  const start = new Date(startStr + "T00:00:00");
+  const end = new Date(endStr + "T00:00:00");
+  const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const endLabel = end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (diffDays >= 6 && diffDays <= 8) return `Last 7 days · ${endLabel}`;
+  if (diffDays >= 28 && diffDays <= 32) return `Last 30 days · ${endLabel}`;
+  const startLabel = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${startLabel} – ${endLabel}, ${end.getFullYear()}`;
+}
+
+function parseSummaryTitle(title: string): string {
+  const match = title.match(/Summary[:\s—-]+(\d{4}-\d{2}-\d{2})\s+to\s+(\d{4}-\d{2}-\d{2})/);
+  if (!match) return title;
+  return formatSummaryTitle(match[1], match[2]);
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SummaryPage() {
@@ -231,6 +250,7 @@ export default function SummaryPage() {
   });
   const [customTo, setCustomTo] = useState(() => localDateStr(new Date()));
   const [summaryDateRange, setSummaryDateRange] = useState<{ startDate: string; endDate: string } | null>(null);
+  const [loaderDone, setLoaderDone] = useState(false);
 
   const { user } = useAuth();
 
@@ -284,7 +304,9 @@ export default function SummaryPage() {
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to generate insights");
     } finally {
+      setLoaderDone(true);
       setGenerating(false);
+      setTimeout(() => setLoaderDone(false), 600);
     }
   }
 
@@ -298,7 +320,7 @@ export default function SummaryPage() {
     try {
       await api.saveSummary({
         patient_id: patient.id,
-        title: `Summary: ${startStr} to ${endStr}`,
+        title: formatSummaryTitle(startStr, endStr),
         content: JSON.stringify(summary),
         date_range_start: startStr,
         date_range_end: endStr,
@@ -428,11 +450,17 @@ export default function SummaryPage() {
         )}
 
         {/* Loading */}
-        {generating && (
+        {(generating || loaderDone) && (
           <div className="flex items-center justify-center py-16">
             <StepLoader
-              steps={["Reviewing your logs...", "Identifying patterns...", "Writing summary..."]}
+              steps={[
+                "Reading your logs...",
+                "Calculating medication adherence...",
+                "Finding patterns across the month...",
+                "Writing your summary...",
+              ]}
               intervalMs={3000}
+              done={loaderDone}
             />
           </div>
         )}
@@ -577,7 +605,7 @@ export default function SummaryPage() {
                 <div key={saved.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="px-4 py-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold text-navy truncate">{saved.title}</p>
+                      <p className="text-base font-semibold text-navy truncate">{parseSummaryTitle(saved.title)}</p>
                       <p className="text-xs text-slate-400 mt-0.5">
                         Saved {new Date(saved.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
