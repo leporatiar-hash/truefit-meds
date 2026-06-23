@@ -68,9 +68,9 @@ function LineChart({
   }
 
   const vals = points.map((p) => p.value);
-  const rawMin = Math.min(...vals), rawMax = Math.max(...vals);
-  const pad = (rawMax - rawMin) * 0.15 || 0.5;
-  const minV = rawMin - pad, maxV = rawMax + pad;
+  const rawMax = Math.max(...vals);
+  const minV = 0;
+  const maxV = Math.ceil(rawMax + 1);
 
   const xs = points.map((_, i) => ptX(i, points.length));
   const ys = points.map((p) => ptY(p.value, minV, maxV));
