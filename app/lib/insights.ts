@@ -43,9 +43,14 @@ function nameToKey(name: string): string {
 // ── Extract helpers ───────────────────────────────────────────────────────────
 
 export function extractSymptom(logs: DailyLog[], name: string): MetricPoint[] {
+  const lowerName = name.toLowerCase();
   return logs
-    .filter((l) => l.symptoms?.some((s) => s.name === name && typeof s.severity === "number"))
-    .map((l) => ({ date: l.date, value: l.symptoms!.find((s) => s.name === name)!.severity as number }))
+    .map((l) => {
+      const symptom = l.symptoms?.find(
+        (s) => s.name.toLowerCase() === lowerName && typeof s.severity === "number"
+      );
+      return { date: l.date, value: symptom ? (symptom.severity as number) : 0 };
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -145,8 +150,9 @@ export function aggregateWeekly(points: MetricPoint[]): MetricPoint[] {
 
 // ── Event markers ─────────────────────────────────────────────────────────────
 
-export function extractEvents(logs: DailyLog[]): EventMarker[] {
+export function extractEvents(logs: DailyLog[], symptomName?: string): EventMarker[] {
   const markers: EventMarker[] = [];
+  const lowerSymptom = symptomName?.toLowerCase();
   for (const log of logs) {
     const missed = log.medications_taken?.filter((m) => !m.taken) ?? [];
     if (missed.length > 0)
@@ -157,7 +163,10 @@ export function extractEvents(logs: DailyLog[]): EventMarker[] {
       markers.push({ date: log.date, type: "smoked", label: "Smoked" });
     if (log.sleep_hours != null && log.sleep_hours < 5)
       markers.push({ date: log.date, type: "low_sleep", label: `${log.sleep_hours}h sleep` });
-    if (log.symptoms?.some((s) => (s.severity ?? 0) >= 7))
+    const hasSpike = lowerSymptom
+      ? (log.symptoms?.find((s) => s.name.toLowerCase() === lowerSymptom)?.severity ?? 0) >= 7
+      : log.symptoms?.some((s) => (s.severity ?? 0) >= 7);
+    if (hasSpike)
       markers.push({ date: log.date, type: "symptom_spike", label: "High symptom" });
   }
   return markers;

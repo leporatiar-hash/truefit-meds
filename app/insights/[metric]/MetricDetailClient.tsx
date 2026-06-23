@@ -302,7 +302,10 @@ export default function MetricDetailClient({ metricKey, onBack }: { metricKey: s
     return pts;
   }, [allPoints, timeframe]);
 
-  const allEvents = useMemo(() => extractEvents(logs), [logs]);
+  const allEvents = useMemo(
+    () => extractEvents(logs, config?.unit === "/10" ? config.label : undefined),
+    [logs, config]
+  );
   const chartEvents = useMemo(() => {
     const days = timeframe === "1W" ? 7 : timeframe === "1M" ? 30 : timeframe === "3M" ? 90 : 365;
     const cutoff = new Date();

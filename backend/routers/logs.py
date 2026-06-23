@@ -284,13 +284,9 @@ def get_logs(
 ):
     _verify_patient(patient_id, current_user, db)
 
-    ninety_days_ago = datetime.now().date() - timedelta(days=90)
     return (
         db.query(models.DailyLog)
-        .filter(
-            models.DailyLog.patient_id == patient_id,
-            models.DailyLog.date >= ninety_days_ago,
-        )
+        .filter(models.DailyLog.patient_id == patient_id)
         .order_by(models.DailyLog.date.desc())
         .all()
     )
