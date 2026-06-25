@@ -34,7 +34,7 @@ export interface DashboardConfig {
   substance_fields?: string[]; // "cigarettes", "alcohol", or any custom substance name
   condition_context?: string;
   summary_style?: "compassionate" | "clinical" | "adaptive";
-  dose_timing_mode?: "simple" | "exact";
+  dose_timing_mode?: "quick" | "simple" | "exact";
   tracking_modules?: string[]; // "sleep" | "hydration" | "vitals" | custom names
   custom_vitals?: string[];    // e.g. ["Weight", "Blood Sugar"]
   show_socialization?: boolean;

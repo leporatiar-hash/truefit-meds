@@ -389,6 +389,10 @@ function LogPageInner() {
   const [addDoseOpenFor, setAddDoseOpenFor] = useState<number | null>(null);
   const [addDoseTime, setAddDoseTime] = useState("");
 
+  // Quick dose mode
+  const [quickAllTaken, setQuickAllTaken] = useState<boolean | null>(null);
+  const [quickMissedText, setQuickMissedText] = useState("");
+
   // Photo capture
   const [photoLoading, setPhotoLoading] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -663,6 +667,17 @@ function LogPageInner() {
     }
   }
 
+  function handleQuickTookAll(allTaken: boolean) {
+    setQuickAllTaken(allTaken);
+    if (allTaken) {
+      const meds = patient?.medications.filter(m => m.active) ?? [];
+      update({ medicationsTaken: meds.map(m => ({ medication_id: m.id, taken: true, time_taken: null })) });
+    } else {
+      update({ medicationsTaken: [] });
+      setQuickMissedText("");
+    }
+  }
+
   // ── Symptoms ─────────────────────────────────────────────────────────────
 
   function setSymptomSeverity(name: string, chipValue: number) {
@@ -857,7 +872,14 @@ function LogPageInner() {
     if (!draft || !patient) return;
     setSaving(true);
     try {
-      await performSave(draft, patient);
+      const mode = user?.user_config?.dose_timing_mode ?? "quick";
+      let draftToSave = draft;
+      if (mode === "quick" && quickAllTaken === false && quickMissedText.trim()) {
+        const prefix = `Missed meds: ${quickMissedText.trim()}`;
+        const existingNotes = draft.notes.trim();
+        draftToSave = { ...draft, notes: existingNotes ? `${prefix}\n${existingNotes}` : prefix };
+      }
+      await performSave(draftToSave, patient);
       isDirtyRef.current = false;
       setSaved(true);
 
@@ -1109,7 +1131,7 @@ function LogPageInner() {
 
   const customSubstanceNames = configSubstanceFields.filter(s => s !== "cigarettes" && s !== "alcohol");
 
-  const doseTimingMode: "simple" | "exact" = user?.user_config?.dose_timing_mode ?? "simple";
+  const doseTimingMode: "quick" | "simple" | "exact" = user?.user_config?.dose_timing_mode ?? "quick";
   const showSocialization: boolean = user?.user_config?.show_socialization !== false;
 
   const totalDoses = draft.medicationsTaken.filter(m => m.taken).length;
@@ -1309,6 +1331,56 @@ function LogPageInner() {
           bgColor="#f2f7f3" borderColor="#d4e0d7" headingColor="#2d4f38"
           isOpen={openSection === "medications"} onToggle={() => toggle("medications")}>
 
+          {doseTimingMode === "quick" ? (
+            <div className="space-y-4">
+              {activeMeds.length === 0 ? (
+                <p className="text-base text-slate-400">No active medications on file.</p>
+              ) : (
+                <div className="rounded-2xl border-2 p-5 space-y-4" style={{ borderColor: "#d4e0d7", background: "#f8fcf9" }}>
+                  <p className="text-lg font-bold text-navy">Took all meds today?</p>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickTookAll(true)}
+                      className="flex-1 py-3.5 rounded-xl text-base font-bold border-2 transition-all active:scale-95"
+                      style={{
+                        borderColor: quickAllTaken === true ? "#4a7c59" : "#CBD5E1",
+                        background: quickAllTaken === true ? "#4a7c59" : "white",
+                        color: quickAllTaken === true ? "white" : "#64748B",
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickTookAll(false)}
+                      className="flex-1 py-3.5 rounded-xl text-base font-bold border-2 transition-all active:scale-95"
+                      style={{
+                        borderColor: quickAllTaken === false ? "#EF4444" : "#CBD5E1",
+                        background: quickAllTaken === false ? "#FEF2F2" : "white",
+                        color: quickAllTaken === false ? "#EF4444" : "#64748B",
+                      }}
+                    >
+                      No
+                    </button>
+                  </div>
+                  {quickAllTaken === false && (
+                    <div className="space-y-2 pt-1">
+                      <label className="text-sm font-semibold text-slate-600">Which ones did he miss?</label>
+                      <input
+                        type="text"
+                        value={quickMissedText}
+                        onChange={e => setQuickMissedText(e.target.value)}
+                        placeholder="e.g. Metformin, Atorvastatin…"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-base text-navy focus:outline-none bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
           {activeMeds.length === 0 && (
             <p className="text-base text-slate-400">No active medications on file.</p>
           )}
@@ -1493,6 +1565,9 @@ function LogPageInner() {
               </div>
             );
           })}
+
+            </>
+          )}
 
           {/* ── Manage medications ── */}
           <div className="pt-2 border-t border-amber-100">

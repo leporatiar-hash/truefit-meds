@@ -165,7 +165,7 @@ export default function CustomizePage() {
   const [customSubstances, setCustomSubstances] = useState<string[]>([]);
 
   // Dose timing
-  const [doseTimingMode, setDoseTimingMode] = useState<"simple" | "exact">("simple");
+  const [doseTimingMode, setDoseTimingMode] = useState<"quick" | "simple" | "exact">("quick");
 
   // Socialization
   const [showSocialization, setShowSocialization] = useState(true);
@@ -188,7 +188,7 @@ export default function CustomizePage() {
     setShowCigarettes(sf.includes("cigarettes"));
     setShowAlcohol(sf.includes("alcohol"));
     setCustomSubstances(sf.filter((s: string) => s !== "cigarettes" && s !== "alcohol"));
-    setDoseTimingMode(cfg.dose_timing_mode ?? "simple");
+    setDoseTimingMode(cfg.dose_timing_mode ?? "quick");
     setShowSocialization(cfg.show_socialization !== false);
   }, []);
 
@@ -442,6 +442,43 @@ export default function CustomizePage() {
           )}
         </Section>
 
+        {/* ── Dose Timing ── */}
+        <Section title="Dose Timing" subtitle="How do you want to log when medications are taken?">
+          <div className="space-y-3">
+            {(["quick", "simple", "exact"] as const).map(mode => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setDoseTimingMode(mode)}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
+                style={{
+                  borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1",
+                  background: doseTimingMode === mode ? "#f2f7f3" : "white",
+                }}
+              >
+                <div
+                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                  style={{ borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1" }}
+                >
+                  {doseTimingMode === mode && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#4a7c59" }} />}
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-navy">
+                    {mode === "quick" ? "Quick" : mode === "simple" ? "Simple" : "Exact Time"}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {mode === "quick"
+                      ? "“Took all meds today” · Yes or No"
+                      : mode === "simple"
+                      ? "Morning · Afternoon · Evening · Night"
+                      : "Pick the precise time for each dose"}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Section>
+
         {/* ── Symptoms ── */}
         <Section title="Symptoms" subtitle="Choose exactly which symptoms to track every day">
           {symptoms.length > 0 && (
@@ -586,39 +623,6 @@ export default function CustomizePage() {
                 {addingContact ? "Adding…" : "Add"}
               </button>
             </div>
-          </div>
-        </Section>
-
-        {/* ── Dose Timing ── */}
-        <Section title="Dose Timing" subtitle="How do you want to log when medications are taken?">
-          <div className="space-y-3">
-            {(["simple", "exact"] as const).map(mode => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setDoseTimingMode(mode)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all"
-                style={{
-                  borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1",
-                  background: doseTimingMode === mode ? "#f2f7f3" : "white",
-                }}
-              >
-                <div
-                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                  style={{ borderColor: doseTimingMode === mode ? "#4a7c59" : "#CBD5E1" }}
-                >
-                  {doseTimingMode === mode && <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#4a7c59" }} />}
-                </div>
-                <div>
-                  <p className="text-base font-semibold text-navy">
-                    {mode === "simple" ? "Simple" : "Exact Time"}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-0.5">
-                    {mode === "simple" ? "Morning · Afternoon · Evening · Night" : "Pick the precise time for each dose"}
-                  </p>
-                </div>
-              </button>
-            ))}
           </div>
         </Section>
 
